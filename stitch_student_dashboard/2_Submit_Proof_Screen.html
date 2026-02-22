@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Submit Proof Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                    "primary": "#1a1a1a",
+                    "background-light": "#f8f9fa", 
+                    "background-dark": "#191919",
+                    "surface-light": "#ffffff",
+                    "surface-dark": "#2a2a2a",
+                },
+                fontFamily: {
+                    "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.5rem", 
+                    "lg": "1rem", 
+                    "xl": "1.5rem", 
+                    "2xl": "1.75rem",
+                    "full": "9999px"
+                },
+                boxShadow: {
+                    'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    'neumorphic': '20px 20px 60px #d1d1d1, -20px -20px 60px #ffffff',
+                }
+            },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-primary dark:text-white min-h-screen flex flex-col items-center justify-center font-display antialiased">
+<!-- Mobile Container -->
+<div class="relative flex h-full min-h-screen w-full max-w-md flex-col bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden">
+<!-- Header -->
+<div class="flex items-center justify-between px-6 pt-12 pb-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+<button class="flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-primary dark:text-white">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-primary dark:text-white flex-1 text-center pr-8">Submit Proof</h1>
+</div>
+<!-- Main Content Scroll Area -->
+<div class="flex-1 overflow-y-auto px-6 pb-24 hide-scrollbar">
+<!-- Activity Summary Card -->
+<div class="mt-4 mb-8">
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
+<!-- Decorative background gradient -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-8 -mt-8 pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-4">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                Approved
+                            </span>
+<span class="text-2xl font-bold text-primary dark:text-white">+20</span>
+</div>
+<h2 class="text-xl font-bold text-primary dark:text-white mb-2 leading-tight">Blood Donation Camp</h2>
+<div class="flex items-center text-sm text-gray-500 dark:text-gray-400 gap-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>Oct 12, 2023</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span>4 Hours</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Submission Form -->
+<div class="space-y-6">
+<!-- Google Drive Link Input -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-primary dark:text-white pl-1">
+                        Proof Link <span class="text-red-500">*</span>
+</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-gray-400">add_link</span>
+</div>
+<input class="block w-full pl-12 pr-12 py-4 bg-surface-light dark:bg-surface-dark border-transparent focus:border-primary focus:ring-0 rounded-2xl text-primary dark:text-white placeholder-gray-400 shadow-soft transition-all" placeholder="Paste Google Drive link" type="url"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-primary dark:text-white hover:text-gray-600 transition-colors">
+<span class="material-symbols-outlined">content_paste</span>
+</button>
+</div>
+<p class="text-xs text-gray-400 px-2">Make sure the link is publicly accessible.</p>
+</div>
+<!-- Notes Text Area -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-primary dark:text-white pl-1">
+                        Notes for Verifier
+                    </label>
+<textarea class="block w-full px-4 py-4 bg-surface-light dark:bg-surface-dark border-transparent focus:border-primary focus:ring-0 rounded-2xl text-primary dark:text-white placeholder-gray-400 shadow-soft resize-none transition-all" placeholder="Add any additional context or details about your participation..." rows="4"></textarea>
+</div>
+<!-- Upload Snapshot (Optional) -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-primary dark:text-white pl-1">
+                        Upload Snapshot <span class="text-gray-400 font-normal">(Optional)</span>
+</label>
+<label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl cursor-pointer bg-surface-light/50 dark:bg-surface-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative overflow-hidden group">
+<div class="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400 group-hover:text-primary dark:group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-3xl mb-2">add_photo_alternate</span>
+<p class="text-xs">Tap to upload image</p>
+</div>
+<input accept="image/*" class="hidden" type="file"/>
+<!-- Decorative gradient on hover -->
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+</label>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="mt-10">
+<button class="w-full bg-primary text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:bg-gray-900 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
+<span>Submit for Verification</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="h-8"></div>
+</div>
+<!-- Bottom Navigation -->
+<div class="flex gap-2 border-t border-[#f2f2f2] dark:border-gray-800 bg-surface-light dark:bg-background-dark px-4 pb-6 pt-3 z-20">
+<a class="just flex flex-1 flex-col items-center justify-end gap-1 text-gray-400 hover:text-primary dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+</a>
+<a class="just flex flex-1 flex-col items-center justify-end gap-1 text-gray-400 hover:text-primary dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">assignment</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Requests</p>
+</a>
+<a class="just flex flex-1 flex-col items-center justify-end gap-1 text-primary dark:text-white" href="#">
+<span class="material-symbols-outlined text-[24px] font-variation-settings-filled">cloud_upload</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Submissions</p>
+</a>
+<a class="just flex flex-1 flex-col items-center justify-end gap-1 text-gray-400 hover:text-primary dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+<a class="just flex flex-1 flex-col items-center justify-end gap-1 text-gray-400 hover:text-primary dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Settings</p>
+</a>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Submissions History - AICTE Activity Points</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#197fe6",
+                        "background-light": "#F8F9FA", 
+                        "background-dark": "#111921",
+                        "text-main": "#1A1A1A",
+                        "text-sub": "#637588",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem", 
+                        "lg": "1.5rem", 
+                        "xl": "2rem", 
+                        "2xl": "2.5rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main antialiased selection:bg-primary/20">
+<div class="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark overflow-x-hidden shadow-2xl">
+<!-- Header Section -->
+<header class="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 pt-12 pb-4">
+<div class="flex items-center justify-between mb-6">
+<h1 class="text-3xl font-bold tracking-tight text-text-main dark:text-white">Submissions</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-sm text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<!-- Segmented Control -->
+<div class="relative flex w-full p-1 bg-gray-200/50 dark:bg-gray-800 rounded-full">
+<!-- Active Indicator Background (Simulated for visual design) -->
+<div class="absolute left-1 top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-700 rounded-full shadow-sm z-0 transition-all duration-300"></div>
+<button class="relative z-10 flex-1 py-2.5 text-sm font-semibold text-text-main dark:text-white text-center rounded-full transition-colors">
+                    Pending
+                </button>
+<button class="relative z-10 flex-1 py-2.5 text-sm font-medium text-text-sub dark:text-gray-400 text-center rounded-full hover:text-text-main dark:hover:text-white transition-colors">
+                    Verified
+                </button>
+</div>
+</header>
+<!-- Main Content: List of Cards -->
+<main class="flex-1 px-5 py-6 space-y-5 pb-24">
+<!-- Pending Section Header -->
+<div class="flex items-center justify-between px-1">
+<span class="text-xs font-semibold uppercase tracking-wider text-text-sub dark:text-gray-400">In Review (3)</span>
+<span class="text-xs font-medium text-primary cursor-pointer hover:underline">View Guidelines</span>
+</div>
+<!-- Card 1: Pending -->
+<div class="group relative flex flex-col bg-white dark:bg-gray-900 rounded-[2rem] p-5 shadow-soft hover:shadow-lg transition-all duration-300 border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-3">
+<div class="flex-1">
+<h3 class="text-lg font-bold text-text-main dark:text-white leading-tight mb-1">Tree Plantation Drive</h3>
+<p class="text-sm text-text-sub dark:text-gray-400 font-medium">14 Oct 2024</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300 mb-2">
+                            +10 Pts
+                        </span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-4 border-t border-gray-50 dark:border-gray-800">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+</span>
+<span class="text-sm font-semibold text-blue-600 dark:text-blue-400">Proof Submitted</span>
+</div>
+<a class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-text-sub hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 group-hover:bg-primary group-hover:text-white" href="#">
+<span class="material-symbols-outlined text-[20px]">link</span>
+</a>
+</div>
+</div>
+<!-- Card 2: Pending -->
+<div class="group relative flex flex-col bg-white dark:bg-gray-900 rounded-[2rem] p-5 shadow-soft hover:shadow-lg transition-all duration-300 border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-3">
+<div class="flex-1">
+<h3 class="text-lg font-bold text-text-main dark:text-white leading-tight mb-1">Tech Fest Volunteer</h3>
+<p class="text-sm text-text-sub dark:text-gray-400 font-medium">10 Oct 2024</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300 mb-2">
+                            +15 Pts
+                        </span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-4 border-t border-gray-50 dark:border-gray-800">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+</span>
+<span class="text-sm font-semibold text-blue-600 dark:text-blue-400">Proof Submitted</span>
+</div>
+<a class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-text-sub hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 group-hover:bg-primary group-hover:text-white" href="#">
+<span class="material-symbols-outlined text-[20px]">link</span>
+</a>
+</div>
+</div>
+<!-- Card 3: Pending with Image Preview -->
+<div class="group relative flex flex-col bg-white dark:bg-gray-900 rounded-[2rem] p-5 shadow-soft hover:shadow-lg transition-all duration-300 border border-transparent hover:border-primary/10">
+<!-- Image Preview Area -->
+<div class="h-32 w-full rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden relative">
+<div class="absolute inset-0 bg-cover bg-center opacity-90 transition-transform duration-700 group-hover:scale-105" data-alt="Close up of blood donation bag hanging" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBfRHIr7145HGxTPsx90Td2Vqhn2qIaJF37ZROyP1-jbLEgmarADEfu96GXs8a3WFN31QSMmtonBFblTdhd_9l-aHgZDrKUbj1Zt4IUYvJLMd5Oj_8fM0HIjY3k0So5w1mphEkS-yHoTbrT8K8BJq_3FxlglTY3z9kPkMfXN38QG1hgJGgAUKlM4uwgNgVPkUsuCDIhgV_-PyRY7_oqh5OXyZ5b5lD6FZVfzH-ol162b6yXu1SJdKm3xmqSZ_aNQkfo_nv-4FJPAw');"></div>
+<div class="absolute top-3 right-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm">
+<span class="text-xs font-bold text-text-main dark:text-white">+20 Pts</span>
+</div>
+</div>
+<div class="flex justify-between items-start mb-1">
+<div class="flex-1">
+<h3 class="text-lg font-bold text-text-main dark:text-white leading-tight mb-1">Blood Donation Camp</h3>
+<p class="text-sm text-text-sub dark:text-gray-400 font-medium">20 Sep 2024</p>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-3 border-t border-gray-50 dark:border-gray-800">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+</span>
+<span class="text-sm font-semibold text-blue-600 dark:text-blue-400">Proof Submitted</span>
+</div>
+<a class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-text-sub hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 group-hover:bg-primary group-hover:text-white" href="#">
+<span class="material-symbols-outlined text-[20px]">link</span>
+</a>
+</div>
+</div>
+<!-- Spacer for verified section simulation -->
+<div class="flex items-center justify-between px-1 pt-4 opacity-60">
+<span class="text-xs font-semibold uppercase tracking-wider text-text-sub dark:text-gray-400">Recent History (Verified)</span>
+</div>
+<!-- Card 4: Verified (Dimmed slightly to show it's history) -->
+<div class="group relative flex flex-col bg-white/60 dark:bg-gray-900/60 rounded-[2rem] p-5 border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-start mb-3">
+<div class="flex-1">
+<h3 class="text-lg font-bold text-text-main/80 dark:text-white/80 leading-tight mb-1">NSS Rural Camp</h3>
+<p class="text-sm text-text-sub dark:text-gray-500 font-medium">15 Aug 2024</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 mb-2">
+                            +50 Pts
+                        </span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-4 border-t border-gray-50 dark:border-gray-800">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-main dark:text-white text-[18px]">verified</span>
+<span class="text-sm font-bold text-text-main dark:text-white">Verified</span>
+</div>
+<a class="flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-text-sub hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</a>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 z-30 flex items-center justify-center w-14 h-14 rounded-full bg-text-main text-white shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 dark:bg-primary dark:shadow-primary/30">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 z-40 w-full max-w-md bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 pb-safe pt-2">
+<div class="flex justify-around items-end w-full px-2 pb-5">
+<a class="flex flex-1 flex-col items-center gap-1 group" href="#">
+<div class="p-1 rounded-full group-hover:bg-gray-50 dark:group-hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">home</span>
+</div>
+<span class="text-[10px] font-medium text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">Home</span>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 group" href="#">
+<div class="p-1 rounded-full group-hover:bg-gray-50 dark:group-hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">list_alt</span>
+</div>
+<span class="text-[10px] font-medium text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">Activities</span>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 group" href="#">
+<div class="relative p-1">
+<div class="absolute inset-0 bg-primary/10 rounded-full scale-100 transition-transform"></div>
+<span class="material-symbols-outlined text-primary dark:text-primary fill-current relative z-10">history_edu</span>
+</div>
+<span class="text-[10px] font-bold text-primary dark:text-primary">Submissions</span>
+</a>
+<a class="flex flex-1 flex-col items-center gap-1 group" href="#">
+<div class="p-1 rounded-full group-hover:bg-gray-50 dark:group-hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">person</span>
+</div>
+<span class="text-[10px] font-medium text-text-sub dark:text-gray-400 group-hover:text-primary transition-colors">Profile</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>
