@@ -12,7 +12,10 @@ export async function GET(request: Request) {
     }
 
     // exchange code for token
-    const redirectUri = `${process.env.FRONTEND_URL}/api/auth/google/callback`;
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const redirectUri = `${baseUrl}/api/auth/google/callback`;
     const tokenUrl = 'https://oauth2.googleapis.com/token';
     const tokenRes = await fetch(tokenUrl, {
         method: 'POST',
@@ -52,10 +55,10 @@ export async function GET(request: Request) {
         if (rows.length > 0) {
             const studentId = rows[0].id;
             const token = createAccessToken({ user_id: studentId, role: 'student' });
-            return NextResponse.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+            return NextResponse.redirect(`${baseUrl}/auth/callback?token=${token}`);
         } else {
             const registerToken = createAccessToken({ sub: googleSub, email, name, type: 'register' });
-            return NextResponse.redirect(`${process.env.FRONTEND_URL}/register?token=${registerToken}`);
+            return NextResponse.redirect(`${baseUrl}/register?token=${registerToken}`);
         }
     } catch (error) {
         console.error("Database query failed during Google OAuth callback:", error);
