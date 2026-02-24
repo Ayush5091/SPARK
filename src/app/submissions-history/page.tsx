@@ -113,14 +113,20 @@ export default function SubmissionsHistoryScreen() {
             (i.type === 'submission' && i.status === 'pending') :
             (i.status !== 'verified' && i.status !== 'rejected' && !(i.type === 'request' && i.status === 'pending'))
     );
-    const verifiedItems = historyItems.filter(i => i.status === 'verified');
+    const verifiedItems = historyItems.filter(i =>
+        user?.role === 'admin' ?
+            (i.status === 'verified' || i.status === 'rejected' || (i.type === 'request' && (i.status === 'approved' || i.status === 'rejected'))) :
+            (i.status === 'verified' || i.status === 'rejected')
+    );
     const currentItems = activeTab === 'pending' ? pendingItems : verifiedItems;
 
     const getStatusDisplay = (item: any) => {
         if (item.type === 'request') {
-            if (item.status === 'approved') return { text: 'Proof Required', color: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' };
+            if (item.status === 'approved') return { text: 'Approved (Awaiting Proof)', color: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-500' };
+            if (item.status === 'rejected') return { text: 'Request Rejected', color: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' };
+            if (item.status === 'pending') return { text: 'Request Pending', color: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' };
         } else {
-            if (item.status === 'pending') return { text: 'Under Review', color: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-500' };
+            if (item.status === 'pending') return { text: 'Under Review', color: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' };
             if (item.status === 'verified') return { text: 'Verified', color: 'text-green-700 dark:text-green-400', dot: 'bg-green-500' };
             if (item.status === 'rejected') return { text: 'Proof Rejected', color: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' };
         }
