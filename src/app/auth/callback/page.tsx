@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
@@ -8,16 +8,29 @@ function CallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login } = useAuth();
+    const hasProcessed = useRef(false);
 
     useEffect(() => {
+        if (hasProcessed.current) return;
         const token = searchParams.get('token');
+        
         if (token) {
+            hasProcessed.current = true;
             login(token);
-            router.push('/');
-        } else {
-            router.push('/login');
+            window.location.href = '/';
+        } else if (!token && searchParams.toString() !== "") {
+            // handle case with no token
+            hasProcessed.current = true;
+            window.location.href = '/login';
+        } else if (!token && searchParams.toString() === "") {
+             // In some cases searchParams might be empty on first tick
+             const rawUrl = window.location.href;
+             if (!rawUrl.includes('token=')) {
+                 hasProcessed.current = true;
+                 window.location.href = '/login';
+             }
         }
-    }, [searchParams, login, router]);
+    }, [searchParams, login]);
 
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background-light dark:bg-background-dark">

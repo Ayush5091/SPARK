@@ -8,10 +8,10 @@ import UserAvatar from "@/components/UserAvatar";
 import AdminDashboard from "@/components/AdminDashboard";
 
 export default function Home() {
-  const { user, token, isLoading } = useAuth();
+  const { user, token, profile, profileLoading, isLoading, isInitializing } = useAuth();
   const router = useRouter();
 
-  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const studentInfo = profile;
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ labels: string[], data: number[], maxVal: number }>({ labels: [], data: [], maxVal: 100 });
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -27,16 +27,12 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        const [profileRes, reqRes, subRes, notifRes] = await Promise.all([
-          fetch('/api/students/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+        const [reqRes, subRes, notifRes] = await Promise.all([
           fetch('/api/activity-requests/me', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/submissions/me', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/notifications', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
-        if (profileRes.ok) {
-          setStudentInfo(await profileRes.json());
-        }
         if (notifRes.ok) {
           setNotifications(await notifRes.json());
         }
@@ -154,7 +150,7 @@ export default function Home() {
   const targetPoints = 100;
   const progressPercent = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
 
-  if (isLoading || !user) {
+  if (isLoading || isInitializing || !user || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary text-primary"></div>
