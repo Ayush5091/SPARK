@@ -1,21 +1,40 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import AdminDashboard from "@/components/AdminDashboard";
 
+interface Event {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  points: number;
+  latitude: number;
+  longitude: number;
+  location_name: string;
+  start_time: string;
+  end_time: string;
+  is_ongoing: boolean;
+  is_upcoming: boolean;
+  is_past: boolean;
+  total_submissions: number;
+  verified_submissions: number;
+  participation_rate: string;
+}
+
 export default function Home() {
   const { user, token, profile, profileLoading, isLoading, isInitializing } = useAuth();
   const router = useRouter();
 
-  const studentInfo = profile;
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<{ labels: string[], data: number[], maxVal: number }>({ labels: [], data: [], maxVal: 100 });
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [filter, setFilter] = useState<string>('all'); // all, ongoing, upcoming
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     if (isLoading) return;
@@ -27,72 +46,23 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        const [reqRes, subRes, notifRes] = await Promise.all([
-          fetch('/api/activity-requests/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/submissions/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+        const [eventsRes, notifRes] = await Promise.all([
+          fetch('/api/events', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/notifications', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
+
+        if (eventsRes.ok) {
+          const eventsData = await eventsRes.json();
+          setEvents(eventsData);
+        }
 
         if (notifRes.ok) {
           setNotifications(await notifRes.json());
         }
-
-        // Merge requests and submissions for Dashboard History
-        let history: any[] = [];
-        if (reqRes.ok && subRes.ok) {
-          const requests = await reqRes.json();
-          const submissions = await subRes.json();
-
-          const subMap = new Map();
-          if (Array.isArray(submissions)) {
-            submissions.forEach((s: any) => subMap.set(s.request_id || s.id, s));
-          }
-
-          if (Array.isArray(requests)) {
-            requests.forEach((r: any) => {
-              const sub = subMap.get(r.request_id || r.id);
-              if (sub) {
-                history.push({ ...sub, type: 'submission', date: sub.submitted_at, activity: sub.activity || r.activity || r.activity_name });
-              } else {
-                history.push({ ...r, type: 'request', date: r.requested_at, activity: r.activity || r.activity_name });
-              }
-            });
-          }
-          history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
-
-        setRecentActivities(history.slice(0, 3)); // Only latest 3
-
-        // Calculate past 6 months data for the graph
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const currentDate = new Date();
-        const last6Months = Array.from({ length: 6 }, (_, i) => {
-          const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - (5 - i), 1);
-          return { monthLabel: months[d.getMonth()], year: d.getFullYear(), month: d.getMonth(), points: 0 };
-        });
-
-        // Aggregate verified submission points and approved requests
-        history.forEach((item: any) => {
-          if ((item.status === 'verified' || item.status === 'approved') && item.date) {
-            const d = new Date(item.date);
-            const bucket = last6Months.find(m => m.month === d.getMonth() && m.year === d.getFullYear());
-            if (bucket) {
-              bucket.points += (item.points || 0);
-            }
-          }
-        });
-
-        const data = last6Months.map(b => b.points);
-        const maxVal = Math.max(10, ...data); // Ensure there's at least some scale
-
-        // Fallback static data if no history so graph doesn't look empty and flat
-        if (data.every(v => v === 0)) {
-          setChartData({ labels: last6Months.map(m => m.monthLabel), data: [10, 20, 15, 30, 25, 40], maxVal: 50 });
-        } else {
-          setChartData({ labels: last6Months.map(m => m.monthLabel), data, maxVal });
-        }
-      } catch (err) {
-        console.error("Failed to load dashboard data");
+      } catch (error) {
+        console.error("Failed to fetch events data", error);
+      } finally {
+        setEventsLoading(false);
       }
     };
 
@@ -119,36 +89,42 @@ export default function Home() {
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  // Generate dynamic SVG path
-  const w = 300;
-  const h = 80;
-  const bottomOffset = 20; // h + offset = 100 which is the viewBox height
-  const dx = w / 5; // Distance between 6 points
+  const getCategoryIconInfo = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case 'cultural':
+        return { icon: 'palette', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', color: 'purple' };
+      case 'community service':
+        return { icon: 'volunteer_activism', bg: 'bg-pink-50 dark:bg-pink-900/20', text: 'text-pink-600 dark:text-pink-400', color: 'pink' };
+      case 'technical':
+        return { icon: 'computer', bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-600 dark:text-teal-400', color: 'teal' };
+      case 'sports':
+        return { icon: 'sports_basketball', bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', color: 'orange' };
+      case 'professional':
+        return { icon: 'work', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', color: 'indigo' };
+      case 'national initiative':
+        return { icon: 'flag', bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', color: 'emerald' };
+      default:
+        return { icon: 'event', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', color: 'blue' };
+    }
+  };
 
-  // Convert data points to Y coordinates (0 to 80, inverted so 0 is top)
-  const coords = chartData.data.map((val, i) => {
-    const y = h - ((val / chartData.maxVal) * h) + bottomOffset; // Base line is at y=100
-    return { x: i * dx, y: y };
+  const getEventStatus = (event: Event) => {
+    if (event.is_ongoing) return { label: 'Happening Now', color: 'bg-green-500', textColor: 'text-green-500' };
+    if (event.is_upcoming) return { label: 'Upcoming', color: 'bg-blue-500', textColor: 'text-blue-500' };
+    return { label: 'Ended', color: 'bg-gray-400', textColor: 'text-gray-400' };
+  };
+
+  // Filter events based on selected filters
+  const filteredEvents = events.filter(event => {
+    if (filter !== 'all') {
+      if (filter === 'ongoing' && !event.is_ongoing) return false;
+      if (filter === 'upcoming' && !event.is_upcoming) return false;
+    }
+    if (selectedCategory !== 'all' && event.category !== selectedCategory) return false;
+    return true;
   });
 
-  // Calculate smooth curves
-  let pathD = "M0,100";
-  let finalPoint = { x: 0, y: 100 };
-  if (coords.length > 0) {
-    pathD = `M${coords[0].x},${coords[0].y} `;
-    finalPoint = coords[0];
-    if (coords.length > 1) {
-      pathD = `M${coords[0].x},${coords[0].y} C ${coords[0].x + dx / 2},${coords[0].y} ${coords[1].x - dx / 2},${coords[1].y} ${coords[1].x},${coords[1].y} `;
-      for (let i = 2; i < coords.length; i++) {
-        pathD += `S ${coords[i].x - dx / 2},${coords[i].y} ${coords[i].x},${coords[i].y} `;
-      }
-      finalPoint = coords[coords.length - 1];
-    }
-  }
-
-  const totalPoints = studentInfo?.total_points || 0;
-  const targetPoints = 100;
-  const progressPercent = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
+  const categories = ['all', 'technical', 'cultural', 'sports', 'professional', 'community service', 'national initiative'];
 
   if (isLoading || isInitializing || !user || profileLoading) {
     return (
@@ -162,34 +138,15 @@ export default function Home() {
     return <AdminDashboard />;
   }
 
-  const getCategoryIconInfo = (category: string) => {
-    switch (category?.toLowerCase()) {
-      case 'cultural':
-        return { icon: 'palette', bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400' };
-      case 'community service':
-        return { icon: 'volunteer_activism', bg: 'bg-pink-50 dark:bg-pink-900/20', text: 'text-pink-600 dark:text-pink-400' };
-      case 'technical':
-        return { icon: 'computer', bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-600 dark:text-teal-400' };
-      case 'sports':
-        return { icon: 'sports_basketball', bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' };
-      case 'professional':
-        return { icon: 'work', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400' };
-      case 'national initiative':
-        return { icon: 'flag', bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400' };
-      default:
-        return { icon: 'assignment', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' };
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
       <header className="pt-8 md:pt-10 pb-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <UserAvatar name={studentInfo?.name || user?.name} className="w-10 h-10 md:w-12 md:h-12 text-lg md:text-xl shadow-lg" />
+          <UserAvatar name={profile?.name || user?.name} className="w-10 h-10 md:w-12 md:h-12 text-lg md:text-xl shadow-lg" />
           <div>
-            <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Welcome back,</h1>
-            <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">{studentInfo?.name || user?.name || "Student"}</h2>
+            <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Discover,</h1>
+            <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">Live Events</h2>
           </div>
         </div>
 
@@ -219,7 +176,7 @@ export default function Home() {
                     notifications.map(n => (
                       <div key={n.id} className={`p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${!n.is_read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{n.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()} {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
                       </div>
                     ))
                   )}
@@ -230,138 +187,136 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 px-6 md:px-10 pb-24 space-y-8 max-w-7xl mx-auto w-full">
+      {/* Filter Section */}
+      <div className="px-6 md:px-10 pb-4 space-y-4">
+        {/* Status Filter */}
+        <div className="flex gap-2 overflow-x-auto">
+          {['all', 'upcoming', 'ongoing'].map(filterOption => (
+            <button
+              key={filterOption}
+              onClick={() => setFilter(filterOption)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                filter === filterOption
+                  ? 'bg-primary text-white'
+                  : 'bg-subtle-light dark:bg-subtle-dark text-text-light dark:text-text-dark hover:bg-primary hover:text-white'
+              }`}
+            >
+              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+            </button>
+          ))}
+        </div>
 
-        {/* Points Card */}
-        <section className="space-y-4">
-          <div className="bg-primary text-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-soft relative overflow-hidden group">
-            <div className="absolute -right-10 -top-10 w-40 h-40 md:w-64 md:h-64 bg-white opacity-5 rounded-full blur-2xl md:blur-3xl"></div>
-            <div className="flex justify-between items-start mb-6 md:mb-8 relative z-10">
-              <div>
-                <p className="text-sm md:text-base font-medium text-gray-300 mb-1">Total Activity Points</p>
-                <h3 className="text-3xl md:text-5xl font-bold tracking-tight mt-1">{totalPoints} <span className="text-lg md:text-2xl font-normal text-gray-400">/ {targetPoints}</span></h3>
-              </div>
-              <div className="relative h-16 w-16 md:h-24 md:w-24">
-                <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                  <path className="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
-                  <path className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3"></path>
-                </svg>
-                <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center">
-                  <span className="text-xs md:text-sm font-bold">{progressPercent}%</span>
-                </div>
-              </div>
-            </div>
+        {/* Category Filter */}
+        <div className="flex gap-2 overflow-x-auto">
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                selectedCategory === category
+                  ? 'bg-primary text-white'
+                  : 'bg-card-light dark:bg-card-dark text-text-muted-light dark:text-text-muted-dark hover:bg-subtle-light dark:hover:bg-subtle-dark'
+              }`}
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {/* Chart */}
-            <div className="mt-2 md:mt-6 pt-4 md:pt-6 border-t border-gray-800 relative z-10">
-              <div className="relative flex justify-between items-end h-24 md:h-32 w-full">
-
-                {/* SVG Line and Gradient */}
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: 'white', stopOpacity: 0.2 }}></stop>
-                      <stop offset="100%" style={{ stopColor: 'white', stopOpacity: 0 }}></stop>
-                    </linearGradient>
-                  </defs>
-                  <path className="chart-path drop-shadow-md" d={pathD} fill="none" stroke="white" strokeLinecap="round" strokeWidth="3"></path>
-                  <path d={`${pathD} V100 H0 Z`} fill="url(#gradient)" opacity="0.5" stroke="none"></path>
-                </svg>
-
-                {/* HTML Pointer - Solves aspect ratio stretch */}
-                <div
-                  className="absolute w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#1A1A1A] border-2 border-white shadow-lg z-20"
-                  style={{
-                    left: `100%`,
-                    bottom: `${100 - (finalPoint.y / 100 * 100)}%`,
-                    transform: 'translate(-50%, 50%)'
-                  }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-[10px] md:text-xs text-gray-400 font-medium px-1">
-                {chartData.labels.map((label, idx) => (
-                  <span key={idx} className={idx === chartData.labels.length - 1 ? "text-white" : ""}>{label}</span>
-                ))}
-              </div>
-            </div>
+      {/* Events Feed */}
+      <div className="flex-1 px-6 md:px-10 pb-24 space-y-6 max-w-4xl mx-auto w-full">
+        {eventsLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        </section>
-
-        {/* Quick Actions & Recent Activities grid on Desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          <section className="lg:col-span-4 space-y-4">
-            <h3 className="text-lg md:text-xl font-bold text-text-light dark:text-text-dark mb-4">Activity Actions</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-              <Link href="/request-activity" className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-md active:scale-95 transition-all group border border-transparent hover:border-subtle-light dark:hover:border-subtle-dark">
-                <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl bg-subtle-light dark:bg-subtle-dark flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-icons-outlined text-2xl md:text-3xl text-primary dark:text-white group-hover:text-white">business_center</span>
-                </div>
-                <div className="text-center">
-                  <span className="block text-sm md:text-base font-semibold text-text-light dark:text-text-dark">Request Activity</span>
-                  <span className="block text-xs md:text-sm text-text-muted-light dark:text-text-muted-dark font-medium mt-1">+ Register New</span>
-                </div>
-              </Link>
-
-              <Link href="/submit-proof" className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-md active:scale-95 transition-all group border border-transparent hover:border-subtle-light dark:hover:border-subtle-dark">
-                <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl bg-subtle-light dark:bg-subtle-dark flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                  <span className="material-icons-outlined text-2xl md:text-3xl text-primary dark:text-white group-hover:text-white">upload_file</span>
-                </div>
-                <div className="text-center">
-                  <span className="block text-sm md:text-base font-semibold text-text-light dark:text-text-dark">Submit Proof</span>
-                  <span className="block text-xs md:text-sm text-text-muted-light dark:text-text-muted-dark font-medium mt-1">Link / Document</span>
-                </div>
-              </Link>
+        ) : filteredEvents.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="h-24 w-24 bg-subtle-light dark:bg-subtle-dark rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons-outlined text-4xl text-text-muted-light dark:text-text-muted-dark">event_busy</span>
             </div>
-          </section>
+            <h3 className="text-lg font-bold text-text-light dark:text-text-dark mb-2">No events found</h3>
+            <p className="text-text-muted-light dark:text-text-muted-dark">Try adjusting your filters to see more events.</p>
+          </div>
+        ) : (
+          filteredEvents.map(event => {
+            const categoryInfo = getCategoryIconInfo(event.category);
+            const statusInfo = getEventStatus(event);
 
-          <section className="lg:col-span-8 space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg md:text-xl font-bold text-text-light dark:text-text-dark">Recent Activities</h3>
-              <button className="flex items-center gap-1 text-xs md:text-sm font-semibold text-text-muted-light dark:text-text-muted-dark bg-card-light dark:bg-card-dark shadow-sm border border-subtle-light dark:border-subtle-dark hover:bg-subtle-light dark:hover:bg-subtle-dark px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-colors">
-                Sort by <span className="material-icons-outlined text-sm">keyboard_arrow_down</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {recentActivities.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No recent activities. It's time to request one!
-                </div>
-              ) : recentActivities.map((activity, idx) => (
-                <div key={idx} className={`bg-card-light dark:bg-card-dark p-4 md:p-5 rounded-2xl shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${activity.status === 'verified' ? 'opacity-80 hover:opacity-100' : 'hover:shadow-md border-2 border-transparent hover:border-subtle-light dark:hover:border-subtle-dark'}`}>
-                  <div className="flex items-center gap-4 md:gap-5">
-                    {(() => {
-                      const catInfo = getCategoryIconInfo(activity.category);
-                      return (
-                        <div className={`h-12 w-12 md:h-14 md:w-14 shrink-0 rounded-xl flex items-center justify-center ${catInfo.bg} ${catInfo.text}`}>
-                          <span className="material-icons-outlined md:text-3xl">
-                            {catInfo.icon}
-                          </span>
-                        </div>
-                      );
-                    })()}
+            return (
+              <div key={event.id} className="bg-card-light dark:bg-card-dark rounded-2xl p-6 shadow-soft border border-subtle-light dark:border-subtle-dark">
+                {/* Event Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${categoryInfo.bg} ${categoryInfo.text}`}>
+                      <span className="material-icons-outlined text-2xl">{categoryInfo.icon}</span>
+                    </div>
                     <div>
-                      <h4 className="text-sm md:text-base font-bold text-text-light dark:text-text-dark">{activity.activity_name || activity.activity || 'Activity'}</h4>
-                      <p className="text-xs md:text-sm text-text-muted-light dark:text-text-muted-dark mt-0.5 md:mt-1">
-                        {new Date(activity.submitted_at).toLocaleDateString()}
+                      <h3 className="text-lg font-bold text-text-light dark:text-text-dark">{event.name}</h3>
+                      <p className="text-sm text-text-muted-light dark:text-text-muted-dark">{event.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </span>
+                    <span className="text-primary dark:text-white font-bold text-xl">{event.points}pts</span>
+                  </div>
+                </div>
+
+                {/* Event Description */}
+                <p className="text-text-light dark:text-text-dark mb-4 leading-relaxed">{event.description}</p>
+
+                {/* Event Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="material-icons-outlined text-text-muted-light dark:text-text-muted-dark">schedule</span>
+                    <div>
+                      <p className="text-sm font-medium text-text-light dark:text-text-dark">
+                        {new Date(event.start_time).toLocaleDateString()} • {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                        Duration: {Math.round((new Date(event.end_time).getTime() - new Date(event.start_time).getTime()) / (1000 * 60 * 60))} hours
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center md:flex-col md:items-end justify-between md:justify-center gap-1 md:gap-2">
-                    <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full uppercase tracking-wider ${activity.status === 'verified'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
-                      }`}>
-                      {activity.status}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-icons-outlined text-text-muted-light dark:text-text-muted-dark">location_on</span>
+                    <div>
+                      <p className="text-sm font-medium text-text-light dark:text-text-dark">{event.location_name}</p>
+                      <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                        {event.total_submissions} participants • {event.participation_rate}% verified
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
+
+                {/* Action Button */}
+                <div className="flex justify-end">
+                  {event.is_ongoing ? (
+                    <button
+                      onClick={() => router.push(`/events/${event.id}/camera`)}
+                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2"
+                    >
+                      <span className="material-icons-outlined">camera_alt</span>
+                      Take Photo
+                    </button>
+                  ) : event.is_upcoming ? (
+                    <button className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 cursor-not-allowed opacity-50">
+                      <span className="material-icons-outlined">alarm</span>
+                      Starts Soon
+                    </button>
+                  ) : (
+                    <button className="bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 cursor-not-allowed opacity-50">
+                      <span className="material-icons-outlined">check</span>
+                      Event Ended
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
