@@ -7,15 +7,33 @@ import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import AdminDashboard from "@/components/AdminDashboard";
 
+const AWARDED_STATUSES = new Set(['approved', 'verified']);
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const createInitialChartData = () => {
+  const currentDate = new Date();
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - (5 - i), 1);
+    return { monthLabel: MONTHS[d.getMonth()], points: 0 };
+  });
+
+  return {
+    labels: last6Months.map((item) => item.monthLabel),
+    data: last6Months.map(() => 0),
+    maxVal: 10
+  };
+};
+
 export default function Home() {
-  const { user, token, profile, profileLoading, isLoading, isInitializing } = useAuth();
+  const { user, token, profile, isLoading, isInitializing } = useAuth();
   const router = useRouter();
 
   const studentInfo = profile;
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<{ labels: string[], data: number[], maxVal: number }>({ labels: [], data: [], maxVal: 100 });
+  const [chartData, setChartData] = useState<{ labels: string[], data: number[], maxVal: number }>(createInitialChartData);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   useEffect(() => {
     if (isLoading) return;
@@ -42,11 +60,10 @@ export default function Home() {
         if (reqRes.ok && subRes.ok) {
           const requests = await reqRes.json();
           const submissions = await subRes.json();
+          const safeSubmissions = Array.isArray(submissions) ? submissions : [];
 
           const subMap = new Map();
-          if (Array.isArray(submissions)) {
-            submissions.forEach((s: any) => subMap.set(s.request_id || s.id, s));
-          }
+          safeSubmissions.forEach((s: any) => subMap.set(s.request_id || s.id, s));
 
           if (Array.isArray(requests)) {
             requests.forEach((r: any) => {
@@ -59,40 +76,36 @@ export default function Home() {
             });
           }
           history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
+          setRecentActivities(history.slice(0, 3)); // Only latest 3
 
-        setRecentActivities(history.slice(0, 3)); // Only latest 3
+          // Calculate past 6 months data for the graph from awarded submissions in the DB.
+          const currentDate = new Date();
+          const last6Months = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - (5 - i), 1);
+            return { monthLabel: MONTHS[d.getMonth()], year: d.getFullYear(), month: d.getMonth(), points: 0 };
+          });
 
-        // Calculate past 6 months data for the graph
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const currentDate = new Date();
-        const last6Months = Array.from({ length: 6 }, (_, i) => {
-          const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - (5 - i), 1);
-          return { monthLabel: months[d.getMonth()], year: d.getFullYear(), month: d.getMonth(), points: 0 };
-        });
+          safeSubmissions
+            .filter((item: any) => AWARDED_STATUSES.has(String(item.status).toLowerCase()) && item.submitted_at)
+            .forEach((item: any) => {
+              const d = new Date(item.submitted_at);
+              const bucket = last6Months.find(m => m.month === d.getMonth() && m.year === d.getFullYear());
+              if (bucket) {
+                bucket.points += Number(item.points || 0);
+              }
+            });
 
-        // Aggregate verified submission points and approved requests
-        history.forEach((item: any) => {
-          if ((item.status === 'verified' || item.status === 'approved') && item.date) {
-            const d = new Date(item.date);
-            const bucket = last6Months.find(m => m.month === d.getMonth() && m.year === d.getFullYear());
-            if (bucket) {
-              bucket.points += (item.points || 0);
-            }
-          }
-        });
-
-        const data = last6Months.map(b => b.points);
-        const maxVal = Math.max(10, ...data); // Ensure there's at least some scale
-
-        // Fallback static data if no history so graph doesn't look empty and flat
-        if (data.every(v => v === 0)) {
-          setChartData({ labels: last6Months.map(m => m.monthLabel), data: [10, 20, 15, 30, 25, 40], maxVal: 50 });
-        } else {
-          setChartData({ labels: last6Months.map(m => m.monthLabel), data, maxVal });
+          const data = last6Months.map(b => b.points);
+          setChartData({
+            labels: last6Months.map(m => m.monthLabel),
+            data,
+            maxVal: Math.max(10, ...data)
+          });
         }
       } catch (err) {
         console.error("Failed to load dashboard data");
+      } finally {
+        setDashboardLoading(false);
       }
     };
 
@@ -146,11 +159,11 @@ export default function Home() {
     }
   }
 
-  const totalPoints = studentInfo?.total_points || 0;
+  const totalPoints = Number(studentInfo?.total_points ?? chartData.data.reduce((sum, value) => sum + value, 0));
   const targetPoints = 100;
   const progressPercent = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
 
-  if (isLoading || isInitializing || !user || profileLoading) {
+  if (isLoading || isInitializing || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary text-primary"></div>
@@ -267,6 +280,14 @@ export default function Home() {
 
             {/* Chart */}
             <div className="mt-2 md:mt-6 pt-4 md:pt-6 border-t border-gray-800 relative z-10">
+              <div className="flex items-center justify-between mb-3 text-xs md:text-sm">
+                <span className="text-gray-300 font-medium">
+                  {dashboardLoading ? 'Loading chart...' : 'Awarded points in the last 6 months'}
+                </span>
+                <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-white">
+                  Total points: {totalPoints}
+                </span>
+              </div>
               <div className="relative flex justify-between items-end h-24 md:h-32 w-full">
 
                 {/* SVG Line and Gradient */}
@@ -278,12 +299,12 @@ export default function Home() {
                     </linearGradient>
                   </defs>
                   <path className="chart-path drop-shadow-md" d={pathD} fill="none" stroke="white" strokeLinecap="round" strokeWidth="3"></path>
-                  <path d={`${pathD} V100 H0 Z`} fill="url(#gradient)" opacity="0.5" stroke="none"></path>
+                  <path className="chart-area" d={`${pathD} V100 H0 Z`} fill="url(#gradient)" opacity="0.5" stroke="none"></path>
                 </svg>
 
                 {/* HTML Pointer - Solves aspect ratio stretch */}
                 <div
-                  className="absolute w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#1A1A1A] border-2 border-white shadow-lg z-20"
+                  className="chart-pointer absolute w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#1A1A1A] border-2 border-white shadow-lg z-20"
                   style={{
                     left: `100%`,
                     bottom: `${100 - (finalPoint.y / 100 * 100)}%`,
@@ -293,7 +314,13 @@ export default function Home() {
               </div>
               <div className="flex justify-between mt-2 text-[10px] md:text-xs text-gray-400 font-medium px-1">
                 {chartData.labels.map((label, idx) => (
-                  <span key={idx} className={idx === chartData.labels.length - 1 ? "text-white" : ""}>{label}</span>
+                  <span
+                    key={idx}
+                    className={`chart-axis-label ${idx === chartData.labels.length - 1 ? "text-white" : ""}`}
+                    style={{ animationDelay: `${0.15 * idx}s` }}
+                  >
+                    {label}
+                  </span>
                 ))}
               </div>
             </div>
@@ -337,9 +364,26 @@ export default function Home() {
             </div>
 
             <div className="space-y-4">
-              {recentActivities.length === 0 ? (
+              {dashboardLoading ? (
+                <div className="space-y-4">
+                  {[0, 1, 2].map((idx) => (
+                    <div key={idx} className="bg-card-light dark:bg-card-dark p-4 md:p-5 rounded-2xl shadow-soft animate-pulse">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 md:gap-5">
+                          <div className="h-12 w-12 md:h-14 md:w-14 shrink-0 rounded-xl bg-slate-200 dark:bg-gray-700"></div>
+                          <div className="space-y-2">
+                            <div className="h-4 w-36 rounded-full bg-slate-200 dark:bg-gray-700"></div>
+                            <div className="h-3 w-24 rounded-full bg-slate-200 dark:bg-gray-700"></div>
+                          </div>
+                        </div>
+                        <div className="h-7 w-24 rounded-full bg-slate-200 dark:bg-gray-700"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentActivities.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No recent activities. It's time to request one!
+                  No recent activities. It&apos;s time to request one!
                 </div>
               ) : recentActivities.map((activity, idx) => (
                 <div key={idx} className={`bg-card-light dark:bg-card-dark p-4 md:p-5 rounded-2xl shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${activity.status === 'verified' ? 'opacity-80 hover:opacity-100' : 'hover:shadow-md border-2 border-transparent hover:border-subtle-light dark:hover:border-subtle-dark'}`}>

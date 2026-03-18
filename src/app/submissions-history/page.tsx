@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import Link from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import AdminReviewModal from '@/components/AdminReviewModal';
 
@@ -134,11 +133,6 @@ export default function SubmissionsHistoryScreen() {
                 <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto w-full">
                     <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-text-main dark:text-white">Submissions</h1>
                     <div className="flex items-center gap-4">
-                        {user?.role !== 'admin' && (
-                            <button onClick={() => router.push('/request-activity')} className="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-600 transition-colors">
-                                <span className="material-symbols-outlined">add</span> Create Request
-                            </button>
-                        )}
                         <button className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-gray-800 shadow-sm text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-100 dark:border-gray-700">
                             <span className="material-symbols-outlined text-xl md:text-2xl">notifications</span>
                         </button>

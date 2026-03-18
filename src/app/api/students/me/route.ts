@@ -9,11 +9,11 @@ export async function GET(request: Request) {
         const { rows } = await db.query(`
             SELECT 
                 st.id, st.name, st.email, st.usn, st.phone_number, st.department,
-                COALESCE(SUM(CASE WHEN su.status = 'verified' THEN a.points ELSE 0 END), 0) as total_points,
+                COALESCE(SUM(a.points), 0) as total_points,
                 COUNT(su.id) as completed_activities
             FROM students st
             LEFT JOIN activity_requests r ON st.id = r.student_id
-            LEFT JOIN submissions su ON r.id = su.request_id AND su.status = 'verified'
+            LEFT JOIN submissions su ON r.id = su.request_id AND su.status IN ('approved', 'verified')
             LEFT JOIN activities a ON r.activity_id = a.id
             WHERE st.id = $1
             GROUP BY st.id, st.name, st.email, st.usn, st.phone_number, st.department
