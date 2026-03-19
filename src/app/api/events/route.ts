@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 
-// GET - Students can view available events
+// GET - Students and admins can view available events
 export async function GET(request: NextRequest) {
   try {
-    requireAuth(request, 'student');
+    requireAuth(request); // Allow both student and admin roles
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -119,12 +119,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (startDate <= new Date()) {
-      return NextResponse.json(
-        { detail: 'Start time must be in the future' },
-        { status: 400 }
-      );
-    }
 
     // Insert event
     const { rows } = await db.query(
@@ -145,7 +139,7 @@ export async function POST(request: NextRequest) {
     const studentsQuery = await db.query('SELECT id FROM students');
     const notificationPromises = studentsQuery.rows.map(student =>
       db.query(
-        `INSERT INTO notifications (user_id, message, is_read, created_at)
+        `INSERT INTO notifications (student_id, message, is_read, created_at)
          VALUES ($1, $2, false, NOW())`,
         [
           student.id,

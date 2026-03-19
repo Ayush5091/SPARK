@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 
 export default function ProfileScreen() {
-    const { user, token, profile, profileLoading, isLoading, isInitializing, logout } = useAuth();
+    const { user, token, profile, profileLoading, isLoading, isInitializing, logout, refreshProfile } = useAuth();
     const router = useRouter();
 
     const studentInfo = profile;
@@ -26,6 +26,9 @@ export default function ProfileScreen() {
 
         const fetchData = async () => {
             try {
+                // Also refresh profile data to ensure we have latest points
+                await refreshProfile();
+
                 const [reqRes, subRes, notifRes] = await Promise.all([
                     fetch('/api/activity-requests/me', { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch('/api/submissions/me', { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -97,6 +100,18 @@ export default function ProfileScreen() {
 
         fetchData();
     }, [user, token, isLoading, router]);
+
+    // Refresh profile data when page comes into focus (e.g. returning from other pages)
+    useEffect(() => {
+        const handleFocus = async () => {
+            if (user && token) {
+                await refreshProfile();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [user, token, refreshProfile]);
 
     const handleMarkAsRead = async () => {
         if (!token || unreadCount === 0) return;

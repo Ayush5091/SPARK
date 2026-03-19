@@ -26,7 +26,7 @@ interface Event {
 }
 
 export default function Home() {
-  const { user, token, profile, profileLoading, isLoading, isInitializing } = useAuth();
+  const { user, token, profile, profileLoading, isLoading, isInitializing, refreshProfile } = useAuth();
   const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -68,6 +68,18 @@ export default function Home() {
 
     fetchData();
   }, [user, token, isLoading, router]);
+
+  // Refresh profile data when page comes into focus (e.g. returning from camera)
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (user && token) {
+        await refreshProfile();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, token, refreshProfile]);
 
   const handleMarkAsRead = async () => {
     if (!token || unreadCount === 0) return;

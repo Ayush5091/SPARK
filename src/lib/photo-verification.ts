@@ -61,7 +61,7 @@ export async function extractPhotoMetadata(photoBuffer: Buffer): Promise<PhotoMe
     const exifData = await exifr.parse(photoBuffer, {
       gps: true,
       exif: true,
-      ifd0: true,
+      ifd0: { pick: ['Make', 'Model', 'DateTime'] },
       ifd1: true
     });
 
@@ -177,14 +177,34 @@ export function verifyPhotoAgainstEvent(
 }
 
 /**
- * Main verification function
+ * Main verification function with user location fallback
  */
 export async function verifyPhotoSubmission(
   photoBuffer: Buffer,
-  eventDetails: EventDetails
+  eventDetails: EventDetails,
+  userLocation?: { latitude: number; longitude: number; timestamp: number } | null
 ): Promise<VerificationResult> {
   // Extract metadata from photo
   const metadata = await extractPhotoMetadata(photoBuffer);
+
+  // If photo doesn't have GPS data but we have user location, use it as fallback
+  if ((!metadata.latitude || !metadata.longitude) && userLocation) {
+    console.log('Using manual location data as fallback');
+    metadata.latitude = userLocation.latitude;
+    metadata.longitude = userLocation.longitude;
+  }
+
+  // If photo doesn't have timestamp but we have user location with timestamp, use it
+  if (!metadata.timestamp && userLocation?.timestamp) {
+    console.log('Using manual timestamp as fallback');
+    metadata.timestamp = new Date(userLocation.timestamp);
+  }
+
+  // If still no timestamp, use current time (photo capture time)
+  if (!metadata.timestamp) {
+    console.log('Using current time as photo timestamp');
+    metadata.timestamp = new Date();
+  }
 
   // Verify against event requirements
   const result = verifyPhotoAgainstEvent(metadata, eventDetails);
@@ -196,7 +216,9 @@ export async function verifyPhotoSubmission(
     locationMatch: result.locationMatch,
     timeMatch: result.timeMatch,
     distanceFromEvent: result.distanceFromEvent,
-    reason: result.reason
+    reason: result.reason,
+    usedManualLocation: userLocation && (!result.metadata.latitude || !result.metadata.longitude),
+    usedManualTimestamp: userLocation?.timestamp && !result.metadata.timestamp
   });
 
   return result;

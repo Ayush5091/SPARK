@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest) {
       : `Your submission for "${submission.event_name}" has been rejected. ${review_notes || 'Please contact admin for more details.'}`;
 
     await db.query(
-      `INSERT INTO notifications (user_id, message, is_read, created_at)
+      `INSERT INTO notifications (student_id, message, is_read, created_at)
        VALUES ($1, $2, false, NOW())`,
       [submission.student_id, notificationMessage]
     );

@@ -2,6 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import dynamic from "next/dynamic";
+
+// Dynamically import the map to avoid SSR issues
+const MapLocationPicker = dynamic(
+  () => import('@/components/MapLocationPicker'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading map...</p>
+        </div>
+      </div>
+    )
+  }
+);
 
 interface EventCreateModalProps {
   isOpen: boolean;
@@ -29,6 +46,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -76,6 +94,62 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
       location_name: location.name
     }));
     setShowLocationPicker(false);
+  };
+
+  // Handle map location selection
+  const handleMapLocationSelect = (lat: number, lng: number, locationName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat.toString(),
+      longitude: lng.toString(),
+      location_name: locationName
+    }));
+  };
+
+  // Handle radius change from map
+  const handleMapRadiusChange = (radius: number) => {
+    setFormData(prev => ({
+      ...prev,
+      location_radius_meters: radius.toString()
+    }));
+  };
+
+  // Format date for datetime-local input
+  const formatDateTimeLocal = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Get date from datetime-local input
+  const getDateFromInput = (dateTimeString: string) => {
+    return new Date(dateTimeString);
+  };
+
+  // Quick time setters
+  const setQuickTime = (hours: number, minutes: number = 0, isEndTime: boolean = false) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + (isEndTime ? 0 : 1));
+    tomorrow.setHours(hours, minutes, 0, 0);
+
+    if (isEndTime) {
+      // For end time, use the same day as start time
+      const startDate = new Date(formData.start_time);
+      if (!isNaN(startDate.getTime())) {
+        tomorrow.setFullYear(startDate.getFullYear());
+        tomorrow.setMonth(startDate.getMonth());
+        tomorrow.setDate(startDate.getDate());
+      }
+    }
+
+    const fieldName = isEndTime ? 'end_time' : 'start_time';
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: formatDateTimeLocal(tomorrow)
+    }));
   };
 
   const validateForm = () => {
@@ -283,17 +357,73 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                   Location Details
                 </h3>
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Name *</label>
+                {/* Location Input Method Selector */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Choose location method:</p>
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowLocationPicker(!showLocationPicker)}
-                      className="text-sm text-primary hover:text-primary-dark font-medium"
+                      onClick={() => {setShowMap(true); setShowLocationPicker(false);}}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
+                        showMap
+                          ? 'bg-primary text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
                     >
-                      {showLocationPicker ? 'Hide' : 'Quick Select'}
+                      <span className="material-icons-outlined text-lg mr-2">map</span>
+                      Interactive Map
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {setShowLocationPicker(true); setShowMap(false);}}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
+                        showLocationPicker
+                          ? 'bg-primary text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <span className="material-icons-outlined text-lg mr-2">list</span>
+                      Quick Select
                     </button>
                   </div>
+                </div>
+
+                {/* Interactive Map */}
+                {showMap && (
+                  <div className="space-y-4">
+                    <MapLocationPicker
+                      initialLat={parseFloat(formData.latitude) || 12.971598}
+                      initialLng={parseFloat(formData.longitude) || 77.594566}
+                      initialRadius={parseInt(formData.location_radius_meters) || 100}
+                      onLocationSelect={handleMapLocationSelect}
+                      onRadiusChange={handleMapRadiusChange}
+                    />
+                  </div>
+                )}
+
+                {/* Quick Location Picker */}
+                {showLocationPicker && (
+                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Popular Locations:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {popularLocations.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleLocationSelect(loc)}
+                          className="text-left p-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
+                        >
+                          <div className="font-medium">{loc.name}</div>
+                          <div className="text-xs text-gray-500">{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual Location Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location Name *</label>
                   <input
                     type="text"
                     name="location_name"
@@ -302,68 +432,51 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     placeholder="e.g., Convention Center"
                   />
+                </div>
 
-                  {/* Location Picker */}
-                  {showLocationPicker && (
-                    <div className="mt-3 p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Popular Locations:</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {popularLocations.map((loc, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleLocationSelect(loc)}
-                            className="text-left p-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
-                          >
-                            {loc.name}
-                          </button>
-                        ))}
-                      </div>
+                {(!showMap && !showLocationPicker) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Latitude *</label>
+                      <input
+                        type="number"
+                        name="latitude"
+                        value={formData.latitude}
+                        onChange={handleInputChange}
+                        step="0.000001"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="12.971598"
+                      />
                     </div>
-                  )}
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Latitude *</label>
-                    <input
-                      type="number"
-                      name="latitude"
-                      value={formData.latitude}
-                      onChange={handleInputChange}
-                      step="0.000001"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      placeholder="12.971598"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Longitude *</label>
+                      <input
+                        type="number"
+                        name="longitude"
+                        value={formData.longitude}
+                        onChange={handleInputChange}
+                        step="0.000001"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="77.594566"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Longitude *</label>
-                    <input
-                      type="number"
-                      name="longitude"
-                      value={formData.longitude}
-                      onChange={handleInputChange}
-                      step="0.000001"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      placeholder="77.594566"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Radius (meters)</label>
+                      <input
+                        type="number"
+                        name="location_radius_meters"
+                        value={formData.location_radius_meters}
+                        onChange={handleInputChange}
+                        min="10"
+                        max="1000"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="100"
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Radius (meters)</label>
-                    <input
-                      type="number"
-                      name="location_radius_meters"
-                      value={formData.location_radius_meters}
-                      onChange={handleInputChange}
-                      min="10"
-                      max="1000"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      placeholder="100"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Time */}
@@ -373,29 +486,139 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                   Time Settings
                 </h3>
 
+                {/* Quick Time Presets */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3">Quick Time Presets:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setQuickTime(9, 0)}
+                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      9:00 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuickTime(10, 0)}
+                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      10:00 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuickTime(14, 0)}
+                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      2:00 PM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuickTime(18, 0)}
+                      className="px-3 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      6:00 PM
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-blue-600 dark:text-blue-400">Click to set start time</p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Time *</label>
-                    <input
-                      type="datetime-local"
-                      name="start_time"
-                      value={formData.start_time}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    />
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        name="start_time"
+                        value={formData.start_time}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 material-icons-outlined text-gray-400 pointer-events-none">
+                        access_time
+                      </span>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Time *</label>
-                    <input
-                      type="datetime-local"
-                      name="end_time"
-                      value={formData.end_time}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    />
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        name="end_time"
+                        value={formData.end_time}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 material-icons-outlined text-gray-400 pointer-events-none">
+                        access_time
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Duration Calculator */}
+                {formData.start_time && formData.end_time && (
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Event Duration:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {(() => {
+                          const start = new Date(formData.start_time);
+                          const end = new Date(formData.end_time);
+                          const diff = end.getTime() - start.getTime();
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                          return `${hours}h ${minutes}m`;
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick End Time Buttons */}
+                {formData.start_time && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-3">Set End Time (duration from start):</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const start = new Date(formData.start_time);
+                          const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
+                        }}
+                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        +2 hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const start = new Date(formData.start_time);
+                          const end = new Date(start.getTime() + 4 * 60 * 60 * 1000); // +4 hours
+                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
+                        }}
+                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        +4 hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const start = new Date(formData.start_time);
+                          const end = new Date(start.getTime() + 8 * 60 * 60 * 1000); // +8 hours
+                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
+                        }}
+                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        +8 hours
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Tolerance (minutes)</label>
