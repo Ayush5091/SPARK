@@ -28,9 +28,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen w-full max-w-full overflow-x-clip">
             <Navigation />
-            <main className={`flex-1 overflow-x-hidden pb-20 md:pb-0 ${isAuthPage ? '' : 'md:ml-64'}`}>
+            <main className={`flex-1 min-w-0 w-full max-w-full overflow-x-clip pb-24 md:pb-0 ${isAuthPage ? '' : 'md:ml-64'}`}>
                 {children}
             </main>
         </div>

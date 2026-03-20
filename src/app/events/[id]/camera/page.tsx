@@ -452,9 +452,9 @@ export default function CameraSubmissionPage() {
                     <span className="font-medium text-blue-600 dark:text-blue-400">Instructions</span>
                   </div>
                   <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
-                    <li>• Make sure you're at the event location</li>
-                    <li>• Include yourself or event activity in the photo</li>
-                    <li>• Photo will be verified automatically</li>
+                    <li>Make sure you&apos;re at the event location</li>
+                    <li>Include yourself or event activity in the photo</li>
+                    <li>Photo will be verified automatically</li>
                   </ul>
                 </div>
               )}
@@ -472,7 +472,7 @@ export default function CameraSubmissionPage() {
                   <span className="font-medium text-green-600 dark:text-green-400">Ready to Submit</span>
                 </div>
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  Photo captured with location data. You'll receive {event.points} points if verified!
+                  Photo captured with location data. You&apos;ll receive {event.points} points if verified!
                 </p>
               </div>
 

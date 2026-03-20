@@ -3,10 +3,10 @@ import db from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { sendEmailAsync } from '@/lib/mail';
 
-export async function PUT(request: Request, { params }: { params: { submission_id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ submission_id: string }> }) {
     try {
         const admin = requireAuth(request, 'admin');
-        const { submission_id } = params;
+        const { submission_id } = await params;
 
         const { rows } = await db.query(
             `UPDATE submissions

@@ -36,6 +36,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# python
+__pycache__/
+*.py[cod]
 
 stitch_screens/
+page_history.txt

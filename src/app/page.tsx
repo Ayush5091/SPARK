@@ -1,10 +1,12 @@
 "use client";
 
 import { useAuth } from "@/lib/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import AdminDashboard from "@/components/AdminDashboard";
+import EventFocusMap, { EventMapPoint } from "@/components/EventFocusMap";
+import EventColorChangeCard from "@/components/EventColorChangeCard";
 
 interface Event {
   id: number;
@@ -35,6 +37,9 @@ export default function Home() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [activeEventId, setActiveEventId] = useState<number | null>(null);
+
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (isLoading) return;
@@ -130,18 +135,102 @@ export default function Home() {
     return { label: "Ended", color: "bg-gray-400" };
   };
 
-  const filteredEvents = events.filter((event) => {
-    if (filter !== "all") {
-      if (filter === "ongoing" && !event.is_ongoing) return false;
-      if (filter === "upcoming" && !event.is_upcoming) return false;
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      if (filter !== "all") {
+        if (filter === "ongoing" && !event.is_ongoing) return false;
+        if (filter === "upcoming" && !event.is_upcoming) return false;
+      }
+
+      if (selectedCategory !== "all" && event.category !== selectedCategory) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [events, filter, selectedCategory]);
+
+  const mapEvents = useMemo<EventMapPoint[]>(() => {
+    return filteredEvents
+      .map((event) => ({
+        id: event.id,
+        name: event.name,
+        category: event.category,
+        locationName: event.location_name,
+        latitude: Number(event.latitude),
+        longitude: Number(event.longitude),
+        points: Number(event.points),
+        isOngoing: event.is_ongoing,
+        isUpcoming: event.is_upcoming,
+      }))
+      .filter((event) => Number.isFinite(event.latitude) && Number.isFinite(event.longitude));
+  }, [filteredEvents]);
+
+  const activeEvent = filteredEvents.find((event) => event.id === activeEventId) ?? filteredEvents[0] ?? null;
+  const activeMapEventId = mapEvents.find((event) => event.id === activeEventId)?.id ?? mapEvents[0]?.id ?? null;
+
+  useEffect(() => {
+    if (!filteredEvents.length) {
+      setActiveEventId(null);
+      return;
     }
 
-    if (selectedCategory !== "all" && event.category !== selectedCategory) {
-      return false;
-    }
+    const preferredEvent =
+      filteredEvents.find((event) => event.id === activeEventId) ??
+      filteredEvents.find((event) => event.is_ongoing) ??
+      filteredEvents.find((event) => event.is_upcoming) ??
+      filteredEvents[0];
 
-    return true;
-  });
+    setActiveEventId(preferredEvent.id);
+  }, [activeEventId, filteredEvents]);
+
+  useEffect(() => {
+    if (!filteredEvents.length) return;
+
+    let frameId = 0;
+
+    const updateActiveEvent = () => {
+      const viewportCenter = window.innerHeight * 0.56;
+      let closestEventId: number | null = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      filteredEvents.forEach((event) => {
+        const node = cardRefs.current[event.id];
+        if (!node) return;
+
+        const rect = node.getBoundingClientRect();
+        const isVisible = rect.bottom > 120 && rect.top < window.innerHeight - 80;
+        if (!isVisible) return;
+
+        const cardCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(cardCenter - viewportCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestEventId = event.id;
+        }
+      });
+
+      if (closestEventId !== null) {
+        setActiveEventId((current) => (current === closestEventId ? current : closestEventId));
+      }
+    };
+
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(updateActiveEvent);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [filteredEvents]);
 
   const categories = ["all", "technical", "cultural", "sports", "professional", "community service", "national initiative"];
 
@@ -210,7 +299,7 @@ export default function Home() {
       </header>
 
       <div className="px-6 md:px-10 pb-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {["all", "upcoming", "ongoing"].map((filterOption) => (
             <button
               key={filterOption}
@@ -226,7 +315,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((category) => (
             <button
               key={category}
@@ -243,7 +332,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex-1 px-6 md:px-10 pb-24 space-y-6 max-w-4xl mx-auto w-full">
+      <div className="flex-1 px-6 md:px-10 pb-24 max-w-6xl mx-auto w-full">
         {eventsLoading ? (
           <div className="flex justify-center items-center py-16">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -257,80 +346,45 @@ export default function Home() {
             <p className="text-text-muted-light dark:text-text-muted-dark">Try adjusting your filters to see more events.</p>
           </div>
         ) : (
-          filteredEvents.map((event) => {
-            const categoryInfo = getCategoryIconInfo(event.category);
-            const statusInfo = getEventStatus(event);
+          <div className="space-y-8 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-8 lg:space-y-0 lg:items-start">
+            <section className="lg:sticky lg:top-28 lg:self-start">
+              <EventFocusMap events={mapEvents} activeEventId={activeMapEventId} />
+            </section>
 
-            return (
-              <div key={event.id} className="bg-card-light dark:bg-card-dark rounded-2xl p-6 shadow-soft border border-subtle-light dark:border-subtle-dark">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${categoryInfo.bg} ${categoryInfo.text}`}>
-                      <span className="material-icons-outlined text-2xl">{categoryInfo.icon}</span>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-text-light dark:text-text-dark">{event.name}</h3>
-                      <p className="text-sm text-text-muted-light dark:text-text-muted-dark">{event.category}</p>
-                    </div>
+            <section className="min-w-0 space-y-5">
+              {activeEvent && (
+                <div className="flex flex-col gap-3 rounded-[1.75rem] border border-black/5 bg-white/80 px-5 py-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.5)] backdrop-blur md:flex-row md:items-end md:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-400">Focused Event</p>
+                    <h3 className="mt-2 text-xl md:text-2xl font-bold text-neutral-900">{activeEvent.name}</h3>
+                    <p className="mt-1 text-sm text-neutral-500">
+                      Scroll the event list and the map trail will follow the card closest to the center.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${statusInfo.color}`}>
-                      {statusInfo.label}
-                    </span>
-                    <span className="text-primary dark:text-white font-bold text-xl">{event.points}pts</span>
+                  <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
+                    <span className="max-w-full truncate rounded-full bg-neutral-950 px-3 py-1.5 font-semibold text-white">{activeEvent.location_name}</span>
+                    <span className="rounded-full bg-neutral-100 px-3 py-1.5 font-semibold text-neutral-500">{activeEvent.points} pts</span>
                   </div>
                 </div>
+              )}
 
-                <p className="text-text-light dark:text-text-dark mb-4 leading-relaxed">{event.description}</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="material-icons-outlined text-text-muted-light dark:text-text-muted-dark">schedule</span>
-                    <div>
-                      <p className="text-sm font-medium text-text-light dark:text-text-dark">
-                        {new Date(event.start_time).toLocaleDateString()} {"\u2022"}{" "}
-                        {new Date(event.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </p>
-                      <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
-                        Duration: {Math.round((new Date(event.end_time).getTime() - new Date(event.start_time).getTime()) / (1000 * 60 * 60))} hours
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-icons-outlined text-text-muted-light dark:text-text-muted-dark">location_on</span>
-                    <div>
-                      <p className="text-sm font-medium text-text-light dark:text-text-dark">{event.location_name}</p>
-                      <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
-                        {event.total_submissions} participants {"\u2022"} {event.participation_rate}% verified
-                      </p>
-                    </div>
-                  </div>
+              {filteredEvents.map((event, index) => (
+                <div
+                  key={event.id}
+                  ref={(node) => {
+                    cardRefs.current[event.id] = node;
+                  }}
+                  className="min-w-0"
+                >
+                  <EventColorChangeCard
+                    event={event}
+                    isActive={event.id === activeEventId}
+                    index={index}
+                  />
                 </div>
-
-                <div className="flex justify-end">
-                  {event.is_ongoing ? (
-                    <button
-                      onClick={() => router.push(`/events/${event.id}/camera`)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                    >
-                      <span className="material-icons-outlined">camera_alt</span>
-                      Take Photo
-                    </button>
-                  ) : event.is_upcoming ? (
-                    <button className="bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 cursor-not-allowed opacity-50">
-                      <span className="material-icons-outlined">alarm</span>
-                      Starts Soon
-                    </button>
-                  ) : (
-                    <button className="bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 cursor-not-allowed opacity-50">
-                      <span className="material-icons-outlined">check</span>
-                      Event Ended
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })
+              ))}
+            </section>
+          </div>
         )}
       </div>
     </div>

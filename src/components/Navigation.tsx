@@ -31,7 +31,7 @@ export default function Navigation() {
     return (
         <>
             {/* Mobile Bottom Navigation */}
-            <nav className={`md:hidden fixed bottom-0 left-0 w-full bg-card-light dark:bg-card-dark border-t border-subtle-light dark:border-subtle-dark px-2 py-4 pb-6 grid ${gridColsClass} items-center justify-items-center z-30 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]`}>
+            <nav className={`md:hidden fixed inset-x-0 bottom-0 w-full max-w-full bg-card-light/98 dark:bg-card-dark/98 backdrop-blur-xl border-t border-subtle-light dark:border-subtle-dark px-2 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] grid ${gridColsClass} items-center justify-items-center z-40 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.12)]`}>
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
 
@@ -53,7 +53,7 @@ export default function Navigation() {
             </nav>
 
             {/* Mobile background gradient */}
-            <div className="md:hidden fixed bottom-[80px] left-0 w-full h-12 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-20"></div>
+            <div className="md:hidden fixed inset-x-0 bottom-[88px] w-full max-w-full h-12 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-30"></div>
 
             {/* Desktop Sidebar */}
             <nav className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-card-light dark:bg-card-dark border-r border-subtle-light dark:border-subtle-dark p-6 z-30 shadow-soft">
