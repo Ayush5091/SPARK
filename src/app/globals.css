@@ -1,3 +1,5 @@
+@import "maplibre-gl/dist/maplibre-gl.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -111,7 +113,7 @@
     }
   }
 
-  .event-focus-shell .leaflet-container {
+  .event-focus-shell .maplibregl-map {
     height: 100%;
     width: 100%;
     background: linear-gradient(135deg, #f1efeb 0%, #f7f5f2 100%);
@@ -119,17 +121,30 @@
     font-family: inherit;
   }
 
-  .event-focus-shell .leaflet-tile-pane {
+  .event-focus-shell .maplibregl-canvas {
     filter: grayscale(1) contrast(1.14) brightness(0.96);
   }
 
-  .event-focus-shell .leaflet-control-container {
+  .event-focus-shell .maplibregl-control-container,
+  .maplibregl-ctrl-bottom-right,
+  .maplibregl-ctrl-bottom-left {
     display: none;
   }
 
-  .event-focus-shell .leaflet-pane,
-  .event-focus-shell .leaflet-interactive {
+  .event-focus-shell .maplibregl-canvas-container,
+  .event-focus-shell .maplibregl-marker {
     transition: all 0.45s ease;
+  }
+
+  .maplibregl-popup-content {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.4);
+    padding: 0.75rem 0.875rem;
+  }
+
+  .maplibregl-popup-tip {
+    border-top-color: white !important;
   }
 
   /* Keep inputs clean */

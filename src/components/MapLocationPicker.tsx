@@ -1,30 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { LatLngExpression } from 'leaflet';
-
-// Dynamic import to avoid SSR issues with Leaflet
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Marker),
-  { ssr: false }
-);
-const Circle = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Circle),
-  { ssr: false }
-);
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
-  { ssr: false }
-);
+import { useEffect, useMemo, useRef, useState } from "react";
+import Map, { Layer, MapLayerMouseEvent, MapRef, Marker, Popup, Source } from "react-map-gl/maplibre";
 
 interface MapLocationPickerProps {
   initialLat?: number;
@@ -34,21 +11,33 @@ interface MapLocationPickerProps {
   onRadiusChange: (radius: number) => void;
 }
 
-interface MapEventsProps {
-  onMapClick: (lat: number, lng: number) => void;
-}
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-// Map click handler component
-function MapEvents({ onMapClick }: MapEventsProps) {
-  const { useMapEvents } = require('react-leaflet');
+function createCircleGeoJson(longitude: number, latitude: number, radiusInMeters: number, points = 72) {
+  const coordinates: [number, number][] = [];
+  const earthRadius = 6371000;
+  const latitudeInRadians = (latitude * Math.PI) / 180;
 
-  useMapEvents({
-    click: (e: any) => {
-      onMapClick(e.latlng.lat, e.latlng.lng);
+  for (let pointIndex = 0; pointIndex <= points; pointIndex += 1) {
+    const angle = (pointIndex / points) * Math.PI * 2;
+    const deltaLatitude = (radiusInMeters / earthRadius) * Math.sin(angle);
+    const deltaLongitude =
+      (radiusInMeters / (earthRadius * Math.cos(latitudeInRadians))) * Math.cos(angle);
+
+    coordinates.push([
+      longitude + (deltaLongitude * 180) / Math.PI,
+      latitude + (deltaLatitude * 180) / Math.PI,
+    ]);
+  }
+
+  return {
+    type: "Feature" as const,
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [coordinates],
     },
-  });
-
-  return null;
+    properties: {},
+  };
 }
 
 export default function MapLocationPicker({
@@ -56,49 +45,49 @@ export default function MapLocationPicker({
   initialLng = 77.594566,
   initialRadius = 100,
   onLocationSelect,
-  onRadiusChange
+  onRadiusChange,
 }: MapLocationPickerProps) {
-  const [position, setPosition] = useState<LatLngExpression>([initialLat, initialLng]);
+  const mapRef = useRef<MapRef | null>(null);
+  const [position, setPosition] = useState({ latitude: initialLat, longitude: initialLng });
   const [radius, setRadius] = useState(initialRadius);
-  const [locationName, setLocationName] = useState('Selected Location');
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [locationName, setLocationName] = useState("Selected Location");
 
   useEffect(() => {
-    // Import required CSS for Leaflet
-    const loadMapCSS = async () => {
-      const L = await import('leaflet');
-      // Fix for default markers in Webpack
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-      setIsLoaded(true);
-    };
+    setPosition({ latitude: initialLat, longitude: initialLng });
+  }, [initialLat, initialLng]);
 
-    loadMapCSS();
-  }, []);
+  useEffect(() => {
+    setRadius(initialRadius);
+  }, [initialRadius]);
 
-  // Simple reverse geocoding using a free service
+  const radiusOverlay = useMemo(
+    () => createCircleGeoJson(position.longitude, position.latitude, radius),
+    [position, radius]
+  );
+
   const getLocationName = async (lat: number, lng: number) => {
     try {
       const response = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
       );
       const data = await response.json();
-      return data.locality || data.city || data.principalSubdivision || 'Selected Location';
+      return data.locality || data.city || data.principalSubdivision || "Selected Location";
     } catch (error) {
-      console.error('Failed to get location name:', error);
-      return 'Selected Location';
+      console.error("Failed to get location name:", error);
+      return "Selected Location";
     }
   };
 
-  const handleMapClick = async (lat: number, lng: number) => {
-    setPosition([lat, lng]);
-    const name = await getLocationName(lat, lng);
+  const handleMapClick = async (event: MapLayerMouseEvent) => {
+    const nextPosition = {
+      latitude: event.lngLat.lat,
+      longitude: event.lngLat.lng,
+    };
+
+    setPosition(nextPosition);
+    const name = await getLocationName(nextPosition.latitude, nextPosition.longitude);
     setLocationName(name);
-    onLocationSelect(lat, lng, name);
+    onLocationSelect(nextPosition.latitude, nextPosition.longitude, name);
   };
 
   const handleRadiusChange = (newRadius: number) => {
@@ -106,82 +95,96 @@ export default function MapLocationPicker({
     onRadiusChange(newRadius);
   };
 
-  if (!isLoaded) {
-    return (
-      <div className="w-full h-80 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    mapRef.current?.flyTo({
+      center: [position.longitude, position.latitude],
+      duration: 800,
+      essential: true,
+    });
+  }, [position]);
 
   return (
     <div className="w-full space-y-4">
-      {/* Map Container */}
-      <div className="w-full h-80 rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600" style={{ zIndex: 1 }}>
-        <MapContainer
-          center={position}
-          zoom={13}
-          style={{ height: '100%', width: '100%' }}
-          zoomControl={true}
+      <div className="h-80 w-full overflow-hidden rounded-xl border border-gray-300 dark:border-gray-600" style={{ zIndex: 1 }}>
+        <Map
+          ref={mapRef}
+          initialViewState={{
+            longitude: position.longitude,
+            latitude: position.latitude,
+            zoom: 13,
+          }}
+          mapStyle={MAP_STYLE}
+          style={{ width: "100%", height: "100%" }}
+          attributionControl={false}
+          dragRotate={false}
+          touchZoomRotate={false}
+          onClick={handleMapClick}
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          <Source id="location-radius" type="geojson" data={radiusOverlay}>
+            <Layer
+              id="location-radius-fill"
+              type="fill"
+              paint={{
+                "fill-color": "#6b7280",
+                "fill-opacity": 0.16,
+              }}
+            />
+            <Layer
+              id="location-radius-outline"
+              type="line"
+              paint={{
+                "line-color": "#374151",
+                "line-width": 2,
+              }}
+            />
+          </Source>
 
-          <MapEvents onMapClick={handleMapClick} />
-
-          {/* Location Marker */}
-          <Marker position={position}>
-            <Popup>
-              <div className="text-center">
-                <p className="font-medium">{locationName}</p>
-                <p className="text-xs text-gray-500">
-                  {(position as number[])[0].toFixed(6)}, {(position as number[])[1].toFixed(6)}
-                </p>
+          <Marker longitude={position.longitude} latitude={position.latitude} anchor="bottom">
+            <div className="relative">
+              <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/10 blur-md" />
+              <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-neutral-900 shadow-lg">
+                <div className="h-2 w-2 rounded-full bg-white" />
               </div>
-            </Popup>
+            </div>
           </Marker>
 
-          {/* Radius Circle */}
-          <Circle
-            center={position}
-            radius={radius}
-            pathOptions={{
-              color: '#3b82f6',
-              fillColor: '#60a5fa',
-              fillOpacity: 0.2,
-              weight: 2
-            }}
-          />
-        </MapContainer>
+          <Popup
+            longitude={position.longitude}
+            latitude={position.latitude}
+            anchor="top"
+            closeButton={false}
+            closeOnClick={false}
+            offset={20}
+            maxWidth="260px"
+          >
+            <div className="text-center">
+              <p className="font-medium">{locationName}</p>
+              <p className="text-xs text-gray-500">
+                {position.latitude.toFixed(6)}, {position.longitude.toFixed(6)}
+              </p>
+            </div>
+          </Popup>
+        </Map>
       </div>
 
-      {/* Instructions */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+      <div className="rounded-xl border border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/80">
         <div className="flex items-start gap-3">
-          <span className="material-icons-outlined text-blue-500 text-lg mt-0.5">info</span>
-          <div className="text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium mb-1">How to use:</p>
+          <span className="material-icons-outlined mt-0.5 text-lg text-gray-600 dark:text-gray-300">info</span>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="mb-1 font-medium">How to use:</p>
             <ul className="space-y-1 text-xs">
-              <li>• <strong>Click anywhere</strong> on the map to set event location</li>
-              <li>• <strong>Adjust radius</strong> using the slider below</li>
-              <li>• The blue circle shows the accepted area for photo verification</li>
+              <li>- Click anywhere on the map to set event location</li>
+              <li>- Adjust radius using the slider below</li>
+              <li>- The monochrome ring shows the accepted area for photo verification</li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Radius Control */}
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Verification Radius
-          </label>
-          <span className="text-sm font-bold text-primary">{radius}m</span>
+      <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Verification Radius</label>
+          <span className="text-sm font-bold text-gray-900 dark:text-white">{radius}m</span>
         </div>
         <input
           type="range"
@@ -189,51 +192,49 @@ export default function MapLocationPicker({
           max="500"
           step="10"
           value={radius}
-          onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+          onChange={(event) => handleRadiusChange(parseInt(event.target.value, 10))}
+          className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
           style={{
-            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((radius - 10) / 490) * 100}%, #e5e7eb ${((radius - 10) / 490) * 100}%, #e5e7eb 100%)`
+            background: `linear-gradient(to right, #111827 0%, #111827 ${((radius - 10) / 490) * 100}%, #e5e7eb ${((radius - 10) / 490) * 100}%, #e5e7eb 100%)`,
           }}
         />
-        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>10m</span>
           <span>500m</span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
           Students must be within this radius to submit valid photos
         </p>
       </div>
 
-      {/* Selected Location Info */}
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected Location</h4>
+      <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
+        <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Selected Location</h4>
         <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
           <p><span className="font-medium">Name:</span> {locationName}</p>
-          <p><span className="font-medium">Coordinates:</span> {(position as number[])[0].toFixed(6)}, {(position as number[])[1].toFixed(6)}</p>
+          <p><span className="font-medium">Coordinates:</span> {position.latitude.toFixed(6)}, {position.longitude.toFixed(6)}</p>
           <p><span className="font-medium">Radius:</span> {radius} meters</p>
         </div>
       </div>
 
-      {/* Map Icons CSS - We need to add the icons */}
       <style jsx global>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 20px;
           width: 20px;
-          border-radius: 50%;
-          background: #3b82f6;
+          border-radius: 9999px;
+          background: #111827;
           cursor: pointer;
           border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         .slider::-moz-range-thumb {
           height: 20px;
           width: 20px;
-          border-radius: 50%;
-          background: #3b82f6;
+          border-radius: 9999px;
+          background: #111827;
           cursor: pointer;
           border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </div>
