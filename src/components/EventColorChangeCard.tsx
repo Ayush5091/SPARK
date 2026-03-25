@@ -57,7 +57,7 @@ const AnimatedLetter = ({ letter }: { letter: string }) => {
         className="flex min-w-[4px] flex-col"
         style={{ y: "0%" }}
         variants={letterVariants}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <span>{letter}</span>
         <span>{letter}</span>
@@ -78,20 +78,20 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
 
   return (
     <motion.div
-      transition={{ staggerChildren: 0.035 }}
+      transition={{ staggerChildren: 0.035, ease: "easeOut" }}
       whileHover="hover"
       animate={isActive ? "hover" : "initial"}
       initial="initial"
       style={{ clipPath: "inset(0px round 2rem)" }}
-      className={`group relative h-72 md:h-80 w-full cursor-pointer isolate rounded-[2rem] border transition-transform duration-500 transform-gpu ${
-        isActive 
-          ? "border-neutral-900/80 bg-white shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] -translate-y-1" 
-          : "border-subtle-light dark:border-subtle-dark bg-slate-300 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.4)]"
+      className={`group relative h-72 md:h-80 w-full cursor-pointer isolate rounded-[2rem] border transition-all duration-500 ease-out transform-gpu ${
+        isActive
+          ? "border-neutral-900/80 bg-white shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] -translate-y-1 scale-[1.02]"
+          : "border-subtle-light dark:border-subtle-dark bg-slate-300 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.4)] hover:scale-[1.01]"
       }`}
     >
       <div
-        className={`absolute inset-0 transition-all duration-500 group-hover:scale-110 md:group-hover:saturate-100 ${
-          isActive ? "scale-110 saturate-100" : "saturate-100 md:saturate-0"
+        className={`absolute inset-0 transition-all duration-500 ease-out group-hover:scale-110 group-hover:saturate-100 ${
+          isActive ? "scale-110 saturate-100" : "saturate-0"
         }`}
         style={{
           backgroundImage: `url(${imgSrc})`,
@@ -101,13 +101,13 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
         }}
       />
       {/* Overlay to ensure text readability */}
-      <div className={`absolute inset-0 transition-colors duration-500 ${
+      <div className={`absolute inset-0 transition-all duration-500 ease-out ${
         isActive ? "bg-black/40" : "bg-black/20 group-hover:bg-black/40"
-      }`} 
+      }`}
       style={{ clipPath: "inset(0px round 2rem)" }}
       />
       
-      <div className={`relative z-20 flex h-full flex-col justify-between p-6 transition-colors duration-500 ${
+      <div className={`relative z-20 flex h-full flex-col justify-between p-6 transition-all duration-500 ease-out ${
         isActive ? "text-white" : "text-slate-100 group-hover:text-white"
       }`}>
         <div className="flex justify-between items-start">
@@ -121,7 +121,7 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
               </span>
             )}
           </div>
-          <FiArrowRight className={`text-3xl transition-transform duration-500 ${isActive ? "-rotate-45" : "group-hover:-rotate-45"}`} />
+          <FiArrowRight className={`text-3xl transition-all duration-500 ease-out ${isActive ? "-rotate-45" : "group-hover:-rotate-45"}`} />
         </div>
 
         <div>
@@ -137,7 +137,7 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
             </div>
           </div>
           
-          <p className={`line-clamp-2 text-sm mb-4 transition-colors duration-500 ${
+          <p className={`line-clamp-2 text-sm mb-4 transition-all duration-500 ease-out ${
             isActive ? "text-white" : "text-neutral-200 group-hover:text-white"
           }`}>
             {event.description}
@@ -161,7 +161,7 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
                   e.stopPropagation();
                   router.push(`/events/${event.id}/camera`);
                 }}
-                className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center gap-2 shadow-lg"
+                className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ease-out flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 <FiCamera />
                 Open Camera

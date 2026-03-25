@@ -10,6 +10,14 @@
     max-width: 100%;
     overflow-x: clip;
     overscroll-behavior-x: none;
+    scroll-behavior: smooth;
+  }
+
+  /* Mobile snap scrolling - will be activated dynamically */
+  @media (max-width: 1023px) {
+    html.snap-active {
+      scroll-snap-type: y mandatory;
+    }
   }
 
   body {
@@ -116,13 +124,13 @@
   .event-focus-shell .maplibregl-map {
     height: 100%;
     width: 100%;
-    background: linear-gradient(135deg, #f1efeb 0%, #f7f5f2 100%);
-    filter: grayscale(1) contrast(1.01) brightness(1);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    filter: contrast(1.08) brightness(0.95);
     font-family: inherit;
   }
 
   .event-focus-shell .maplibregl-canvas {
-    filter: grayscale(1) contrast(1.14) brightness(0.96);
+    filter: contrast(1.12) brightness(1.02);
   }
 
   .event-focus-shell .maplibregl-control-container,
@@ -138,13 +146,15 @@
 
   .maplibregl-popup-content {
     border-radius: 0.75rem;
-    border: 1px solid rgba(17, 24, 39, 0.08);
-    box-shadow: 0 14px 30px -18px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.6);
     padding: 0.75rem 0.875rem;
+    background: rgba(30, 30, 30, 0.95);
+    color: white;
   }
 
   .maplibregl-popup-tip {
-    border-top-color: white !important;
+    border-top-color: rgba(30, 30, 30, 0.95) !important;
   }
 
   /* Keep inputs clean */

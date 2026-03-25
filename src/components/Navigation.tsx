@@ -31,29 +31,26 @@ export default function Navigation() {
     return (
         <>
             {/* Mobile Bottom Navigation */}
-            <nav className={`md:hidden fixed inset-x-0 bottom-0 w-full max-w-full bg-card-light/98 dark:bg-card-dark/98 backdrop-blur-xl border-t border-subtle-light dark:border-subtle-dark px-2 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] grid ${gridColsClass} items-center justify-items-center z-40 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.12)]`}>
+            <nav className={`md:hidden fixed inset-x-0 bottom-0 w-full max-w-full bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-2 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] grid ${gridColsClass} items-center justify-items-center z-40 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]`}>
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
 
                     if (item.isPrimary) {
                         return (
-                            <Link href={item.href} key={item.label} className="relative -top-6 bg-primary text-white h-14 w-14 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+                            <Link href={item.href} key={item.label} className="relative -top-6 bg-gradient-to-br from-primary to-primary/90 text-white h-14 w-14 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 ease-out border border-primary/20">
                                 <span className="material-icons-outlined text-2xl">{item.icon}</span>
                             </Link>
                         );
                     }
 
                     return (
-                        <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-colors ${isActive ? 'text-primary dark:text-white' : 'text-text-muted-light dark:text-text-muted-dark hover:text-primary dark:hover:text-white'}`}>
-                            <span className="material-icons-outlined text-2xl group-hover:scale-110 transition-transform">{item.icon}</span>
+                        <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isActive ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
+                            <span className="material-icons-outlined text-2xl group-hover:scale-110 transition-transform duration-200 ease-out">{item.icon}</span>
                             <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                         </Link>
                     );
                 })}
             </nav>
-
-            {/* Mobile background gradient */}
-            <div className="md:hidden fixed inset-x-0 bottom-[88px] w-full max-w-full h-12 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-30"></div>
 
             {/* Desktop Sidebar */}
             <nav className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-card-light dark:bg-card-dark border-r border-subtle-light dark:border-subtle-dark p-6 z-30 shadow-soft">

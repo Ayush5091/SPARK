@@ -36,10 +36,13 @@ export default function Home() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeEventId, setActiveEventId] = useState<number | null>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [isOnLandingPage, setIsOnLandingPage] = useState(true);
+  const [showHeader, setShowHeader] = useState(false);
 
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const landingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -86,6 +89,32 @@ export default function Home() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [user, token, refreshProfile]);
 
+  // Enhanced scroll tracking for landing page and header visibility
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      // Check if we're past the landing page
+      const pastLanding = scrollY > windowHeight * 0.3;
+      setIsOnLandingPage(!pastLanding);
+
+      // Show header when scrolling in events, hide when on landing
+      setShowHeader(pastLanding);
+
+      // Activate scroll snap after first scroll on mobile
+      if (!hasScrolled && scrollY > 50 && window.innerWidth <= 1023) {
+        setHasScrolled(true);
+        document.documentElement.classList.add('snap-active');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasScrolled]);
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAsRead = async () => {
@@ -108,6 +137,10 @@ export default function Home() {
     if (isOpening) {
       handleMarkAsRead();
     }
+  };
+
+  const scrollToLanding = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getCategoryIconInfo = (category: string) => {
@@ -142,13 +175,9 @@ export default function Home() {
         if (filter === "upcoming" && !event.is_upcoming) return false;
       }
 
-      if (selectedCategory !== "all" && event.category !== selectedCategory) {
-        return false;
-      }
-
       return true;
     });
-  }, [events, filter, selectedCategory]);
+  }, [events, filter]);
 
   const mapEvents = useMemo<EventMapPoint[]>(() => {
     return filteredEvents
@@ -232,8 +261,6 @@ export default function Home() {
     };
   }, [filteredEvents]);
 
-  const categories = ["all", "technical", "cultural", "sports", "professional", "community service", "national initiative"];
-
   if (isLoading || isInitializing || !user || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -248,110 +275,170 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="pt-8 md:pt-10 pb-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <UserAvatar name={profile?.name || user?.name} className="w-10 h-10 md:w-12 md:h-12 text-lg md:text-xl shadow-lg" />
-          <div>
-            <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Discover,</h1>
-            <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">Live Events</h2>
+      {/* Landing Page Section */}
+      <section
+        ref={landingRef}
+        className="min-h-screen flex flex-col relative overflow-hidden snap-start"
+      >
+        {/* Modern Black Header inspired by attached image */}
+        <div className="bg-black text-white flex-1 flex flex-col justify-center px-6 md:px-10">
+          <div className="max-w-4xl mx-auto w-full">
+            <div className="flex items-center justify-between mb-8">
+              <UserAvatar
+                name={profile?.name || user?.name}
+                className="w-12 h-12 md:w-14 md:h-14 text-lg md:text-xl shadow-lg border-2 border-white/20"
+              />
+
+              <div className="relative">
+                <button
+                  onClick={toggleNotifications}
+                  className="relative p-3 rounded-full hover:bg-white/10 transition-all duration-200 text-white"
+                >
+                  <span className="material-icons-outlined text-2xl">notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-red-500 border-2 border-black"></span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)}></div>
+                    <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[#202020] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-20 py-2">
+                      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                        <h3 className="font-bold text-gray-800 dark:text-white">Notifications</h3>
+                      </div>
+                      <div className="flex flex-col">
+                        {notifications.length === 0 ? (
+                          <p className="text-gray-500 text-sm p-4 text-center">No notifications yet.</p>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              className={`p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                                !n.is_read ? "bg-blue-50/30 dark:bg-blue-900/10" : ""
+                              }`}
+                            >
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{n.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="text-center space-y-6">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none">
+                DISCOVER
+              </h1>
+              <div className="relative">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-white/80">
+                  Live Events
+                </h2>
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-24 h-0.5 bg-white/60"></div>
+              </div>
+
+              <div className="pt-8 space-y-4">
+                <p className="text-lg md:text-xl text-white/70 max-w-lg mx-auto">
+                  Immerse yourself in real-time events and participate in activities that shape your journey.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{profile?.total_points || 0}</div>
+                    <div className="text-sm text-white/60">Total Points</div>
+                  </div>
+                  <div className="hidden sm:block w-px h-8 bg-white/20"></div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{profile?.completed_activities || 0}</div>
+                    <div className="text-sm text-white/60">Activities</div>
+                  </div>
+                  <div className="hidden sm:block w-px h-8 bg-white/20"></div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{events.length}</div>
+                    <div className="text-sm text-white/60">Available</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="relative">
+        {/* Color Transition Section */}
+        <div className="bg-gradient-to-b from-black via-gray-900 to-white h-32 md:h-40"></div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Conditional Header for Events Section */}
+      {showHeader && (
+        <header className="fixed top-0 left-0 right-0 z-50 pt-4 pb-4 px-6 md:px-10 flex justify-between items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 transform transition-all duration-300 ease-out">
           <button
-            onClick={toggleNotifications}
-            className="relative p-2 rounded-full hover:bg-subtle-light dark:hover:bg-subtle-dark transition-colors text-primary dark:text-white"
+            onClick={scrollToLanding}
+            className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 px-3 py-2 rounded-xl transition-colors"
           >
-            <span className="material-icons-outlined text-2xl">notifications</span>
-            {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background-light dark:border-background-dark"></span>
-            )}
+            <span className="material-icons-outlined text-gray-600 dark:text-gray-300">arrow_back</span>
+            <div className="text-left">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Back to</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white">Landing</div>
+            </div>
           </button>
 
-          {isNotificationsOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)}></div>
-              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[#202020] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-20 py-2">
-                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                  <h3 className="font-bold text-gray-800 dark:text-white">Notifications</h3>
-                </div>
-                <div className="flex flex-col">
-                  {notifications.length === 0 ? (
-                    <p className="text-gray-500 text-sm p-4 text-center">No notifications yet.</p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
-                          !n.is_read ? "bg-blue-50/30 dark:bg-blue-900/10" : ""
-                        }`}
-                      >
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{n.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </header>
+          <div className="text-center">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Events</div>
+            <div className="text-lg font-bold text-gray-900 dark:text-white">{filteredEvents.length} Available</div>
+          </div>
+        </header>
+      )}
 
-      <div className="px-6 md:px-10 pb-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      {/* Events Filter Section */}
+      <div className="px-6 md:px-10 pt-6 pb-4 bg-white dark:bg-gray-900">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-6xl mx-auto">
           {["all", "upcoming", "ongoing"].map((filterOption) => (
             <button
               key={filterOption}
               onClick={() => setFilter(filterOption)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ease-out whitespace-nowrap ${
                 filter === filterOption
-                  ? "bg-primary text-white"
-                  : "bg-subtle-light dark:bg-subtle-dark text-text-light dark:text-text-dark hover:bg-primary hover:text-white"
+                  ? "bg-black text-white shadow-lg shadow-black/30 scale-105"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-black hover:text-white hover:scale-105 active:scale-95"
               }`}
             >
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
             </button>
           ))}
         </div>
-
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                selectedCategory === category
-                  ? "bg-primary text-white"
-                  : "bg-card-light dark:bg-card-dark text-text-muted-light dark:text-text-muted-dark hover:bg-subtle-light dark:hover:bg-subtle-dark"
-              }`}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
       </div>
 
-      <div className="flex-1 px-6 md:px-10 pb-24 max-w-6xl mx-auto w-full">
+      {/* Events Content Section */}
+      <div className="flex-1 px-6 md:px-10 pb-24 max-w-6xl mx-auto w-full bg-white dark:bg-gray-900">
         {eventsLoading ? (
           <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="text-center py-16">
-            <div className="h-24 w-24 bg-subtle-light dark:bg-subtle-dark rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="material-icons-outlined text-4xl text-text-muted-light dark:text-text-muted-dark">event_busy</span>
+            <div className="h-24 w-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="material-icons-outlined text-4xl text-gray-400">event_busy</span>
             </div>
-            <h3 className="text-lg font-bold text-text-light dark:text-text-dark mb-2">No events found</h3>
-            <p className="text-text-muted-light dark:text-text-muted-dark">Try adjusting your filters to see more events.</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No events found</h3>
+            <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters to see more events.</p>
           </div>
         ) : (
-          <div className="space-y-8 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-8 lg:space-y-0 lg:items-start">
-            <section className="lg:sticky lg:top-28 lg:self-start">
+          <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-8 lg:space-y-0 lg:items-start">
+            <section className={`sticky z-10 lg:self-start lg:z-auto transition-all duration-300 ${showHeader ? 'top-24' : 'top-4'}`}>
               <EventFocusMap events={mapEvents} activeEventId={activeMapEventId} />
             </section>
 
-            <section className="min-w-0 space-y-5">
+            <section className="min-w-0 space-y-2 lg:space-y-5">
               {activeEvent && (
                 <div className="flex flex-col gap-3 rounded-[1.75rem] border border-black/5 bg-white/80 px-5 py-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.5)] backdrop-blur md:flex-row md:items-end md:justify-between">
                   <div className="min-w-0">
@@ -374,13 +461,15 @@ export default function Home() {
                   ref={(node) => {
                     cardRefs.current[event.id] = node;
                   }}
-                  className="min-w-0"
+                  className="min-w-0 snap-start min-h-[calc(100vh-28rem)] lg:min-h-0 flex items-center lg:block py-2 lg:py-0"
                 >
-                  <EventColorChangeCard
-                    event={event}
-                    isActive={event.id === activeEventId}
-                    index={index}
-                  />
+                  <div className="w-full">
+                    <EventColorChangeCard
+                      event={event}
+                      isActive={event.id === activeEventId}
+                      index={index}
+                    />
+                  </div>
                 </div>
               ))}
             </section>

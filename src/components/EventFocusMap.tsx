@@ -20,7 +20,7 @@ interface EventFocusMapProps {
   activeEventId: number | null;
 }
 
-const MONOCHROME_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const DARK_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
 function createCircleGeoJson(longitude: number, latitude: number, radiusInMeters: number, points = 72) {
   const coordinates: [number, number][] = [];
@@ -108,7 +108,7 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
   if (!events.length || !activeEvent) {
     return (
       <div className="rounded-[2rem] border border-black/10 bg-white/80 p-6 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.35)]">
-        <div className="flex h-[280px] items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-neutral-100 via-neutral-50 to-white text-center text-neutral-500 md:h-[360px] lg:h-[calc(100vh-9rem)] lg:min-h-[520px] lg:max-h-[720px]">
+        <div className="flex h-48 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-neutral-100 via-neutral-50 to-white text-center text-neutral-500 md:h-[280px] lg:h-[calc(100vh-9rem)] lg:min-h-[520px] lg:max-h-[720px]">
           Map focus becomes active when events with locations are available.
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
         <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.62),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.04)_42%,rgba(15,23,42,0.08))]"></div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-t from-white/70 via-white/18 to-transparent"></div>
 
-        <div className="event-focus-shell h-[280px] md:h-[360px] lg:h-[calc(100vh-9rem)] lg:min-h-[520px] lg:max-h-[720px]">
+        <div className="event-focus-shell h-48 md:h-[280px] lg:h-[calc(100vh-9rem)] lg:min-h-[520px] lg:max-h-[720px]">
           <Map
             ref={mapRef}
             initialViewState={{
@@ -151,7 +151,7 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
               latitude: activeEvent.latitude,
               zoom: 13,
             }}
-            mapStyle={MONOCHROME_STYLE}
+            mapStyle={DARK_STYLE}
             style={{ width: "100%", height: "100%" }}
             interactive={false}
             attributionControl={false}
