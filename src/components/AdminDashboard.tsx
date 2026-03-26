@@ -9,10 +9,11 @@ import EventCreateModal from "@/components/EventCreateModal";
 export default function AdminDashboard() {
     const { user, token } = useAuth();
 
-    const [requests, setRequests] = useState<any[]>([]);
     const [submissions, setSubmissions] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [capacityEdits, setCapacityEdits] = useState<Record<number, string>>({});
+    const [savingCapacityId, setSavingCapacityId] = useState<number | null>(null);
 
     // Modal state
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
@@ -26,26 +27,24 @@ export default function AdminDashboard() {
         if (!token) return;
         try {
             setIsLoading(true);
-            const [reqRes, subRes, eventsRes, eventSubsRes] = await Promise.all([
-                fetch('/api/activity-requests?status=pending', { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch('/api/submissions?status=pending', { headers: { 'Authorization': `Bearer ${token}` } }),
+            const [eventsRes, eventSubsRes] = await Promise.all([
                 fetch('/api/events', { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch('/api/admin/event-submissions?status=pending_review', { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
 
-            if (reqRes.ok) setRequests(await reqRes.json());
-            if (subRes.ok) setSubmissions(await subRes.json());
             if (eventsRes.ok) setEvents(await eventsRes.json());
 
             // Add event submissions to regular submissions for review
             if (eventSubsRes.ok) {
                 const eventSubmissions = await eventSubsRes.json();
-                setSubmissions(prev => [...prev, ...eventSubmissions.map((sub: any) => ({
+                setSubmissions(eventSubmissions.map((sub: any) => ({
                     ...sub,
                     submission_id: sub.id,
                     activity_name: sub.event_name,
                     type: 'event_submission'
-                }))]);
+                })));
+            } else {
+                setSubmissions([]);
             }
 
         } catch (error) {
@@ -59,28 +58,7 @@ export default function AdminDashboard() {
         fetchData();
     }, [token]);
 
-    const handleApproveRequest = async (id: number) => {
-        setIsSubmitting(true);
-        try {
-            const res = await fetch(`/api/activity-requests/${id}/approve`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                setRequests(prev => prev.filter(r => r.request_id !== id));
-                setIsModalOpen(false);
-                setSelectedItem(null);
-            } else {
-                alert("Failed to approve request.");
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleVerifySubmission = async (id: number) => {
+    const handleVerifySubmission = async (id: number, pointsAwarded?: number) => {
         setIsSubmitting(true);
         try {
             const endpoint = selectedItem?.type === 'event_submission'
@@ -88,7 +66,7 @@ export default function AdminDashboard() {
                 : `/api/submissions/${id}/verify`;
 
             const body = selectedItem?.type === 'event_submission'
-                ? { submission_id: id, action: 'approve' }
+                ? { submission_id: id, action: 'approve', points_awarded: pointsAwarded }
                 : undefined;
 
             const res = await fetch(endpoint, {
@@ -110,6 +88,39 @@ export default function AdminDashboard() {
             console.error(err);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleCapacitySave = async (eventId: number) => {
+        const rawValue = capacityEdits[eventId];
+        const capacityValue = rawValue === "" || rawValue === undefined ? null : parseInt(rawValue, 10);
+
+        if (capacityValue !== null && (Number.isNaN(capacityValue) || capacityValue < 1)) {
+            alert("Capacity must be a positive number or left blank.");
+            return;
+        }
+
+        setSavingCapacityId(eventId);
+        try {
+            const res = await fetch(`/api/events/${eventId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ capacity: capacityValue })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Failed to update capacity");
+            }
+
+            setEvents(prev => prev.map(event => event.id === eventId ? { ...event, capacity: capacityValue } : event));
+        } catch (err: any) {
+            alert(err.message || "Failed to update capacity");
+        } finally {
+            setSavingCapacityId(null);
         }
     };
 
@@ -166,18 +177,6 @@ export default function AdminDashboard() {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-orange-600 dark:text-orange-400">pending</span>
-                                        </div>
-                                        <div>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{requests.length}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Pending Requests</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-                                    <div className="flex items-center gap-3">
                                         <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                                             <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">verified</span>
                                         </div>
@@ -203,7 +202,7 @@ export default function AdminDashboard() {
                                 <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                                     <div className="flex items-center gap-3">
                                         <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">total_events</span>
+                                            <span className="material-icons-outlined text-purple-600 dark:text-purple-400">event</span>
                                         </div>
                                         <div>
                                             <p className="text-2xl font-bold text-gray-900 dark:text-white">{events.length}</p>
@@ -272,60 +271,37 @@ export default function AdminDashboard() {
 
                                                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                                                     <span>📍 {event.location_name}</span>
-                                                    <span>{event.total_submissions || 0} participants</span>
+                                                    <span>
+                                                        {event.total_submissions || 0}
+                                                        {event.capacity ? ` / ${event.capacity}` : ""} participants
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-4 flex items-center gap-3">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
+                                                            Capacity
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            placeholder="Unlimited"
+                                                            value={capacityEdits[event.id] ?? (event.capacity ?? "")}
+                                                            onChange={(e) => setCapacityEdits(prev => ({ ...prev, [event.id]: e.target.value }))}
+                                                            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleCapacitySave(event.id)}
+                                                        disabled={savingCapacityId === event.id}
+                                                        className="mt-6 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                                                    >
+                                                        {savingCapacityId === event.id ? "Saving..." : "Save"}
+                                                    </button>
                                                 </div>
                                             </div>
                                         );
                                     })}
-                                </div>
-                            )}
-                        </section>
-
-                        {/* Pending Requests Section */}
-                        <section>
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Pending Requests</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Students requesting to participate in activities.</p>
-                                </div>
-                                <div className="bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 font-bold px-3 py-1 rounded-full text-sm">
-                                    {requests.length}
-                                </div>
-                            </div>
-
-                            {requests.length === 0 ? (
-                                <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                                    <div className="h-16 w-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                        <span className="material-symbols-outlined text-gray-400 text-3xl">task_alt</span>
-                                    </div>
-                                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">All caught up!</h4>
-                                    <p className="text-gray-500 mt-1">There are no pending activity requests.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {requests.map(req => (
-                                        <div
-                                            key={req.request_id}
-                                            onClick={() => {
-                                                setSelectedItem({ ...req, id: req.request_id, type: 'request', date: req.requested_at, activity: req.activity_name });
-                                                setIsModalOpen(true);
-                                            }}
-                                            className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-start gap-4">
-                                                    <UserAvatar name={req.student_name} className="w-10 h-10 shrink-0 text-sm" />
-                                                    <div>
-                                                        <h4 className="font-bold text-gray-900 dark:text-white">{req.student_name}</h4>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{req.activity_name}</p>
-                                                    </div>
-                                                </div>
-                                                <span className="text-xs font-medium text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
-                                                    {new Date(req.requested_at).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             )}
                         </section>
@@ -402,7 +378,7 @@ export default function AdminDashboard() {
                 isOpen={isModalOpen}
                 onClose={() => { setIsModalOpen(false); setSelectedItem(null); }}
                 item={selectedItem}
-                onApprove={selectedItem?.type === 'request' ? handleApproveRequest : handleVerifySubmission}
+                onApprove={handleVerifySubmission}
                 isSubmitting={isSubmitting}
             />
 

@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
     const eventId = searchParams.get('event_id');
 
     let queryStr = `
-      SELECT es.id, es.student_id, es.event_id, es.status,
-             es.submitted_at, es.verification_result, es.photo_metadata,
+            SELECT es.id, es.student_id, es.event_id, es.status,
+              es.submitted_at, es.verification_result, es.photo_metadata,
+              es.points_awarded,
              s.name as student_name, s.email as student_email, s.usn,
              e.name as event_name, e.points as event_points,
              e.latitude as event_latitude, e.longitude as event_longitude,
@@ -75,7 +76,7 @@ export async function PUT(request: NextRequest) {
     const adminId = authData.user_id;
 
     const body = await request.json();
-    const { submission_id, action, review_notes } = body;
+    const { submission_id, action, review_notes, points_awarded } = body;
 
     if (!submission_id || !action) {
       return NextResponse.json(
@@ -109,7 +110,18 @@ export async function PUT(request: NextRequest) {
 
     const submission = submissionQuery.rows[0];
     const newStatus = action === 'approve' ? 'verified' : 'rejected';
-    const pointsAwarded = action === 'approve' ? submission.points : 0;
+    const safePoints = points_awarded !== undefined && points_awarded !== null
+      ? Number(points_awarded)
+      : submission.points;
+
+    if (action === 'approve' && (Number.isNaN(safePoints) || safePoints < 0)) {
+      return NextResponse.json(
+        { detail: 'Points awarded must be a non-negative number' },
+        { status: 400 }
+      );
+    }
+
+    const pointsAwarded = action === 'approve' ? safePoints : 0;
 
     // Update submission
     await db.query(
@@ -126,13 +138,13 @@ export async function PUT(request: NextRequest) {
         `UPDATE students
          SET total_points = total_points + $1
          WHERE id = $2`,
-        [submission.points, submission.student_id]
+        [pointsAwarded, submission.student_id]
       );
     }
 
     // Create notification for student
     const notificationMessage = action === 'approve'
-      ? `Your submission for "${submission.event_name}" has been approved! You've been awarded ${submission.points} points.`
+      ? `Your submission for "${submission.event_name}" has been approved! You've been awarded ${pointsAwarded} points.`
       : `Your submission for "${submission.event_name}" has been rejected. ${review_notes || 'Please contact admin for more details.'}`;
 
     await db.query(

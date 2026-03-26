@@ -17,6 +17,7 @@
   @media (max-width: 1023px) {
     html.snap-active {
       scroll-snap-type: y mandatory;
+      scroll-padding-top: 6rem;
     }
   }
 

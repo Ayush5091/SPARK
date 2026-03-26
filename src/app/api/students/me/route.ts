@@ -10,10 +10,9 @@ export async function GET(request: Request) {
             SELECT
                 st.id, st.name, st.email, st.usn, st.phone_number, st.department,
                 COALESCE(st.total_points, 0) as total_points,
-                COUNT(su.id) as completed_activities
+                COUNT(es.id) FILTER (WHERE es.status = 'verified') as completed_activities
             FROM students st
-            LEFT JOIN activity_requests r ON st.id = r.student_id
-            LEFT JOIN submissions su ON r.id = su.request_id AND su.status = 'verified'
+            LEFT JOIN event_submissions es ON st.id = es.student_id
             WHERE st.id = $1
             GROUP BY st.id, st.name, st.email, st.usn, st.phone_number, st.department, st.total_points
         `, [user.user_id]);

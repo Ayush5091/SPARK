@@ -5,16 +5,16 @@ import { requireAuth } from '@/lib/auth';
 // GET - Students and admins can view available events
 export async function GET(request: NextRequest) {
   try {
-    requireAuth(request); // Allow both student and admin roles
+    const authData = requireAuth(request); // Allow both student and admin roles
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const active_only = searchParams.get('active_only') !== 'false'; // default to true
 
     let queryStr = `
-      SELECT e.id, e.name, e.description, e.category, e.points,
+            SELECT e.id, e.name, e.description, e.category, e.points,
              e.latitude, e.longitude, e.location_name,
-             e.location_radius_meters, e.start_time, e.end_time,
+              e.location_radius_meters, e.capacity, e.start_time, e.end_time,
              e.time_tolerance_minutes, e.status,
              COUNT(es.id) as total_submissions,
              COUNT(CASE WHEN es.status = 'verified' THEN 1 END) as verified_submissions
@@ -29,6 +29,13 @@ export async function GET(request: NextRequest) {
       queryStr += ` AND e.status = 'active'`;
     }
 
+    if (authData.role === 'student') {
+      params.push(authData.user_id);
+      queryStr += ` AND (COALESCE(e.is_personal, false) = false OR e.personal_owner_id = $${params.length})`;
+    } else {
+      queryStr += ` AND COALESCE(e.is_personal, false) = false`;
+    }
+
     if (category) {
       params.push(category);
       queryStr += ` AND e.category = $${params.length}`;
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest) {
     queryStr += `
       GROUP BY e.id, e.name, e.description, e.category, e.points,
                e.latitude, e.longitude, e.location_name,
-               e.location_radius_meters, e.start_time, e.end_time,
+               e.location_radius_meters, e.capacity, e.start_time, e.end_time,
                e.time_tolerance_minutes, e.status
       ORDER BY e.start_time ASC
     `;
@@ -47,6 +54,7 @@ export async function GET(request: NextRequest) {
     // Add computed fields for frontend
     const events = rows.map(event => ({
       ...event,
+      capacity_remaining: event.capacity ? Math.max(event.capacity - Number(event.total_submissions || 0), 0) : null,
       is_ongoing: new Date() >= new Date(event.start_time) && new Date() <= new Date(event.end_time),
       is_upcoming: new Date() < new Date(event.start_time),
       is_past: new Date() > new Date(event.end_time),
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
       longitude,
       location_name,
       location_radius_meters = 100,
+      capacity = null,
       start_time,
       end_time,
       time_tolerance_minutes = 30
@@ -108,6 +117,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (capacity !== null && capacity !== undefined && Number(capacity) < 1) {
+      return NextResponse.json(
+        { detail: 'Capacity must be a positive number when provided' },
+        { status: 400 }
+      );
+    }
+
     // Validate time range
     const startDate = new Date(start_time);
     const endDate = new Date(end_time);
@@ -124,12 +140,12 @@ export async function POST(request: NextRequest) {
     const { rows } = await db.query(
       `INSERT INTO events
        (name, description, category, points, latitude, longitude, location_name,
-        location_radius_meters, start_time, end_time, time_tolerance_minutes, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        location_radius_meters, capacity, start_time, end_time, time_tolerance_minutes, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING id`,
       [
         name, description, category, points, latitude, longitude, location_name,
-        location_radius_meters, start_time, end_time, time_tolerance_minutes, adminId
+        location_radius_meters, capacity, start_time, end_time, time_tolerance_minutes, adminId
       ]
     );
 

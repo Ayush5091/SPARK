@@ -95,6 +95,7 @@ export default function MapLocationPicker({
     onRadiusChange(newRadius);
   };
 
+
   useEffect(() => {
     mapRef.current?.flyTo({
       center: [position.longitude, position.latitude],

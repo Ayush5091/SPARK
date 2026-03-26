@@ -7,6 +7,7 @@ import UserAvatar from "@/components/UserAvatar";
 import AdminDashboard from "@/components/AdminDashboard";
 import EventFocusMap, { EventMapPoint } from "@/components/EventFocusMap";
 import EventColorChangeCard from "@/components/EventColorChangeCard";
+import EventDetailsModal from "@/components/EventDetailsModal";
 
 interface Event {
   id: number;
@@ -25,6 +26,8 @@ interface Event {
   total_submissions: number;
   verified_submissions: number;
   participation_rate: string;
+  capacity?: number | null;
+  capacity_remaining?: number | null;
 }
 
 export default function Home() {
@@ -40,6 +43,7 @@ export default function Home() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isOnLandingPage, setIsOnLandingPage] = useState(true);
   const [showHeader, setShowHeader] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const landingRef = useRef<HTMLDivElement | null>(null);
@@ -168,8 +172,12 @@ export default function Home() {
     return { label: "Ended", color: "bg-gray-400" };
   };
 
+  const visibleEvents = useMemo(() => {
+    return events.filter((event) => !event.is_past);
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+    return visibleEvents.filter((event) => {
       if (filter !== "all") {
         if (filter === "ongoing" && !event.is_ongoing) return false;
         if (filter === "upcoming" && !event.is_upcoming) return false;
@@ -177,7 +185,7 @@ export default function Home() {
 
       return true;
     });
-  }, [events, filter]);
+  }, [visibleEvents, filter]);
 
   const mapEvents = useMemo<EventMapPoint[]>(() => {
     return filteredEvents
@@ -358,7 +366,7 @@ export default function Home() {
                   </div>
                   <div className="hidden sm:block w-px h-8 bg-white/20"></div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{events.length}</div>
+                    <div className="text-2xl font-bold text-white">{visibleEvents.length}</div>
                     <div className="text-sm text-white/60">Available</div>
                   </div>
                 </div>
@@ -438,36 +446,21 @@ export default function Home() {
               <EventFocusMap events={mapEvents} activeEventId={activeMapEventId} />
             </section>
 
-            <section className="min-w-0 space-y-2 lg:space-y-5">
-              {activeEvent && (
-                <div className="flex flex-col gap-3 rounded-[1.75rem] border border-black/5 bg-white/80 px-5 py-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.5)] backdrop-blur md:flex-row md:items-end md:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-400">Focused Event</p>
-                    <h3 className="mt-2 text-xl md:text-2xl font-bold text-neutral-900">{activeEvent.name}</h3>
-                    <p className="mt-1 text-sm text-neutral-500">
-                      Scroll the event list and the map trail will follow the card closest to the center.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
-                    <span className="max-w-full truncate rounded-full bg-neutral-950 px-3 py-1.5 font-semibold text-white">{activeEvent.location_name}</span>
-                    <span className="rounded-full bg-neutral-100 px-3 py-1.5 font-semibold text-neutral-500">{activeEvent.points} pts</span>
-                  </div>
-                </div>
-              )}
-
+            <section className="min-w-0 space-y-3 lg:space-y-5">
               {filteredEvents.map((event, index) => (
                 <div
                   key={event.id}
                   ref={(node) => {
                     cardRefs.current[event.id] = node;
                   }}
-                  className="min-w-0 snap-start min-h-[calc(100vh-28rem)] lg:min-h-0 flex items-center lg:block py-2 lg:py-0"
+                  className="min-w-0 snap-start snap-always scroll-mt-28 lg:scroll-mt-0 py-1 lg:py-0"
                 >
                   <div className="w-full">
                     <EventColorChangeCard
                       event={event}
                       isActive={event.id === activeEventId}
                       index={index}
+                      onOpen={setSelectedEvent}
                     />
                   </div>
                 </div>
@@ -476,6 +469,12 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <EventDetailsModal
+        event={selectedEvent}
+        isOpen={Boolean(selectedEvent)}
+        onClose={() => setSelectedEvent(null)}
+      />
     </div>
   );
 }

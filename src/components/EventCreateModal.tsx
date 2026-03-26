@@ -53,6 +53,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
     description: '',
     category: 'technical',
     points: '',
+    capacity: '',
     latitude: '',
     longitude: '',
     location_name: '',
@@ -187,6 +188,14 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
       return false;
     }
 
+    if (formData.capacity) {
+      const cap = parseInt(formData.capacity, 10);
+      if (isNaN(cap) || cap < 1) {
+        alert('Capacity must be a positive number');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -206,6 +215,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
         body: JSON.stringify({
           ...formData,
           points: parseInt(formData.points),
+          capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           latitude: parseFloat(formData.latitude),
           longitude: parseFloat(formData.longitude),
           location_radius_meters: parseInt(formData.location_radius_meters),
@@ -223,6 +233,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
           description: '',
           category: 'technical',
           points: '',
+          capacity: '',
           latitude: '',
           longitude: '',
           location_name: '',
@@ -317,7 +328,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
                     <select
@@ -345,6 +356,19 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                       max="100"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       placeholder="e.g., 50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Capacity</label>
+                    <input
+                      type="number"
+                      name="capacity"
+                      value={formData.capacity}
+                      onChange={handleInputChange}
+                      min="1"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      placeholder="Optional"
                     />
                   </div>
                 </div>
@@ -647,6 +671,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
                 <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <p><span className="font-medium">Name:</span> {formData.name || 'Event Name'}</p>
                   <p><span className="font-medium">Points:</span> {formData.points || '0'} pts</p>
+                  <p><span className="font-medium">Capacity:</span> {formData.capacity || 'No limit'}</p>
                   <p><span className="font-medium">Location:</span> {formData.location_name || 'Location Name'}</p>
                   <p><span className="font-medium">Duration:</span> {formData.start_time && formData.end_time ?
                     `${Math.round((new Date(formData.end_time).getTime() - new Date(formData.start_time).getTime()) / (1000 * 60 * 60))} hours` :

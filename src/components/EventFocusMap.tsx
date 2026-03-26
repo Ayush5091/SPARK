@@ -120,21 +120,14 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
       <div className="relative overflow-hidden rounded-[1.5rem] border border-black/12">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] flex items-start justify-between p-5 md:p-6">
           <div className="max-w-md">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-500 backdrop-blur">
-              <span className="h-2 w-2 rounded-full bg-black/70"></span>
-              Scroll Guided Map
-            </div>
-            <h3 className="text-xl font-bold text-neutral-900 md:text-3xl">{activeEvent.name}</h3>
-            <p className="mt-1 text-sm text-neutral-500 md:text-base">
+            <h3 className="text-xl font-bold text-white drop-shadow md:text-3xl">{activeEvent.name}</h3>
+            <p className="mt-1 text-sm text-white/80 md:text-base">
               {activeEvent.locationName} {"\u2022"} {activeEvent.category}
             </p>
           </div>
 
           <div className="hidden flex-col items-end gap-2 md:flex">
-            <span className="rounded-full border border-black/10 bg-white/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-600 backdrop-blur">
-              {activeEvent.isOngoing ? "Live Now" : activeEvent.isUpcoming ? "Next Focus" : "Recent Stop"}
-            </span>
-            <span className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+            <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg">
               {activeEvent.points} pts
             </span>
           </div>
@@ -231,14 +224,7 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
           </Map>
         </div>
 
-        <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-[2] flex items-end justify-between gap-4">
-          <div className="rounded-2xl border border-black/10 bg-white/75 px-4 py-3 backdrop-blur-md">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-neutral-500">Map Story</p>
-            <p className="mt-1 text-sm font-medium text-neutral-800">
-              The pin follows the card closest to the center of the viewport.
-            </p>
-          </div>
-        </div>
+        <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-[2] flex items-end justify-between gap-4"></div>
       </div>
     </div>
   );

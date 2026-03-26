@@ -1,12 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ReviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     item: any | null;
-    onApprove?: (id: number) => void;
+    onApprove?: (id: number, pointsAwarded?: number) => void;
     onReject?: (id: number) => void;
     isSubmitting?: boolean;
 }
@@ -19,10 +19,17 @@ export default function AdminReviewModal({
     onReject,
     isSubmitting = false
 }: ReviewModalProps) {
-    if (!isOpen || !item) return null;
+    const [pointsInput, setPointsInput] = useState<string>('');
 
-    const isRequest = item.type === 'request';
-    const title = isRequest ? "Review Activity Request" : "Verify Activity Proof";
+    useEffect(() => {
+        if (!item) return;
+        const defaultPoints = item.points_awarded ?? item.event_points ?? item.points ?? '';
+        setPointsInput(defaultPoints?.toString?.() ?? '');
+    }, [item]);
+
+    const title = "Verify Activity Proof";
+
+    if (!isOpen || !item) return null;
 
     const dateStr = item.date || item.activity_date
         ? new Date(item.date || item.activity_date).toLocaleDateString()
@@ -35,7 +42,7 @@ export default function AdminReviewModal({
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">
-                            {isRequest ? 'assignment' : 'verified'}
+                            verified
                         </span>
                         {title}
                     </h2>
@@ -67,11 +74,9 @@ export default function AdminReviewModal({
                     <div>
                         <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-1">Activity</p>
                         <p className="text-xl font-bold text-primary dark:text-blue-400">{item.activity || item.activity_name}</p>
-                        {item.points && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold mt-2 bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-300">
-                                +{item.points} Points Target
-                            </span>
-                        )}
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold mt-2 bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-300">
+                            {item.event_points ?? item.points ?? 0} Points Target
+                        </span>
                     </div>
 
                     {/* Description */}
@@ -83,33 +88,42 @@ export default function AdminReviewModal({
                     </div>
 
                     {/* Submission Specifics */}
-                    {!isRequest && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-2">Hours Logged</p>
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                                    <span className="material-symbols-outlined text-gray-400">schedule</span>
-                                    <span className="font-bold text-gray-900 dark:text-white">{item.hours_spent || "N/A"}</span>
-                                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-2">Hours Logged</p>
+                            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                <span className="material-symbols-outlined text-gray-400">schedule</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{item.hours_spent || "N/A"}</span>
                             </div>
-
-                            {item.proof && (
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-2">Proof Link</p>
-                                    <a
-                                        href={item.proof}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-colors group"
-                                    >
-                                        <span className="material-symbols-outlined">link</span>
-                                        <span className="font-bold truncate">View Attachment</span>
-                                        <span className="material-symbols-outlined ml-auto text-sm opacity-50 group-hover:opacity-100">open_in_new</span>
-                                    </a>
-                                </div>
-                            )}
                         </div>
-                    )}
+
+                        <div>
+                            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-2">Points Awarded</p>
+                            <input
+                                type="number"
+                                min="0"
+                                value={pointsInput}
+                                onChange={(e) => setPointsInput(e.target.value)}
+                                className="w-full rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                            />
+                        </div>
+
+                        {item.proof && (
+                            <div>
+                                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-2">Proof Link</p>
+                                <a
+                                    href={item.proof}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30 transition-colors group"
+                                >
+                                    <span className="material-symbols-outlined">link</span>
+                                    <span className="font-bold truncate">View Attachment</span>
+                                    <span className="material-symbols-outlined ml-auto text-sm opacity-50 group-hover:opacity-100">open_in_new</span>
+                                </a>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Actions Footer */}
@@ -135,12 +149,12 @@ export default function AdminReviewModal({
 
                         {onApprove && (
                             <button
-                                onClick={() => onApprove(item.id)}
+                                onClick={() => onApprove(item.id, pointsInput === '' ? undefined : Number(pointsInput))}
                                 disabled={isSubmitting}
                                 className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-xl font-bold text-white bg-green-500 hover:bg-green-600 shadow-md transition-colors disabled:opacity-50"
                             >
                                 {isSubmitting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                {isRequest ? "Approve Request" : "Verify & Award Points"}
+                                Verify & Award Points
                             </button>
                         )}
                     </div>

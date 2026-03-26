@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
     const eventId = searchParams.get('event_id');
 
     let queryStr = `
-      SELECT es.id, es.event_id, es.status, es.auto_verified,
+            SELECT es.id, es.event_id, es.status, es.auto_verified,
              es.submitted_at, es.reviewed_at, es.review_notes,
              es.points_awarded, es.verification_result,
              e.name as event_name, e.points as event_points,
-             e.category, e.start_time, e.end_time
+              e.category, e.start_time, e.end_time, e.location_name
       FROM event_submissions es
       JOIN events e ON es.event_id = e.id
       WHERE es.student_id = $1
@@ -77,7 +77,12 @@ export async function HEAD(request: NextRequest) {
 
     // Check if event exists and is active
     const eventQuery = await db.query(
-      `SELECT id, start_time, end_time, status FROM events WHERE id = $1`,
+      `SELECT e.id, e.start_time, e.end_time, e.status, e.capacity,
+              COUNT(es.id) as total_submissions
+       FROM events e
+       LEFT JOIN event_submissions es ON e.id = es.event_id
+       WHERE e.id = $1
+       GROUP BY e.id, e.start_time, e.end_time, e.status, e.capacity`,
       [eventId]
     );
 
@@ -92,6 +97,13 @@ export async function HEAD(request: NextRequest) {
       return new NextResponse(null, {
         status: 403,
         headers: { 'X-Reason': 'Event is not active' }
+      });
+    }
+
+    if (event.capacity && Number(event.total_submissions) >= Number(event.capacity)) {
+      return new NextResponse(null, {
+        status: 403,
+        headers: { 'X-Reason': 'Event capacity reached' }
       });
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { FiArrowRight, FiCamera, FiClock, FiMapPin } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
@@ -25,6 +25,7 @@ interface EventColorChangeCardProps {
   event: Event;
   isActive: boolean;
   index: number;
+  onOpen?: (event: Event) => void;
 }
 
 const getCategoryImg = (category: string) => {
@@ -44,29 +45,7 @@ const getCategoryImg = (category: string) => {
   }
 };
 
-const letterVariants: Variants = {
-  hover: {
-    y: "-50%",
-  },
-};
-
-const AnimatedLetter = ({ letter }: { letter: string }) => {
-  return (
-    <div className="inline-block h-[30px] md:h-[36px] overflow-hidden font-bold text-xl md:text-2xl">
-      <motion.span
-        className="flex min-w-[4px] flex-col"
-        style={{ y: "0%" }}
-        variants={letterVariants}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        <span>{letter}</span>
-        <span>{letter}</span>
-      </motion.span>
-    </div>
-  );
-};
-
-const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardProps) => {
+const EventColorChangeCard = ({ event, isActive, index, onOpen }: EventColorChangeCardProps) => {
   const router = useRouter();
   const imgSrc = getCategoryImg(event.category);
 
@@ -78,6 +57,7 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
 
   return (
     <motion.div
+      onClick={() => onOpen?.(event)}
       transition={{ staggerChildren: 0.035, ease: "easeOut" }}
       whileHover="hover"
       animate={isActive ? "hover" : "initial"}
@@ -125,11 +105,9 @@ const EventColorChangeCard = ({ event, isActive, index }: EventColorChangeCardPr
         </div>
 
         <div>
-           <div className="flex justify-between items-end mb-2">
-            <h4 className="flex flex-wrap">
-              {event.name.split("").map((letter, i) => (
-                <AnimatedLetter letter={letter === " " ? "\u00A0" : letter} key={i} />
-              ))}
+          <div className="flex justify-between items-end mb-2">
+            <h4 className="text-xl md:text-2xl font-bold">
+              {event.name}
             </h4>
             <div className="text-right">
               <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-neutral-300">Reward</p>
