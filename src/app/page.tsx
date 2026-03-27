@@ -289,7 +289,13 @@ export default function Home() {
         className="min-h-screen flex flex-col relative overflow-hidden snap-start"
       >
         {/* Modern Black Header inspired by attached image */}
-        <div className="bg-black text-white flex-1 flex flex-col justify-center px-6 md:px-10">
+        <div className="relative text-white flex-1 flex flex-col justify-center px-6 md:px-10 bg-[#07090c]">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(32,140,210,0.35),transparent_70%)]"></div>
+            <div className="absolute right-[-12%] top-[-10%] h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(28,180,140,0.28),transparent_68%)]"></div>
+            <div className="absolute bottom-[-15%] left-1/3 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(20,120,160,0.22),transparent_70%)]"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.4)_0%,rgba(0,0,0,0.6)_45%,rgba(0,0,0,0.85)_100%)]"></div>
+          </div>
           <div className="max-w-4xl mx-auto w-full">
             <div className="flex items-center justify-between mb-8">
               <UserAvatar
@@ -446,14 +452,14 @@ export default function Home() {
               <EventFocusMap events={mapEvents} activeEventId={activeMapEventId} />
             </section>
 
-            <section className="min-w-0 space-y-3 lg:space-y-5">
+            <section className="min-w-0 space-y-3 lg:space-y-5 mt-4 lg:mt-0">
               {filteredEvents.map((event, index) => (
                 <div
                   key={event.id}
                   ref={(node) => {
                     cardRefs.current[event.id] = node;
                   }}
-                  className="min-w-0 snap-start snap-always scroll-mt-28 lg:scroll-mt-0 py-1 lg:py-0"
+                  className="min-w-0 snap-start snap-always scroll-mt-[18rem] md:scroll-mt-28 lg:scroll-mt-0 py-1 lg:py-0"
                 >
                   <div className="w-full">
                     <EventColorChangeCard

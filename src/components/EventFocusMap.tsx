@@ -120,8 +120,7 @@ export default function EventFocusMap({ events, activeEventId }: EventFocusMapPr
       <div className="relative overflow-hidden rounded-[1.5rem] border border-black/12">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] flex items-start justify-between p-5 md:p-6">
           <div className="max-w-md">
-            <h3 className="text-xl font-bold text-white drop-shadow md:text-3xl">{activeEvent.name}</h3>
-            <p className="mt-1 text-sm text-white/80 md:text-base">
+            <p className="text-sm text-white/80 md:text-base">
               {activeEvent.locationName} {"\u2022"} {activeEvent.category}
             </p>
           </div>
