@@ -84,7 +84,6 @@ class AuthService {
       if (response.data is String) {
         throw Exception(
           'Server returned a non-JSON response (type: String). '
-          'This usually means the backend redirected instead of returning JSON. '
           'Raw response: ${response.data.toString().substring(0, (response.data as String).length.clamp(0, 300))}',
         );
       }
@@ -100,6 +99,24 @@ class AuthService {
     } catch (e) {
       debugPrint('=== Unknown error in googleAuthCallback: $e');
       rethrow;
+    }
+  }
+
+  /// Mobile-specific: verifies an ID token directly with the backend.
+  /// No redirect_uri or server auth code exchange needed.
+  Future<Map<String, dynamic>> googleMobileAuth(String idToken) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.googleMobileAuth,
+        data: {'id_token': idToken},
+      );
+      debugPrint('=== googleMobileAuth Response ===');
+      debugPrint('Status: ${response.statusCode}');
+      debugPrint('Data: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      debugPrint('=== DioException in googleMobileAuth: ${e.response?.data}');
+      throw _handleError(e);
     }
   }
 

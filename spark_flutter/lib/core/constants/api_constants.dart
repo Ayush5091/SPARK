@@ -5,6 +5,7 @@ class ApiConstants {
   // Auth
   static const String adminLogin = '/api/auth/admin/login';
   static const String googleCallback = '/api/auth/google/callback';
+  static const String googleMobileAuth = '/api/auth/google/mobile';
   static const String register = '/api/auth/register';
   
   // Student

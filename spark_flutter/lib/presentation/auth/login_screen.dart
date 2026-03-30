@@ -169,25 +169,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleGoogleSignIn() async {
     try {
-      // Force sign out first to guarantee Android gives us a fresh serverAuthCode
+      // Force sign out first to guarantee a fresh idToken
       await _googleSignIn.signOut();
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) return;
 
-      // serverAuthCode lives on the account object, NOT on account.authentication
-      final serverAuthCode = account.serverAuthCode;
-      if (serverAuthCode == null) {
-        throw Exception('Server auth code not found. Make sure the Android OAuth client is registered in Google Cloud Console with the correct SHA-1 and package name.');
+      // Get the ID token — this is the correct mobile approach.
+      // ID tokens are directly verifiable by the backend, no redirect_uri needed.
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        throw Exception('Google Sign-In failed: no ID token received. Make sure the serverClientId is set correctly.');
       }
-      
+
       setState(() => _isLoading = true);
-      
-      final result = await _authService.googleAuthCallback(serverAuthCode);
-      
+
+      final result = await _authService.googleMobileAuth(idToken);
+
+      if (!mounted) return;
       if (result.containsKey('access_token')) {
         await _authRepository.saveToken(result['access_token']);
         final role = result['role'] ?? 'student';
-        
+
         final onboardingComplete = await _authRepository.isOnboardingComplete();
         if (!onboardingComplete) {
           context.go(RouteNames.onboarding);
@@ -195,14 +198,15 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go(role == 'admin' ? RouteNames.adminDashboard : RouteNames.studentHome);
         }
       } else if (result.containsKey('register_token')) {
-        context.push('${RouteNames.register}?token=${result['register_token']}&name=${account.displayName}&photo=${account.photoUrl}');
+        context.push('${RouteNames.register}?token=${result['register_token']}&name=${Uri.encodeComponent(account.displayName ?? '')}&photo=${Uri.encodeComponent(account.photoUrl ?? '')}');
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sign in failed: ${e.toString()}')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
