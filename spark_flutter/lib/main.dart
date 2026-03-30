@@ -7,17 +7,14 @@ import 'routes/app_router.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Set system UI style for immersive experience
+  // Immersive edge-to-edge UI
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
+    const SystemUIOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
-  
-  // Ensure the app spans full screen
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   runApp(
@@ -32,11 +29,13 @@ class SparkApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(AppRouter.routerProvider);
+
     return MaterialApp.router(
-      title: 'SPARK AICTE',
+      title: 'SPARK',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      routerConfig: AppRouter.router,
+      routerConfig: router,
     );
   }
 }

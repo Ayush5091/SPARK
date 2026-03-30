@@ -15,38 +15,41 @@ class SparkErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.error_outline,
-            color: AppColors.error,
-            size: 64,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: AppColors.error,
+              size: 64,
             ),
-          ),
-          if (onRetry != null) ...[
-            const SizedBox(height: 32),
-            SparkButton(
-              label: "Try Again",
-              variant: SparkButtonVariant.secondary,
-              onPressed: onRetry,
-              width: 200,
+            const SizedBox(height: 24),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 32),
+              SparkButton(
+                label: "Try Again",
+                variant: SparkButtonVariant.secondary,
+                onPressed: onRetry,
+                width: 200,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
+
 // Fixed naming conflict with Flutter's ErrorWidget
 typedef SparkError = SparkErrorWidget;
