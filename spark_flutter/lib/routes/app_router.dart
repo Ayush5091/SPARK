@@ -34,7 +34,7 @@ class AppRouter {
         }
 
         if (authState.status == AuthStatus.authenticated && isLoggingIn) {
-          return authState.role == 'admin' ? RouteNames.adminHome : RouteNames.studentHome;
+          return authState.role == 'admin' ? RouteNames.adminDashboard : RouteNames.studentHome;
         }
 
         return null;
@@ -106,7 +106,7 @@ class AppRouter {
           builder: (context, state, child) => MainAdminShell(child: child),
           routes: [
             GoRoute(
-              path: RouteNames.adminHome,
+              path: RouteNames.adminDashboard,
               builder: (context, state) => const AdminDashboardScreen(),
             ),
             GoRoute(

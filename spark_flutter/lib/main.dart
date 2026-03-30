@@ -9,7 +9,7 @@ void main() {
   
   // Immersive edge-to-edge UI
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.light,

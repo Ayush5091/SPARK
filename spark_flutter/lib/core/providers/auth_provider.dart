@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/repositories/auth_repository.dart';
+import '../../data/repositories/auth_repository.dart';
 
 enum AuthStatus { authenticated, unauthenticated, checking }
 

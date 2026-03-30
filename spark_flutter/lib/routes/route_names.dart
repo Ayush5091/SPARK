@@ -15,7 +15,7 @@ class RouteNames {
   static const studentProfile = '/student/profile';
   
   // Admin routes
-  static const adminHome = '/admin/dashboard';
+  static const adminDashboard = '/admin/dashboard';
   static const adminEvents = '/admin/events';
   static const createEvent = '/admin/create-event';
   static const adminSubmissions = '/admin/submissions';
