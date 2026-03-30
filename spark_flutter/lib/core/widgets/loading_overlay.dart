@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
-// TODO: Implement lib/core/widgets/loading_overlay.dart
 class LoadingOverlay extends StatelessWidget {
   const LoadingOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('LoadingOverlay')), body: const Center(child: Text('LoadingOverlay')));
+    return Container(
+      color: Colors.black54,
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary,
+        ),
+      ),
+    );
   }
 }

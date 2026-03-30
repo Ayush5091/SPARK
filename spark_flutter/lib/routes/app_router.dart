@@ -26,7 +26,14 @@ class AppRouter {
       ),
       GoRoute(
         path: RouteNames.register,
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) {
+          final queryParams = state.uri.queryParameters;
+          return RegisterScreen(
+            registerToken: queryParams['token'] ?? '',
+            name: queryParams['name'] ?? '',
+            photoUrl: queryParams['photo'],
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.studentHome,
