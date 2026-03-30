@@ -19,8 +19,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // TODO: Add your Google OAuth server client ID here
-    serverClientId: 'YOUR_SERVER_CLIENT_ID',
+    serverClientId: '452620927260-ijiu5lrf229hqpfnt3r6opk1scii5qqk.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
   
@@ -170,17 +169,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleGoogleSignIn() async {
     try {
+      // Force sign out first to guarantee Android gives us a fresh serverAuthCode
+      await _googleSignIn.signOut();
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) return;
-      
-      final auth = await account.authentication;
-      if (auth.serverAuthCode == null) {
-        throw Exception("Server auth code not found");
+
+      // serverAuthCode lives on the account object, NOT on account.authentication
+      final serverAuthCode = account.serverAuthCode;
+      if (serverAuthCode == null) {
+        throw Exception('Server auth code not found. Make sure the Android OAuth client is registered in Google Cloud Console with the correct SHA-1 and package name.');
       }
       
       setState(() => _isLoading = true);
       
-      final result = await _authService.googleAuthCallback(auth.serverAuthCode!);
+      final result = await _authService.googleAuthCallback(serverAuthCode);
       
       if (result.containsKey('access_token')) {
         await _authRepository.saveToken(result['access_token']);
