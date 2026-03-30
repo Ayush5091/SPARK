@@ -71,12 +71,35 @@ class AuthService {
     try {
       final response = await _dio.get(
         ApiConstants.googleCallback,
-        queryParameters: {'code': serverAuthCode},
+        queryParameters: {'code': serverAuthCode, 'source': 'mobile'},
       );
+
+      // Diagnostic: log raw response to debug type mismatch
+      debugPrint('=== Google Callback Response ===');
+      debugPrint('Status: ${response.statusCode}');
+      debugPrint('Data type: ${response.data.runtimeType}');
+      debugPrint('Data: ${response.data}');
+
+      // If Dio followed a redirect and got back HTML/string, catch it gracefully
+      if (response.data is String) {
+        throw Exception(
+          'Server returned a non-JSON response (type: String). '
+          'This usually means the backend redirected instead of returning JSON. '
+          'Raw response: ${response.data.toString().substring(0, (response.data as String).length.clamp(0, 300))}',
+        );
+      }
+
       // Returns {access_token, role: 'student'} or {register_token: token}
-      return response.data;
-    } catch (e) {
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      debugPrint('=== DioException in googleAuthCallback ===');
+      debugPrint('Status: ${e.response?.statusCode}');
+      debugPrint('Response data: ${e.response?.data}');
+      debugPrint('Message: ${e.message}');
       throw _handleError(e);
+    } catch (e) {
+      debugPrint('=== Unknown error in googleAuthCallback: $e');
+      rethrow;
     }
   }
 
