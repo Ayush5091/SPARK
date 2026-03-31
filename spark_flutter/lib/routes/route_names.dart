@@ -8,9 +8,8 @@ class RouteNames {
   // Student routes
   static const studentHome = '/student/home';
   static const activityList = '/student/activities';
-  static const requestActivity = '/student/request-activity';
-  static const submitProof = '/student/submit-proof';
-  static const myRequests = '/student/my-requests';
+  static const claimProof = '/student/claim-proof';
+  static const mySubmissions = '/student/my-submissions';
   static const eventCamera = '/student/event-camera';
   static const studentProfile = '/student/profile';
   
@@ -20,4 +19,5 @@ class RouteNames {
   static const createEvent = '/admin/create-event';
   static const adminSubmissions = '/admin/submissions';
   static const adminMore = '/admin/more';
+  static const manageActivities = '/admin/manage-activities';
 }

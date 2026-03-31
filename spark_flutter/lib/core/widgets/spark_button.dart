@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 
-enum SparkButtonVariant { primary, secondary, ghost }
+enum SparkButtonVariant { primary, secondary, ghost, spark }
 
 class SparkButton extends StatefulWidget {
   final String label;
@@ -11,6 +11,8 @@ class SparkButton extends StatefulWidget {
   final SparkButtonVariant variant;
   final double? width;
   final double height;
+  final double borderRadius;
+  final Widget? leading;
 
   const SparkButton({
     super.key,
@@ -20,6 +22,8 @@ class SparkButton extends StatefulWidget {
     this.variant = SparkButtonVariant.primary,
     this.width = double.infinity,
     this.height = 56,
+    this.borderRadius = 16,
+    this.leading,
   });
 
   @override
@@ -44,14 +48,23 @@ class _SparkButtonState extends State<SparkButton> {
         child: Container(
           width: widget.width,
           height: widget.height,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: _buildDecoration(),
-          child: Center(
-            child: widget.isLoading
-                ? _buildLoadingIndicator()
-                : Text(
-                    widget.label,
-                    style: _buildTextStyle(),
-                  ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.leading != null && !widget.isLoading) ...[
+                widget.leading!,
+                const SizedBox(width: 12),
+              ],
+              if (widget.isLoading)
+                _buildLoadingIndicator()
+              else
+                Text(
+                  widget.label,
+                  style: _buildTextStyle(),
+                ),
+            ],
           ),
         ),
       ),
@@ -63,26 +76,25 @@ class _SparkButtonState extends State<SparkButton> {
       case SparkButtonVariant.primary:
         return BoxDecoration(
           color: widget.onPressed == null ? AppColors.textMuted : AppColors.primary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: widget.onPressed != null
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha(51),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : null,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
         );
       case SparkButtonVariant.secondary:
         return BoxDecoration(
-          color: AppColors.cardElevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary, width: 1.5),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: Border.all(
+            color: const Color(0xFF2A2A2A),
+            width: 1.2,
+          ),
         );
       case SparkButtonVariant.ghost:
         return const BoxDecoration(
           color: Colors.transparent,
+        );
+      case SparkButtonVariant.spark:
+        return BoxDecoration(
+          color: widget.onPressed == null ? AppColors.textMuted : AppColors.spark,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
         );
     }
   }
@@ -98,8 +110,11 @@ class _SparkButtonState extends State<SparkButton> {
       case SparkButtonVariant.primary:
         return baseStyle.copyWith(color: AppColors.textInverse);
       case SparkButtonVariant.secondary:
+        return baseStyle.copyWith(color: AppColors.textPrimary);
       case SparkButtonVariant.ghost:
-        return baseStyle.copyWith(color: AppColors.primary);
+        return baseStyle.copyWith(color: AppColors.textSecondary);
+      case SparkButtonVariant.spark:
+        return baseStyle.copyWith(color: AppColors.textInverse);
     }
   }
 
@@ -110,7 +125,7 @@ class _SparkButtonState extends State<SparkButton> {
       child: CircularProgressIndicator(
         strokeWidth: 2.5,
         valueColor: AlwaysStoppedAnimation<Color>(
-          widget.variant == SparkButtonVariant.primary
+          (widget.variant == SparkButtonVariant.primary || widget.variant == SparkButtonVariant.spark)
               ? AppColors.textInverse
               : AppColors.primary,
         ),

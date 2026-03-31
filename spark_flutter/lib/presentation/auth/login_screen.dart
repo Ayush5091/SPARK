@@ -1,259 +1,216 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
-
-import '../../core/widgets/spark_card.dart';
-import '../../data/services/auth_service.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../../core/widgets/spark_button.dart';
 import '../../routes/route_names.dart';
-import 'admin_login_screen.dart';
+import 'package:go_router/go_router.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '452620927260-ijiu5lrf229hqpfnt3r6opk1scii5qqk.apps.googleusercontent.com',
-    scopes: ['email', 'profile'],
-  );
-  
-  final AuthService _authService = AuthService();
-  final AuthRepository _authRepository = AuthRepository();
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.loginBackground,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Dot pattern background
-          Positioned.fill(child: CustomPaint(painter: _DotPatternPainter())),
-          
-          // Top 65% area
-          Column(
-            children: [
-              Expanded(
-                flex: 65,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "SPARK",
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 4,
-                      ),
-                    ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.2, end: 0),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Let's go",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const _SparkLogoHexagon()
-                            .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                            .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 2.seconds, curve: Curves.easeInOut)
-                            .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.3)),
-                      ],
-                    ).animate().fadeIn(delay: 400.ms, duration: 800.ms).slideY(begin: 0.2, end: 0),
-                  ],
+          // TOP ZONE (65%)
+          Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.65,
+            color: AppColors.loginBackground,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: HexagonGridPainter(),
+                  ),
                 ),
-              ),
-              
-              // Bottom 35% area
-              Expanded(
-                flex: 35,
-                child: Hero(
-                  tag: 'login_bottom_sheet',
-                  child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(28),
-                      topRight: Radius.circular(28),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildAuthButton(
-                        label: "Continue with Google",
-                        iconPath: 'assets/google_logo.png', // Assuming asset exists
-                        onTap: _handleGoogleSignIn,
-                        isGoogle: true,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildAuthButton(
-                        label: "Admin Login",
-                        icon: Icons.lock_outline,
-                        onTap: _showAdminLogin,
-                      ),
-                      const Spacer(),
-                      const Text(
-                        "SPARK • Sahyadri College",
-                        style: TextStyle(
-                          color: AppColors.primaryMuted,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ),
-                ).animate().slideY(begin: 1.0, end: 0, duration: 800.ms, curve: Curves.easeOutCubic),
-              ),
-            ],
+                _buildHeroContent(),
+              ],
+            ),
           ),
           
-          if (_isLoading)
-            const Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black45,
-                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAuthButton({
-    required String label,
-    IconData? icon,
-    String? iconPath,
-    required VoidCallback onTap,
-    bool isGoogle = false,
-  }) {
-    return SparkCard(
-      onTap: onTap,
-      padding: 16,
-      radius: 16,
-      child: Row(
-        children: [
-          if (isGoogle)
-            const Text("G", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))
-          else if (icon != null)
-            Icon(icon, color: AppColors.textSecondary, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isGoogle ? Colors.white : AppColors.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          // BOTTOM ZONE (35%)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildBottomZone(),
           ),
         ],
       ),
     );
   }
 
-  void _handleGoogleSignIn() async {
-    try {
-      // Force sign out first to guarantee a fresh idToken
-      await _googleSignIn.signOut();
-      final GoogleSignInAccount? account = await _googleSignIn.signIn();
-      if (account == null) return;
-
-      // Get the ID token — this is the correct mobile approach.
-      // ID tokens are directly verifiable by the backend, no redirect_uri needed.
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) {
-        throw Exception('Google Sign-In failed: no ID token received. Make sure the serverClientId is set correctly.');
-      }
-
-      setState(() => _isLoading = true);
-
-      final result = await _authService.googleMobileAuth(idToken);
-
-      if (!mounted) return;
-      if (result.containsKey('access_token')) {
-        await _authRepository.saveToken(result['access_token']);
-        final role = result['role'] ?? 'student';
-
-        final onboardingComplete = await _authRepository.isOnboardingComplete();
-        if (!onboardingComplete) {
-          context.go(RouteNames.onboarding);
-        } else {
-          context.go(role == 'admin' ? RouteNames.adminDashboard : RouteNames.studentHome);
-        }
-      } else if (result.containsKey('register_token')) {
-        context.push('${RouteNames.register}?token=${result['register_token']}&name=${Uri.encodeComponent(account.displayName ?? '')}&photo=${Uri.encodeComponent(account.photoUrl ?? '')}');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed: ${e.toString()}')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _showAdminLogin() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AdminLoginScreen(),
+  Widget _buildHeroContent() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "SPARK",
+            style: GoogleFonts.poppins(
+              color: AppColors.spark,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 6,
+            ),
+          ).animate().fadeIn(delay: 200.ms),
+          const SizedBox(height: 20),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: "Let's go",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 38,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: AppColors.spark,
+                        shape: BoxShape.circle,
+                      ),
+                    ).animate(onPlay: (c) => c.repeat())
+                     .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 1200.ms, curve: Curves.easeInOut)
+                     .then()
+                     .scale(begin: const Offset(1.15, 1.15), end: const Offset(1, 1), duration: 1200.ms),
+                  ),
+                ),
+              ],
+            ),
+          ).animate()
+           .fadeIn(duration: 600.ms)
+           .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic, duration: 800.ms),
+        ],
+      ),
     );
   }
-}
 
-class _SparkLogoHexagon extends StatelessWidget {
-  const _SparkLogoHexagon();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildBottomZone() {
     return Container(
-      width: 40,
-      height: 40,
+      width: double.infinity,
+      height: MediaQuery.of(context).size.height * 0.35,
+      padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
       decoration: const BoxDecoration(
-        color: AppColors.primary,
-        shape: BoxShape.circle, // Simplified hexagon for now
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
       ),
-      child: const Center(
-        child: Icon(Icons.bolt, color: Colors.black, size: 24),
+      child: Column(
+        children: [
+          SparkButton(
+            label: "Continue with Google",
+            variant: SparkButtonVariant.spark,
+            height: 58,
+            borderRadius: 16,
+            leading: _buildGoogleIcon(),
+            isLoading: _isLoading,
+            onPressed: () async {
+              setState(() => _isLoading = true);
+              await Future.delayed(const Duration(milliseconds: 1500));
+              if (mounted) context.go(RouteNames.studentHome);
+            },
+          ),
+          const SizedBox(height: 14),
+          SparkButton(
+            label: "Admin Login",
+            variant: SparkButtonVariant.secondary,
+            height: 54,
+            borderRadius: 16,
+            leading: const Icon(Icons.lock_outline, size: 18, color: AppColors.textSecondary),
+            onPressed: () => context.push(RouteNames.adminDashboard),
+          ),
+          const Spacer(),
+          Text(
+            "SPARK · Sahyadri College of Engineering",
+            style: GoogleFonts.poppins(
+              color: AppColors.textMuted,
+              fontSize: 10,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
+      ),
+    ).animate()
+     .slideY(begin: 1.0, end: 0, duration: 800.ms, curve: Curves.elasticOut);
+  }
+
+  Widget _buildGoogleIcon() {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        "G",
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
 
-class _DotPatternPainter extends CustomPainter {
+class HexagonGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primaryDark.withOpacity(0.05)
-      ..strokeWidth = 2;
-    
-    const double spacing = 24.0;
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), 1.5, paint);
+      ..color = const Color(0xFF1E2E0A)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    const double radius = 35;
+    final double hexWidth = radius * math.sqrt(3);
+    final double hexHeight = radius * 1.5;
+
+    for (double y = 0; y < size.height + hexHeight; y += hexHeight) {
+      bool isOdd = (y / hexHeight).round() % 2 != 0;
+      double xOffset = isOdd ? hexWidth / 2 : 0;
+      for (double x = -hexWidth; x < size.width + hexWidth; x += hexWidth) {
+        _drawHexagon(canvas, Offset(x + xOffset, y), radius, paint);
       }
     }
   }
 
+  void _drawHexagon(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      double angle = (i * 60 - 30) * math.pi / 180;
+      double x = center.dx + radius * math.cos(angle);
+      double y = center.dy + radius * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

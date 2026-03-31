@@ -14,6 +14,7 @@ class SparkTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onEditingComplete;
   final FormFieldValidator<String>? validator;
+  final int maxLines;
 
   const SparkTextField({
     super.key,
@@ -28,6 +29,7 @@ class SparkTextField extends StatefulWidget {
     this.onChanged,
     this.onEditingComplete,
     this.validator,
+    this.maxLines = 1,
   });
 
   @override
@@ -55,6 +57,7 @@ class _SparkTextFieldState extends State<SparkTextField> {
           controller: widget.controller,
           obscureText: widget.isPassword ? _obscureText : false,
           keyboardType: widget.keyboardType,
+          maxLines: widget.isPassword ? 1 : widget.maxLines,
           onChanged: widget.onChanged,
           onEditingComplete: widget.onEditingComplete,
           validator: widget.validator,

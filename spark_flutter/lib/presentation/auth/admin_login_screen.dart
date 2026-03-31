@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/spark_button.dart';
 import '../../core/widgets/spark_text_field.dart';
 import '../../data/services/auth_service.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../routes/route_names.dart';
 import 'package:go_router/go_router.dart';
 
-class AdminLoginScreen extends StatefulWidget {
+class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
 
   @override
-  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+  ConsumerState<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _AdminLoginScreenState extends State<AdminLoginScreen> {
+class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
-  final _authRepository = AuthRepository();
   bool _isLoading = false;
   bool _showError = false;
 
@@ -118,8 +118,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         _emailController.text,
         _passwordController.text,
       );
-      
-      await _authRepository.saveToken(token);
+
+      await ref.read(authProvider.notifier).signInWithToken(
+        token,
+        role: 'admin',
+      );
       
       if (mounted) {
         context.pop(); // Close bottom sheet

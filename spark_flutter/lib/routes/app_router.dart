@@ -11,11 +11,16 @@ import '../presentation/student/home/student_home_screen.dart';
 import '../presentation/student/profile/student_profile_screen.dart';
 import '../presentation/admin/home/admin_dashboard_screen.dart';
 import '../presentation/admin/events/admin_events_screen.dart';
+import '../presentation/admin/events/create_event_screen.dart';
 import '../presentation/admin/submissions/admin_submissions_screen.dart';
 import '../presentation/admin/more/admin_more_screen.dart';
-import '../presentation/shared/shells.dart';
+import '../presentation/student/activity/activity_list_screen.dart';
+import '../presentation/student/activity/claim_proof_screen.dart';
+import '../presentation/student/activity/my_submissions_screen.dart';
+import '../presentation/shared/main_student_shell.dart';
+import '../presentation/shared/main_admin_shell.dart';
+import '../presentation/admin/more/manage_activities_screen.dart';
 
-// Import newly requested screens too
 class AppRouter {
   static final routerProvider = Provider<GoRouter>((ref) {
     final authState = ref.watch(authProvider);
@@ -70,11 +75,39 @@ class AppRouter {
           routes: [
             GoRoute(
               path: RouteNames.studentHome,
-              builder: (context, state) => const StudentHomeScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const StudentHomeScreen(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: animation.drive(
+                      Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                    ),
+                    child: child,
+                  );
+                },
+              ),
             ),
             GoRoute(
               path: RouteNames.studentProfile,
-              builder: (context, state) => const StudentProfileScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const StudentProfileScreen(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: animation.drive(
+                      Tween<Offset>(
+                        begin: const Offset(-1, 0),
+                        end: Offset.zero,
+                      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                    ),
+                    child: child,
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -82,19 +115,18 @@ class AppRouter {
         // Private Student non-shell routes
         GoRoute(
           path: RouteNames.activityList,
-          builder: (context, state) => const Scaffold(body: Center(child: Text("Activities Screen"))),
+          builder: (context, state) => const ActivityListScreen(),
         ),
         GoRoute(
-          path: RouteNames.requestActivity,
-          builder: (context, state) => const Scaffold(body: Center(child: Text("Request Activity"))),
+          path: RouteNames.claimProof,
+          builder: (context, state) {
+            final activityJson = state.uri.queryParameters['activity'];
+            return ClaimProofScreen(activityJson: activityJson);
+          },
         ),
         GoRoute(
-          path: RouteNames.submitProof,
-          builder: (context, state) => const Scaffold(body: Center(child: Text("Submit Proof"))),
-        ),
-        GoRoute(
-          path: RouteNames.myRequests,
-          builder: (context, state) => const Scaffold(body: Center(child: Text("My Requests"))),
+          path: RouteNames.mySubmissions,
+          builder: (context, state) => const MySubmissionsScreen(),
         ),
         GoRoute(
           path: RouteNames.eventCamera,
@@ -121,12 +153,16 @@ class AppRouter {
               path: RouteNames.adminMore,
               builder: (context, state) => const AdminMoreScreen(),
             ),
+            GoRoute(
+              path: RouteNames.manageActivities,
+              builder: (context, state) => const ManageActivitiesScreen(),
+            ),
           ],
         ),
 
         GoRoute(
           path: RouteNames.createEvent,
-          builder: (context, state) => const Scaffold(body: Center(child: Text("Create Event"))),
+          builder: (context, state) => const CreateEventScreen(),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(

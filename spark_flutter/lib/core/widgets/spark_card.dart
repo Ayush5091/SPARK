@@ -26,11 +26,10 @@ class SparkCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
-          gradient: gradient ??
-              (accentCard ? AppColors.accentCardGradient : AppColors.cardGradient),
+          gradient: gradient ?? AppColors.cardGradient,
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(
-            color: AppColors.border,
+            color: AppColors.cardBorder,
             width: 0.5,
           ),
           boxShadow: [

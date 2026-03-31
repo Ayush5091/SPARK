@@ -20,6 +20,10 @@ class ApiConstants {
   static const String myActivityRequests = '/api/activity-requests/me';
   static const String submissions = '/api/submissions';
   static const String mySubmissions = '/api/submissions/me';
+
+  // Direct Claims (new flow)
+  static const String directClaims = '/api/direct-claims';
+  static const String myDirectClaims = '/api/direct-claims/me';
   
   // Events
   static const String events = '/api/events';

@@ -11,9 +11,7 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.textInverse,
         surface: AppColors.surface,
@@ -35,8 +33,10 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: AppColors.spark,
         unselectedItemColor: AppColors.textMuted,
+        selectedIconTheme: IconThemeData(color: AppColors.spark),
+        unselectedIconTheme: IconThemeData(color: AppColors.textMuted),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
@@ -47,6 +47,24 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(20)),
           side: BorderSide(color: AppColors.border, width: 0.5),
         ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.textPrimary,
+        unselectedLabelColor: AppColors.textMuted,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: AppColors.textPrimary, width: 2),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.card,
+        selectedColor: AppColors.primary,
+        secondarySelectedColor: AppColors.primary,
+        labelStyle: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+        secondaryLabelStyle: const TextStyle(color: AppColors.textInverse, fontSize: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: const BorderSide(color: Colors.transparent),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -63,31 +81,18 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.spark, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textInverse,
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-          elevation: 0,
-        ),
-      ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.cardElevated,
+        backgroundColor: Color(0xFF1E1E1E),
         contentTextStyle: TextStyle(color: AppColors.textPrimary),
         behavior: SnackBarBehavior.floating,
       ),
-
     );
   }
 }
