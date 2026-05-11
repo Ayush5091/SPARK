@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/contexts/AuthContext";
-import UserAvatar from "@/components/UserAvatar";
+import { motion } from "framer-motion";
 import EventCreateModal from "@/components/EventCreateModal";
 
 export default function AdminEventsManager() {
@@ -207,55 +206,59 @@ export default function AdminEventsManager() {
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark">
-            <header className="sticky top-0 z-30 border-b border-gray-100/80 bg-white/85 px-6 py-4 backdrop-blur-xl dark:border-gray-800/80 dark:bg-[#0f1115]/85 md:px-10 md:py-5">
-                <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-center gap-4">
-                        <UserAvatar name={user?.name || "Admin"} className="w-12 h-12 text-xl shadow-lg bg-black text-white dark:bg-white dark:text-black" />
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-gray-400">Admin Portal</p>
-                            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Event Manager</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Create, duplicate, and tune events without crowding the review dashboard.</p>
-                        </div>
+            <motion.div
+                className="px-6 lg:px-10 pt-8 pb-4"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+                <div className="mx-auto max-w-7xl flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Events</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create, duplicate, and manage events.</p>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-                        >
-                            <span className="material-icons-outlined text-lg">dashboard</span>
-                            Dashboard
-                        </Link>
-                        <button
-                            onClick={() => openCreateEventModal()}
-                            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark"
-                        >
-                            <span className="material-icons-outlined text-lg">add</span>
-                            Create Event
-                        </button>
-                    </div>
+                    <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => openCreateEventModal()}
+                        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark"
+                    >
+                        <span className="material-icons-outlined text-lg">add</span>
+                        Create Event
+                    </motion.button>
                 </div>
-            </header>
+            </motion.div>
 
-            <main className="mx-auto w-full max-w-7xl px-6 py-8 md:px-10 lg:py-10">
-                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#121212]">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total events</p>
-                        <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{totalEvents}</p>
-                    </div>
-                    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#121212]">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Active now</p>
-                        <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{activeEvents}</p>
-                    </div>
-                    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#121212]">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Live now</p>
-                        <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{liveEvents}</p>
-                    </div>
-                    <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#121212]">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Capacity pressure</p>
-                        <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{capacityLimitedEvents}</p>
-                    </div>
-                </section>
+            <main className="mx-auto w-full max-w-7xl px-6 py-4 md:px-10 lg:py-6">
+                <motion.section
+                    className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+                    initial="hidden" animate="show"
+                    variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
+                >
+                    {[
+                        { label: "Total events", value: totalEvents },
+                        { label: "Active now", value: activeEvents },
+                        { label: "Live now", value: liveEvents },
+                        { label: "Capacity pressure", value: capacityLimitedEvents },
+                    ].map(stat => (
+                        <motion.div
+                            key={stat.label}
+                            variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}
+                            whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}
+                            className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#121212] cursor-default"
+                        >
+                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{stat.label}</p>
+                            <motion.p
+                                key={stat.value}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-2 text-3xl font-bold text-gray-900 dark:text-white"
+                            >
+                                {stat.value}
+                            </motion.p>
+                        </motion.div>
+                    ))}
+                </motion.section>
 
                 <section className="mt-6 rounded-3xl border border-gray-100 bg-white/90 p-6 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#121212]">
                     <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
@@ -313,13 +316,6 @@ export default function AdminEventsManager() {
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Event catalog</h2>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Open any event to edit capacity or duplicate it into a new event.</p>
                         </div>
-                        <Link
-                            href="/"
-                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-                        >
-                            <span className="material-icons-outlined text-lg">arrow_back</span>
-                            Back to dashboard
-                        </Link>
                     </div>
 
                     {isLoadingEvents ? (
@@ -350,11 +346,16 @@ export default function AdminEventsManager() {
                                 const capacityUsage = capacityLimit ? Math.min(100, (participants / capacityLimit) * 100) : Math.min(100, Number(event.participation_rate || 0));
 
                                 return (
-                                    <button
+                                    <motion.button
                                         key={event.id}
                                         type="button"
+                                        initial={{ opacity: 0, y: 16 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                        whileHover={{ y: -4, boxShadow: "0 12px 32px rgba(0,0,0,0.08)" }}
+                                        whileTap={{ scale: 0.99 }}
                                         onClick={() => openEventSettings(event)}
-                                        className="group rounded-3xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-lg dark:border-gray-800 dark:bg-[#121212]"
+                                        className="group rounded-3xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-colors hover:border-primary/20 dark:border-gray-800 dark:bg-[#121212]"
                                     >
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex min-w-0 items-center gap-4">
@@ -400,7 +401,7 @@ export default function AdminEventsManager() {
                                             <span>{event.is_ongoing ? "Live now" : event.is_upcoming ? "Scheduled" : "Completed"}</span>
                                             <span>Open settings for capacity edits or duplication</span>
                                         </div>
-                                    </button>
+                                    </motion.button>
                                 );
                             })}
                         </div>

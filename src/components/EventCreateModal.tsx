@@ -79,13 +79,31 @@ const createDefaultFormData = (seed?: any | null) => {
   };
 };
 
+const SAVED_LOCATIONS_KEY = 'spark_admin_saved_locations';
+
+function getSavedLocations(): typeof popularLocations {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_LOCATIONS_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveSavedLocations(locations: typeof popularLocations) {
+  localStorage.setItem(SAVED_LOCATIONS_KEY, JSON.stringify(locations));
+}
+
 export default function EventCreateModal({ isOpen, onClose, onEventCreated, initialEvent }: EventCreateModalProps) {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [savedLocations, setSavedLocations] = useState<typeof popularLocations>([]);
 
   const [formData, setFormData] = useState(() => createDefaultFormData());
+
+  useEffect(() => {
+    setSavedLocations(getSavedLocations());
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,6 +112,23 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
     setShowLocationPicker(false);
     setShowMap(Boolean(initialEvent?.latitude && initialEvent?.longitude));
   }, [isOpen, initialEvent]);
+
+  const handleSaveCurrentLocation = () => {
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+    if (!formData.location_name || isNaN(lat) || isNaN(lng)) return;
+    const loc = { name: formData.location_name, lat, lng };
+    const existing = getSavedLocations().filter(l => l.name !== loc.name);
+    const updated = [loc, ...existing].slice(0, 10);
+    saveSavedLocations(updated);
+    setSavedLocations(updated);
+  };
+
+  const handleDeleteSavedLocation = (name: string) => {
+    const updated = getSavedLocations().filter(l => l.name !== name);
+    saveSavedLocations(updated);
+    setSavedLocations(updated);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -424,6 +459,30 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
                 {/* Quick Location Picker */}
                 {showLocationPicker && (
                   <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800">
+                    {savedLocations.length > 0 && (
+                      <>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          <span className="material-symbols-outlined text-sm align-middle mr-1">bookmark</span>
+                          My Saved Locations
+                        </p>
+                        <div className="grid grid-cols-1 gap-2 mb-4">
+                          {savedLocations.map((loc, idx) => (
+                            <div key={`saved-${idx}`} className="flex items-center gap-2">
+                              <button type="button" onClick={() => handleLocationSelect(loc)}
+                                className="flex-1 text-left p-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+                                <div className="font-medium">{loc.name}</div>
+                                <div className="text-xs text-gray-500">{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</div>
+                              </button>
+                              <button type="button" onClick={() => handleDeleteSavedLocation(loc.name)}
+                                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors" title="Remove saved location">
+                                <span className="material-symbols-outlined text-sm">close</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mb-3" />
+                      </>
+                    )}
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Popular Locations:</p>
                     <div className="grid grid-cols-1 gap-2">
                       {popularLocations.map((loc, idx) => (
@@ -441,17 +500,26 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
                   </div>
                 )}
 
-                {/* Manual Location Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location Name *</label>
-                  <input
-                    type="text"
-                    name="location_name"
-                    value={formData.location_name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="e.g., Convention Center"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="location_name"
+                      value={formData.location_name}
+                      onChange={handleInputChange}
+                      className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      placeholder="e.g., Convention Center"
+                    />
+                    {formData.location_name && formData.latitude && formData.longitude && (
+                      <button type="button" onClick={handleSaveCurrentLocation}
+                        className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors whitespace-nowrap"
+                        title="Save this location for quick reuse">
+                        <span className="material-symbols-outlined text-sm align-middle mr-1">bookmark_add</span>
+                        Save
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {(!showMap && !showLocationPicker) && (

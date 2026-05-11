@@ -9,26 +9,55 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'pending_review';
     const eventId = searchParams.get('event_id');
+    const category = searchParams.get('category');
+    const dateFrom = searchParams.get('date_from');
+    const dateTo = searchParams.get('date_to');
 
     let queryStr = `
             SELECT es.id, es.student_id, es.event_id, es.status,
               es.submitted_at, es.verification_result, es.photo_metadata,
-              es.points_awarded,
+              es.points_awarded, es.review_notes,
              s.name as student_name, s.email as student_email, s.usn, s.department as student_department,
-             e.name as event_name, e.points as event_points,
+             s.total_points as student_total_points,
+             e.name as event_name, e.points as event_points, e.category as event_category,
              e.latitude as event_latitude, e.longitude as event_longitude,
              e.location_name, e.start_time, e.end_time
       FROM event_submissions es
       JOIN students s ON es.student_id = s.id
       JOIN events e ON es.event_id = e.id
-      WHERE es.status = $1
     `;
 
-    const params: any[] = [status];
+    const params: any[] = [];
+    const conditions: string[] = [];
+
+    // Status filter: 'all' fetches everything, otherwise filter by status
+    if (status !== 'all') {
+      params.push(status);
+      conditions.push(`es.status = $${params.length}`);
+    }
 
     if (eventId) {
       params.push(eventId);
-      queryStr += ` AND es.event_id = $${params.length}`;
+      conditions.push(`es.event_id = $${params.length}`);
+    }
+
+    if (category) {
+      params.push(category);
+      conditions.push(`e.category = $${params.length}`);
+    }
+
+    if (dateFrom) {
+      params.push(dateFrom);
+      conditions.push(`es.submitted_at >= $${params.length}::timestamp`);
+    }
+
+    if (dateTo) {
+      params.push(dateTo);
+      conditions.push(`es.submitted_at <= $${params.length}::timestamp`);
+    }
+
+    if (conditions.length > 0) {
+      queryStr += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     queryStr += ` ORDER BY es.submitted_at ASC`;
@@ -43,13 +72,14 @@ export async function GET(request: NextRequest) {
       try {
         verificationResult = submission.verification_result ? JSON.parse(submission.verification_result) : null;
       } catch (e) {
-        console.error('Error parsing verification_result:', e);
+        // Already parsed (JSONB auto-parses in some drivers)
+        verificationResult = submission.verification_result;
       }
 
       try {
         photoMetadata = submission.photo_metadata ? JSON.parse(submission.photo_metadata) : null;
       } catch (e) {
-        console.error('Error parsing photo_metadata:', e);
+        photoMetadata = submission.photo_metadata;
       }
 
       return {

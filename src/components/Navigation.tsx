@@ -21,13 +21,20 @@ export default function Navigation() {
     ];
 
     const adminNavItems = [
-        { label: 'Home', href: '/', icon: 'home' },
+        { label: 'Overview', href: '/', icon: 'dashboard' },
+        { label: 'Review Queue', href: '/admin/queue', icon: 'assignment' },
         { label: 'Events', href: '/admin/events', icon: 'event_note' },
         { label: 'Profile', href: '/profile', icon: 'person' },
     ];
 
     const navItems = user?.role === 'admin' ? adminNavItems : studentNavItems;
-    const gridColsClass = user?.role === 'admin' ? 'grid-cols-3' : 'grid-cols-5';
+    const gridColsClass = user?.role === 'admin' ? 'grid-cols-4' : 'grid-cols-5';
+
+    // For admin, match partial paths (e.g. /admin/queue should match)
+    const isActive = (href: string) => {
+        if (href === '/') return pathname === '/';
+        return pathname.startsWith(href);
+    };
 
     return (
         <>
@@ -35,22 +42,22 @@ export default function Navigation() {
             <nav className="md:hidden fixed inset-x-0 bottom-0 w-full max-w-full bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-2 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-40 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)]">
                 <div className={`relative grid ${gridColsClass} items-center justify-items-center`}>
                     {user?.role === 'admin' ? navItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const active = isActive(item.href);
 
                         return (
-                            <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isActive ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
+                            <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${active ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
                                 <span className="material-icons-outlined text-2xl group-hover:scale-110 transition-transform duration-200 ease-out">{item.icon}</span>
-                                <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                                <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                             </Link>
                         );
                     }) : <>
                         {navItems.slice(0, 2).map((item) => {
-                            const isActive = pathname === item.href;
+                            const active = isActive(item.href);
 
                             return (
-                                <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isActive ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
+                                <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${active ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
                                     <span className="material-icons-outlined text-2xl group-hover:scale-110 transition-transform duration-200 ease-out">{item.icon}</span>
-                                    <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                                    <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                                 </Link>
                             );
                         })}
@@ -58,12 +65,12 @@ export default function Navigation() {
                         <div aria-hidden="true" className="h-1 w-1" />
 
                         {navItems.slice(2).map((item) => {
-                            const isActive = pathname === item.href;
+                            const active = isActive(item.href);
 
                             return (
-                                <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isActive ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
+                                <Link href={item.href} key={item.label} className={`flex flex-col items-center gap-1 group transition-all duration-200 ease-out px-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 ${active ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}>
                                     <span className="material-icons-outlined text-2xl group-hover:scale-110 transition-transform duration-200 ease-out">{item.icon}</span>
-                                    <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                                    <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                                 </Link>
                             );
                         })}
@@ -90,12 +97,12 @@ export default function Navigation() {
                     <h1 className="text-xl font-bold tracking-tight text-primary dark:text-white">SPARK</h1>
                 </div>
 
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 space-y-2">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const active = isActive(item.href);
 
                         return (
-                            <Link href={item.href} key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-subtle-light dark:bg-subtle-dark text-primary dark:text-white font-bold shadow-sm' : 'text-text-muted-light dark:text-text-muted-dark hover:bg-subtle-light/50 hover:text-primary font-medium'}`}>
+                            <Link href={item.href} key={item.label} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? 'bg-subtle-light dark:bg-subtle-dark text-primary dark:text-white font-bold shadow-sm' : 'text-text-muted-light dark:text-text-muted-dark hover:bg-subtle-light/50 hover:text-primary font-medium'}`}>
                                 <span className="material-icons-outlined text-[20px]">{item.icon}</span>
                                 <span className="text-sm">{item.label}</span>
                             </Link>
@@ -105,7 +112,7 @@ export default function Navigation() {
                     {user?.role !== "admin" && (
                         <Link
                             href="/events?new=1"
-                            className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary-dark"
+                            className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary-dark mt-4"
                         >
                             <span className="material-icons-outlined text-lg">add</span>
                             Start Event
