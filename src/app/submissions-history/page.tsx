@@ -17,6 +17,11 @@ export default function SubmissionsHistoryScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        if (user?.role === 'admin') {
+            router.replace('/');
+            return;
+        }
+
         if (!token) return;
 
         const fetchData = async () => {
@@ -123,21 +128,16 @@ export default function SubmissionsHistoryScreen() {
         return { text: 'Unknown', color: 'text-gray-500', dot: 'bg-gray-500' };
     };
 
+    if (user?.role === 'admin') {
+        return null;
+    }
+
     return (
         <div className="flex flex-col min-h-screen">
             <header className="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 md:px-10 pt-10 md:pt-16 pb-4">
                 <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto w-full">
                     <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-text-main dark:text-white">Submissions</h1>
                     <div className="flex items-center gap-4">
-                        {user?.role !== 'admin' && (
-                            <button
-                                onClick={() => router.push('/request-activity')}
-                                className="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-blue-600 transition-colors"
-                            >
-                                <span className="material-symbols-outlined">add</span>
-                                Create Request
-                            </button>
-                        )}
                         <button className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-gray-800 shadow-sm text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-100 dark:border-gray-700">
                             <span className="material-symbols-outlined text-xl md:text-2xl">notifications</span>
                         </button>

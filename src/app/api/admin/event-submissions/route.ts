@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
             SELECT es.id, es.student_id, es.event_id, es.status,
               es.submitted_at, es.verification_result, es.photo_metadata,
               es.points_awarded,
-             s.name as student_name, s.email as student_email, s.usn,
+             s.name as student_name, s.email as student_email, s.usn, s.department as student_department,
              e.name as event_name, e.points as event_points,
              e.latitude as event_latitude, e.longitude as event_longitude,
              e.location_name, e.start_time, e.end_time

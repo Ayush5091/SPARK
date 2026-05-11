@@ -11,8 +11,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Student Activity Dashboard",
-  description: "AICTE Activity Framework",
+  title: "SPARK",
+  description: "SPARK Activity Framework",
 };
 
 export default function RootLayout({

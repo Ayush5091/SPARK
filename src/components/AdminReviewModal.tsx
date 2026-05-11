@@ -27,6 +27,19 @@ export default function AdminReviewModal({
         setPointsInput(defaultPoints?.toString?.() ?? '');
     }, [item]);
 
+    const parseJsonValue = (value: any) => {
+        if (!value || typeof value !== 'string') return value;
+        try {
+            return JSON.parse(value);
+        } catch {
+            return null;
+        }
+    };
+
+    const verificationResult = parseJsonValue(item?.verification_result);
+    const photoMetadata = parseJsonValue(item?.photo_metadata);
+    const canReview = item?.status === 'pending' || item?.status === 'pending_review';
+
     const title = "Verify Activity Proof";
 
     if (!isOpen || !item) return null;
@@ -87,6 +100,48 @@ export default function AdminReviewModal({
                         </div>
                     </div>
 
+                    {(verificationResult || photoMetadata) && (
+                        <div className="space-y-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider uppercase mb-1">Verification Evidence</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Photo metadata and automated checks collected during submission.</p>
+                                </div>
+                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${verificationResult?.isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
+                                    {verificationResult?.isValid ? 'Auto-verified' : 'Manual review'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="rounded-xl border border-white/70 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-3 text-sm">
+                                    <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Capture Metadata</p>
+                                    <div className="space-y-1 text-gray-700 dark:text-gray-300">
+                                        <p>Camera: {photoMetadata?.make || photoMetadata?.model ? [photoMetadata?.make, photoMetadata?.model].filter(Boolean).join(' ') : 'Unavailable'}</p>
+                                        <p>Timestamp: {photoMetadata?.timestamp ? new Date(photoMetadata.timestamp).toLocaleString() : 'Unavailable'}</p>
+                                        <p>Coordinates: {photoMetadata?.latitude && photoMetadata?.longitude ? `${photoMetadata.latitude}, ${photoMetadata.longitude}` : 'Unavailable'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border border-white/70 dark:border-gray-700 bg-white dark:bg-gray-900/70 p-3 text-sm">
+                                    <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Check Summary</p>
+                                    <div className="space-y-1 text-gray-700 dark:text-gray-300">
+                                        <p>Location match: <span className="font-semibold">{verificationResult?.locationMatch ? 'Yes' : 'No'}</span></p>
+                                        <p>Time match: <span className="font-semibold">{verificationResult?.timeMatch ? 'Yes' : 'No'}</span></p>
+                                        <p>Distance from event: <span className="font-semibold">{verificationResult?.distanceFromEvent != null ? `${Math.round(verificationResult.distanceFromEvent)} m` : 'Unavailable'}</span></p>
+                                        <p>Time delta: <span className="font-semibold">{verificationResult?.timeDifferenceMinutes != null ? `${verificationResult.timeDifferenceMinutes} min` : 'Unavailable'}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {verificationResult?.reason && (
+                                <div className="rounded-xl border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/15 p-3 text-sm text-amber-800 dark:text-amber-200">
+                                    <p className="text-xs font-semibold uppercase tracking-wider mb-1">Review Note</p>
+                                    <p>{verificationResult.reason}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Submission Specifics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -127,7 +182,7 @@ export default function AdminReviewModal({
                 </div>
 
                 {/* Actions Footer */}
-                {item.status === 'pending' && (
+                {canReview && (
                     <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col-reverse md:flex-row justify-end gap-3">
                         <button
                             onClick={onClose}

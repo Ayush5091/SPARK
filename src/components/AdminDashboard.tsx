@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import UserAvatar from "@/components/UserAvatar";
 import AdminReviewModal from "@/components/AdminReviewModal";
-import EventCreateModal from "@/components/EventCreateModal";
 
 export default function AdminDashboard() {
     const { user, token } = useAuth();
@@ -12,21 +12,18 @@ export default function AdminDashboard() {
     const [submissions, setSubmissions] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [capacityEdits, setCapacityEdits] = useState<Record<number, string>>({});
-    const [savingCapacityId, setSavingCapacityId] = useState<number | null>(null);
+    const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     // Modal state
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Event creation modal state
-    const [isEventCreateModalOpen, setIsEventCreateModalOpen] = useState(false);
-
-    const fetchData = async () => {
+    const fetchData = async (showLoader = true) => {
         if (!token) return;
         try {
-            setIsLoading(true);
+            if (showLoader) setIsLoading(true);
             const [eventsRes, eventSubsRes] = await Promise.all([
                 fetch('/api/events', { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch('/api/admin/event-submissions?status=pending_review', { headers: { 'Authorization': `Bearer ${token}` } })
@@ -50,13 +47,47 @@ export default function AdminDashboard() {
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         } finally {
-            setIsLoading(false);
+            if (showLoader) setIsLoading(false);
         }
     };
 
     useEffect(() => {
         fetchData();
     }, [token]);
+
+    const availableDepartments = useMemo(() => {
+        const departments = submissions
+            .map((sub) => sub.student_department)
+            .filter((value) => typeof value === "string" && value.trim().length > 0);
+        return Array.from(new Set(departments)).sort();
+    }, [submissions]);
+
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    const filteredSubmissions = useMemo(() => {
+        const byDepartment = departmentFilter === "all"
+            ? submissions
+            : submissions.filter((sub) => sub.student_department === departmentFilter);
+
+        if (!normalizedSearch) return byDepartment;
+
+        return byDepartment.filter((sub) => {
+            const haystack = [
+                sub.student_name,
+                sub.student_department,
+                sub.activity_name,
+                sub.event_name,
+                sub.status,
+                sub.points_awarded,
+                sub.event_points,
+            ]
+                .filter((value) => value !== undefined && value !== null)
+                .join(" ")
+                .toLowerCase();
+
+            return haystack.includes(normalizedSearch);
+        });
+    }, [departmentFilter, submissions, normalizedSearch]);
 
     const handleVerifySubmission = async (id: number, pointsAwarded?: number) => {
         setIsSubmitting(true);
@@ -91,57 +122,6 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleCapacitySave = async (eventId: number) => {
-        const rawValue = capacityEdits[eventId];
-        const capacityValue = rawValue === "" || rawValue === undefined ? null : parseInt(rawValue, 10);
-
-        if (capacityValue !== null && (Number.isNaN(capacityValue) || capacityValue < 1)) {
-            alert("Capacity must be a positive number or left blank.");
-            return;
-        }
-
-        setSavingCapacityId(eventId);
-        try {
-            const res = await fetch(`/api/events/${eventId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ capacity: capacityValue })
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.detail || "Failed to update capacity");
-            }
-
-            setEvents(prev => prev.map(event => event.id === eventId ? { ...event, capacity: capacityValue } : event));
-        } catch (err: any) {
-            alert(err.message || "Failed to update capacity");
-        } finally {
-            setSavingCapacityId(null);
-        }
-    };
-
-    const getEventStatus = (event: any) => {
-        if (event.is_ongoing) return { color: 'bg-green-500', label: 'Active', textColor: 'text-green-600' };
-        if (event.is_upcoming) return { color: 'bg-blue-500', label: 'Upcoming', textColor: 'text-blue-600' };
-        return { color: 'bg-gray-400', label: 'Ended', textColor: 'text-gray-500' };
-    };
-
-    const getCategoryIcon = (category: string) => {
-        switch (category?.toLowerCase()) {
-            case 'cultural': return 'palette';
-            case 'community service': return 'volunteer_activism';
-            case 'technical': return 'computer';
-            case 'sports': return 'sports_basketball';
-            case 'professional': return 'work';
-            case 'national initiative': return 'flag';
-            default: return 'event';
-        }
-    };
-
     return (
         <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark">
             {/* Header */}
@@ -153,13 +133,13 @@ export default function AdminDashboard() {
                         <h2 className="text-xl md:text-2xl font-bold leading-tight text-primary dark:text-white">Dashboard Overview</h2>
                     </div>
                 </div>
-                <button
-                    onClick={() => setIsEventCreateModalOpen(true)}
+                <Link
+                    href="/admin/events"
                     className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl font-semibold transition-colors flex items-center gap-2 shadow-lg"
                 >
-                    <span className="material-icons-outlined text-xl">add</span>
-                    <span className="hidden md:inline">Create Event</span>
-                </button>
+                    <span className="material-icons-outlined text-xl">event_note</span>
+                    <span className="hidden md:inline">Manage Events</span>
+                </Link>
             </header>
 
             {/* Main Content */}
@@ -181,7 +161,7 @@ export default function AdminDashboard() {
                                             <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">verified</span>
                                         </div>
                                         <div>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{submissions.length}</p>
+                                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredSubmissions.length}</p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">Pending Verifications</p>
                                         </div>
                                     </div>
@@ -213,97 +193,75 @@ export default function AdminDashboard() {
                             </div>
                         </section>
 
-                        {/* Events Management */}
-                        <section>
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Events Management</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage location-based events and photo verification</p>
+                        <section className="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white/90 dark:bg-[#121212] p-6 shadow-sm backdrop-blur-sm">
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="max-w-2xl">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Event management moved to its own page</h3>
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Keep the dashboard focused on approvals. Use the dedicated event manager when you need to create, duplicate, or adjust capacities.
+                                    </p>
                                 </div>
-                                <button
-                                    onClick={() => setIsEventCreateModalOpen(true)}
-                                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2"
-                                >
-                                    <span className="material-icons-outlined text-lg">add</span>
-                                    New Event
-                                </button>
-                            </div>
 
-                            {events.length === 0 ? (
-                                <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                                    <div className="h-16 w-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                        <span className="material-symbols-outlined text-gray-400 text-3xl">event_note</span>
-                                    </div>
-                                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">No events created yet</h4>
-                                    <p className="text-gray-500 mt-1 mb-4">Create your first location-based event for students to join.</p>
-                                    <button
-                                        onClick={() => setIsEventCreateModalOpen(true)}
-                                        className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                                <div className="flex flex-wrap gap-3">
+                                    <Link
+                                        href="/admin/events"
+                                        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-medium text-white transition-colors hover:bg-primary-dark"
                                     >
+                                        <span className="material-icons-outlined text-lg">event_note</span>
+                                        Open Event Manager
+                                    </Link>
+                                    <Link
+                                        href="/admin/events?new=1"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                                    >
+                                        <span className="material-icons-outlined text-lg">add</span>
                                         Create Event
-                                    </button>
+                                    </Link>
                                 </div>
-                            ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {events.slice(0, 6).map(event => {
-                                        const status = getEventStatus(event);
-                                        return (
-                                            <div key={event.id} className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                                                            <span className="material-symbols-outlined text-primary text-lg">{getCategoryIcon(event.category)}</span>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900 dark:text-white">{event.name}</h4>
-                                                            <p className="text-sm text-gray-500 dark:text-gray-400">{event.category}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${status.color}`}>
-                                                            {status.label}
-                                                        </span>
-                                                        <span className="text-primary font-bold">{event.points}pts</span>
-                                                    </div>
-                                                </div>
+                            </div>
+                        </section>
 
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{event.description}</p>
-
-                                                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                                                    <span>📍 {event.location_name}</span>
-                                                    <span>
-                                                        {event.total_submissions || 0}
-                                                        {event.capacity ? ` / ${event.capacity}` : ""} participants
-                                                    </span>
-                                                </div>
-
-                                                <div className="mt-4 flex items-center gap-3">
-                                                    <div className="flex-1">
-                                                        <label className="block text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">
-                                                            Capacity
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            placeholder="Unlimited"
-                                                            value={capacityEdits[event.id] ?? (event.capacity ?? "")}
-                                                            onChange={(e) => setCapacityEdits(prev => ({ ...prev, [event.id]: e.target.value }))}
-                                                            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={() => handleCapacitySave(event.id)}
-                                                        disabled={savingCapacityId === event.id}
-                                                        className="mt-6 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
-                                                    >
-                                                        {savingCapacityId === event.id ? "Saving..." : "Save"}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                        <section className="rounded-3xl border border-gray-100 dark:border-gray-800 bg-white/90 dark:bg-[#121212] p-6 shadow-sm backdrop-blur-sm">
+                            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+                                <div className="max-w-2xl">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Verification toolbar</h3>
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Search submissions and narrow the review queue by department.
+                                    </p>
                                 </div>
-                            )}
+
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:min-w-[48rem]">
+                                    <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 sm:col-span-2 xl:col-span-2">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Search</span>
+                                        <div className="flex items-center gap-2 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
+                                            <span className="material-symbols-outlined text-gray-400 text-lg">search</span>
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder="Students, departments, activities, status..."
+                                                className="w-full border-0 bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white"
+                                            />
+                                        </div>
+                                    </label>
+
+                                    <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Department</span>
+                                        <select
+                                            value={departmentFilter}
+                                            onChange={(e) => setDepartmentFilter(e.target.value)}
+                                            className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm text-gray-900 dark:text-white"
+                                        >
+                                            <option value="all">All departments</option>
+                                            {availableDepartments.map((department) => (
+                                                <option key={department} value={department}>
+                                                    {department}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
                         </section>
 
                         {/* Pending Submissions Section */}
@@ -314,11 +272,11 @@ export default function AdminDashboard() {
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Student submissions awaiting verification (includes photo submissions).</p>
                                 </div>
                                 <div className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold px-3 py-1 rounded-full text-sm">
-                                    {submissions.length}
+                                    {filteredSubmissions.length}
                                 </div>
                             </div>
 
-                            {submissions.length === 0 ? (
+                            {filteredSubmissions.length === 0 ? (
                                 <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
                                     <div className="h-16 w-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                                         <span className="material-symbols-outlined text-gray-400 text-3xl">verified</span>
@@ -327,44 +285,67 @@ export default function AdminDashboard() {
                                     <p className="text-gray-500 mt-1">All student submissions have been processed.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 gap-6">
-                                    {submissions.map(sub => (
-                                        <div
+                                <div className="grid grid-cols-1 gap-5">
+                                    {filteredSubmissions.map(sub => (
+                                        <button
                                             key={sub.submission_id}
+                                            type="button"
                                             onClick={() => {
                                                 setSelectedItem({ ...sub, id: sub.submission_id, type: sub.type || 'submission', date: sub.submitted_at, activity: sub.activity_name });
                                                 setIsModalOpen(true);
                                             }}
-                                            className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow cursor-pointer"
+                                            className="group rounded-3xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-lg dark:border-gray-800 dark:bg-[#121212]"
                                         >
-                                            <div className="flex items-center gap-5 md:w-1/3">
-                                                <UserAvatar name={sub.student_name} className="w-12 h-12 shrink-0 border-2 border-green-100 dark:border-green-900/30" />
-                                                <div>
-                                                    <h4 className="font-bold text-gray-900 dark:text-white text-lg">{sub.student_name}</h4>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-medium text-gray-400">
-                                                            Submitted: {new Date(sub.submitted_at).toLocaleDateString()}
-                                                        </span>
-                                                        {sub.type === 'event_submission' && (
-                                                            <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
-                                                                Photo Submission
-                                                            </span>
-                                                        )}
+                                            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                                                <div className="flex min-w-0 items-start gap-4 md:w-[30%]">
+                                                    <UserAvatar name={sub.student_name} className="w-12 h-12 shrink-0 border-2 border-green-100 dark:border-green-900/30" />
+                                                    <div className="min-w-0">
+                                                        <h4 className="truncate text-lg font-bold text-gray-900 dark:text-white">{sub.student_name}</h4>
+                                                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{sub.student_department || 'Department not set'}</p>
+                                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium text-gray-400">
+                                                            <span>Submitted {new Date(sub.submitted_at).toLocaleDateString()}</span>
+                                                            {sub.type === 'event_submission' && (
+                                                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                                                    Photo Submission
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="md:w-1/3 border-l-2 border-gray-50 dark:border-gray-800 pl-6 py-2">
-                                                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Activity</p>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{sub.activity_name}</p>
-                                            </div>
+                                                <div className="min-w-0 rounded-2xl border border-gray-100 bg-gray-50 p-4 md:w-[42%] dark:border-gray-800 dark:bg-gray-900/60">
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Activity</p>
+                                                    <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{sub.activity_name}</p>
+                                                    {sub.type === 'event_submission' && sub.verification_result && (
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${sub.verification_result.locationMatch ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                                                Location {sub.verification_result.locationMatch ? 'OK' : 'Mismatch'}
+                                                            </span>
+                                                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${sub.verification_result.timeMatch ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                                                Time {sub.verification_result.timeMatch ? 'OK' : 'Mismatch'}
+                                                            </span>
+                                                            {sub.verification_result.reason && (
+                                                                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                                                    Evidence captured
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {sub.verification_result?.reason && (
+                                                        <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                                            {sub.verification_result.reason}
+                                                        </p>
+                                                    )}
+                                                </div>
 
-                                            <div className="md:w-1/3 flex justify-end shrink-0">
-                                                <span className="text-primary font-bold hover:underline flex items-center gap-1">
-                                                    Review {sub.type === 'event_submission' ? 'Photo' : 'Proof'} <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                                </span>
+                                                <div className="flex items-center justify-between gap-3 md:w-[20%] md:flex-col md:items-end md:text-right">
+                                                    <span className="text-primary font-bold transition-transform group-hover:translate-x-0.5 flex items-center gap-1">
+                                                        Review {sub.type === 'event_submission' ? 'Photo' : 'Proof'} <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                                    </span>
+                                                    <span className="text-xs font-medium text-gray-400 md:text-right">Open the review panel for approval or point adjustments.</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             )}
@@ -380,13 +361,6 @@ export default function AdminDashboard() {
                 item={selectedItem}
                 onApprove={handleVerifySubmission}
                 isSubmitting={isSubmitting}
-            />
-
-            {/* Event Creation Modal */}
-            <EventCreateModal
-                isOpen={isEventCreateModalOpen}
-                onClose={() => setIsEventCreateModalOpen(false)}
-                onEventCreated={fetchData}
             />
         </div>
     );

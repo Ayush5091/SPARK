@@ -51,6 +51,11 @@ export default function EventsPage() {
   ];
 
   useEffect(() => {
+    if (user?.role === "admin") {
+      router.replace("/");
+      return;
+    }
+
     if (!token || user?.role !== "student") {
       setSubmissions([]);
       setLoading(false);
@@ -169,6 +174,10 @@ export default function EventsPage() {
       setIsCreating(false);
     }
   };
+
+  if (user?.role === "admin") {
+    return null;
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f6f4ef]">

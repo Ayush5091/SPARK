@@ -24,6 +24,7 @@ interface EventCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEventCreated: () => void;
+  initialEvent?: any | null;
 }
 
 const categories = ['technical', 'cultural', 'sports', 'professional', 'community service', 'national initiative'];
@@ -42,42 +43,57 @@ const popularLocations = [
   { name: 'Phoenix Marketcity', lat: 12.996211, lng: 77.693413 }
 ];
 
-export default function EventCreateModal({ isOpen, onClose, onEventCreated }: EventCreateModalProps) {
+const formatDateTimeLocal = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const createDefaultFormData = (seed?: any | null) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+
+  const tomorrowEnd = new Date(tomorrow);
+  tomorrowEnd.setHours(17, 0, 0, 0);
+
+  const startDate = seed?.start_time ? new Date(seed.start_time) : null;
+  const endDate = seed?.end_time ? new Date(seed.end_time) : null;
+
+  return {
+    name: seed?.name ? `Copy of ${seed.name}` : '',
+    description: seed?.description || '',
+    category: seed?.category || 'technical',
+    points: seed?.points !== undefined && seed?.points !== null ? String(seed.points) : '',
+    capacity: seed?.capacity !== undefined && seed?.capacity !== null ? String(seed.capacity) : '',
+    latitude: seed?.latitude !== undefined && seed?.latitude !== null ? String(seed.latitude) : '',
+    longitude: seed?.longitude !== undefined && seed?.longitude !== null ? String(seed.longitude) : '',
+    location_name: seed?.location_name || '',
+    location_radius_meters: seed?.location_radius_meters !== undefined && seed?.location_radius_meters !== null ? String(seed.location_radius_meters) : '100',
+    start_time: startDate && !Number.isNaN(startDate.getTime()) ? formatDateTimeLocal(startDate) : formatDateTimeLocal(tomorrow),
+    end_time: endDate && !Number.isNaN(endDate.getTime()) ? formatDateTimeLocal(endDate) : formatDateTimeLocal(tomorrowEnd),
+    time_tolerance_minutes: seed?.time_tolerance_minutes !== undefined && seed?.time_tolerance_minutes !== null ? String(seed.time_tolerance_minutes) : '30'
+  };
+};
+
+export default function EventCreateModal({ isOpen, onClose, onEventCreated, initialEvent }: EventCreateModalProps) {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: 'technical',
-    points: '',
-    capacity: '',
-    latitude: '',
-    longitude: '',
-    location_name: '',
-    location_radius_meters: '100',
-    start_time: '',
-    end_time: '',
-    time_tolerance_minutes: '30'
-  });
+  const [formData, setFormData] = useState(() => createDefaultFormData());
 
-  // Generate default start time (tomorrow at 9 AM)
   useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    if (!isOpen) return;
 
-    const tomorrowEnd = new Date(tomorrow);
-    tomorrowEnd.setHours(17, 0, 0, 0);
-
-    setFormData(prev => ({
-      ...prev,
-      start_time: tomorrow.toISOString().slice(0, 16),
-      end_time: tomorrowEnd.toISOString().slice(0, 16)
-    }));
-  }, [isOpen]);
+    setFormData(createDefaultFormData(initialEvent));
+    setShowLocationPicker(false);
+    setShowMap(Boolean(initialEvent?.latitude && initialEvent?.longitude));
+  }, [isOpen, initialEvent]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -113,21 +129,6 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
       ...prev,
       location_radius_meters: radius.toString()
     }));
-  };
-
-  // Format date for datetime-local input
-  const formatDateTimeLocal = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  // Get date from datetime-local input
-  const getDateFromInput = (dateTimeString: string) => {
-    return new Date(dateTimeString);
   };
 
   // Quick time setters
@@ -224,24 +225,8 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
       });
 
       if (response.ok) {
-        alert('Event created successfully!');
         onEventCreated();
         onClose();
-        // Reset form
-        setFormData({
-          name: '',
-          description: '',
-          category: 'technical',
-          points: '',
-          capacity: '',
-          latitude: '',
-          longitude: '',
-          location_name: '',
-          location_radius_meters: '100',
-          start_time: '',
-          end_time: '',
-          time_tolerance_minutes: '30'
-        });
       } else {
         const error = await response.json();
         alert(`Failed to create event: ${error.detail}`);
@@ -276,22 +261,33 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated }: Ev
       {/* Modal */}
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#121212] rounded-3xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
 
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between gap-4 p-6 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center">
                   <span className="material-icons-outlined text-white text-xl">event</span>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create New Event</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Add a location-based activity for students</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {initialEvent ? 'Duplicate Event Template' : 'Create New Event'}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {initialEvent ? 'Reuse the selected event and adjust the details in one pass.' : 'Add a location-based activity for students.'}
+                  </p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                <span className="material-icons-outlined text-gray-500">close</span>
-              </button>
+              <div className="flex items-center gap-3">
+                {initialEvent && (
+                  <span className="hidden md:inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    Template: {initialEvent.name}
+                  </span>
+                )}
+                <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                  <span className="material-icons-outlined text-gray-500">close</span>
+                </button>
+              </div>
             </div>
 
             {/* Form */}

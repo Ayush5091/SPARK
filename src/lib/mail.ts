@@ -16,7 +16,7 @@ export const sendEmailAsync = async (
     htmlBody: string
 ) => {
     try {
-        const fromName = process.env.MAIL_FROM_NAME || 'AICTE App';
+        const fromName = process.env.MAIL_FROM_NAME || 'SPARK';
         const fromEmail = process.env.MAIL_FROM;
 
         const info = await transporter.sendMail({

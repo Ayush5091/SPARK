@@ -52,7 +52,7 @@ export default function LoginPage() {
                         {role === 'student' ? 'Welcome Back' : 'Admin Login'}
                     </h2>
                     <p className="text-gray-500 text-sm font-medium">
-                        {role === 'student' ? 'AICTE Activity Points System' : 'Access the dashboard'}
+                        {role === 'student' ? 'SPARK Activity Points System' : 'Access the dashboard'}
                     </p>
                 </div>
 
@@ -157,7 +157,7 @@ export default function LoginPage() {
                 {/* Footer Links */}
                 <div className="mt-8 text-center relative z-10">
                     <p className="text-gray-400 text-[11px] font-medium">
-                        © {new Date().getFullYear()} AICTE. All rights reserved.<br className="mt-1" />
+                        © {new Date().getFullYear()} SPARK. All rights reserved.<br className="mt-1" />
                         <span className="inline-flex gap-3 mt-1.5">
                             <span className="cursor-pointer hover:text-gray-700 transition-colors">Privacy Policy</span>
                             <span>•</span>

@@ -101,18 +101,6 @@ export default function ProfileScreen() {
         fetchData();
     }, [user, token, isLoading, router]);
 
-    // Refresh profile data when page comes into focus (e.g. returning from other pages)
-    useEffect(() => {
-        const handleFocus = async () => {
-            if (user && token) {
-                await refreshProfile();
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
-    }, [user, token, refreshProfile]);
-
     const handleMarkAsRead = async () => {
         if (!token || unreadCount === 0) return;
         try {
