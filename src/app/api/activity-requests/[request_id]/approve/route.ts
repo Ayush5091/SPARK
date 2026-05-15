@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 import { sendEmailAsync } from '@/lib/mail';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ request_id: string }> }) {
@@ -57,6 +57,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ requ
             message: "Activity request approved"
         });
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Error" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Error" }, { status: authStatus ?? 400 });
     }
 }

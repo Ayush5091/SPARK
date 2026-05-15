@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
+import { calculateSemester } from '@/lib/student';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
               es.submitted_at, es.verification_result, es.photo_metadata,
               es.points_awarded, es.review_notes,
              s.name as student_name, s.email as student_email, s.usn, s.department as student_department,
+             s.semester as student_semester,
              s.total_points as student_total_points,
              e.name as event_name, e.points as event_points, e.category as event_category,
              e.latitude as event_latitude, e.longitude as event_longitude,
@@ -82,8 +84,12 @@ export async function GET(request: NextRequest) {
         photoMetadata = submission.photo_metadata;
       }
 
+      // Auto-update semester for display
+      const currentSemester = calculateSemester(submission.student_email, submission.usn);
+
       return {
         ...submission,
+        student_semester: currentSemester ?? submission.student_semester,
         verification_result: verificationResult,
         photo_metadata: photoMetadata
       };
@@ -93,9 +99,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Get admin submissions error:', error);
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || 'Internal server error' },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }
@@ -190,9 +197,10 @@ export async function PUT(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Review submission error:', error);
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || 'Internal server error' },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }

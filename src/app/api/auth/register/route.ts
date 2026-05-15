@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { createAccessToken, decodeAccessToken } from '@/lib/auth';
+import { calculateSemester } from '@/lib/student';
 
 function extractDepartment(email: string): string | null {
     if (!email) return null;
@@ -41,10 +42,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ detail: "USN already registered" }, { status: 400 });
         }
         const department = extractDepartment(payload.email);
+        const semester = calculateSemester(payload.email, upperUsn);
 
         const insertRes = await db.query(
-            'INSERT INTO students (name, email, google_sub, usn, department) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [payload.name, payload.email, payload.sub, upperUsn, department]
+            'INSERT INTO students (name, email, google_sub, usn, department, semester) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [payload.name, payload.email, payload.sub, upperUsn, department, semester]
         );
 
         const studentId = insertRes.rows[0].id;

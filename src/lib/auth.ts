@@ -32,3 +32,10 @@ export function requireAuth(req: Request, roleContext?: 'student' | 'admin') {
     }
     return payload;
 }
+
+export function getAuthErrorStatus(err: unknown) {
+    const message = err instanceof Error ? err.message : (err as any)?.message;
+    if (message === 'Unauthorized') return 401;
+    if (message === 'Forbidden') return 403;
+    return undefined;
+}

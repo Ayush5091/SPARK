@@ -32,6 +32,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isInitializing, setIsInitializing] = useState(true);
     const router = useRouter();
 
+    const parseJwt = useCallback((jwtToken: string) => {
+        try {
+            const base64Url = jwtToken.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(base64));
+        } catch (e) {
+            return null;
+        }
+    }, []);
+
+    const isTokenExpired = useCallback((payload: any) => {
+        if (!payload || typeof payload.exp !== 'number') return true;
+        return payload.exp * 1000 <= Date.now();
+    }, []);
+
+    const setAuthCookie = useCallback((jwtToken: string, payload: any) => {
+        const expSeconds = typeof payload?.exp === 'number' ? payload.exp : undefined;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const maxAge = expSeconds ? Math.max(expSeconds - nowSeconds, 0) : undefined;
+        const maxAgePart = typeof maxAge === 'number' ? `; Max-Age=${maxAge}` : '';
+        document.cookie = `access_token=${encodeURIComponent(jwtToken)}; Path=/; SameSite=Lax${maxAgePart}`;
+    }, []);
+
+    const clearAuthCookie = useCallback(() => {
+        document.cookie = 'access_token=; Path=/; Max-Age=0; SameSite=Lax';
+    }, []);
+
+    const clearAuth = useCallback((redirectToLogin = false) => {
+        localStorage.removeItem('access_token');
+        clearAuthCookie();
+        setToken(null);
+        setUser(null);
+        setProfile(null);
+        setProfileLoading(false);
+        if (redirectToLogin) {
+            router.push('/login');
+        }
+    }, [router, clearAuthCookie]);
+
     const refreshProfile = useCallback(async (currentToken: string | null = token, currentUser: User | null = user) => {
         if (!currentToken || !currentUser?.role) {
             setProfile(null);
@@ -49,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await res.json();
                 setProfile(data);
             } else {
+                if ([400, 401, 403].includes(res.status)) {
+                    clearAuth();
+                }
                 setProfile(null);
             }
         } catch (e) {
@@ -57,22 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setProfileLoading(false);
         }
-    }, [token, user]);
+    }, [token, user, clearAuth]);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('access_token');
         if (storedToken) {
-            try {
+            const payload = parseJwt(storedToken);
+            if (!payload || isTokenExpired(payload)) {
+                clearAuth();
+            } else {
+                setAuthCookie(storedToken, payload);
                 setToken(storedToken);
-                const base64Url = storedToken.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const payload = JSON.parse(atob(base64));
                 setUser(payload);
                 refreshProfile(storedToken, payload);
-            } catch (e) {
-                console.error("Failed to decode token", e);
-                localStorage.removeItem('access_token');
-                setProfileLoading(false);
             }
         } else {
             setProfileLoading(false);
@@ -85,25 +124,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = useCallback((newToken: string) => {
         localStorage.setItem('access_token', newToken);
         setToken(newToken);
-        try {
-            const base64Url = newToken.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const payload = JSON.parse(atob(base64));
-            setUser(payload);
-            refreshProfile(newToken, payload);
-        } catch (e) {
-            console.error("Failed to parse token generated at login");
+        const payload = parseJwt(newToken);
+        if (!payload || isTokenExpired(payload)) {
+            clearAuth(true);
+            return;
         }
+        setAuthCookie(newToken, payload);
+        setUser(payload);
+        refreshProfile(newToken, payload);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const logout = useCallback(() => {
-        localStorage.removeItem('access_token');
-        setToken(null);
-        setUser(null);
-        setProfile(null);
-        router.push('/login');
-    }, [router]);
+        clearAuth(true);
+    }, [clearAuth]);
 
     return (
         <AuthContext.Provider value={{ user, token, profile, profileLoading, login, logout, refreshProfile, isLoading, isInitializing }}>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 import { verifyPhotoSubmission, EventDetails } from '@/lib/photo-verification';
 
 export async function POST(request: NextRequest) {
@@ -212,9 +212,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Photo verification error:', error);
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || 'Internal server error' },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }

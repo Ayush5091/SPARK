@@ -131,9 +131,13 @@ export default function AdminReviewModal({
                         <div>
                             <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0.015 250)' }}>Student</p>
                             <p className="text-base font-semibold mt-1" style={{ color: 'oklch(0.18 0.015 250)' }}>{item.student_name}</p>
-                            {item.student_department && (
-                                <p className="text-sm mt-0.5" style={{ color: 'oklch(0.5 0.015 250)' }}>{item.student_department}</p>
-                            )}
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                                {item.student_department && (
+                                    <p className="text-sm" style={{ color: 'oklch(0.5 0.015 250)' }}>{item.student_department}</p>
+                                )}
+                                <div className="w-1 h-1 rounded-full opacity-30" style={{ backgroundColor: 'oklch(0.5 0.015 250)' }} />
+                                <p className="text-sm font-medium" style={{ color: 'oklch(0.45 0.1 250)' }}>Semester {item.student_semester || 'N/A'}</p>
+                            </div>
                         </div>
                         <div className="text-right">
                             <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0.015 250)' }}>Submitted</p>

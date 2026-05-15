@@ -249,7 +249,7 @@ export default function AdminQueueTab({
                                         {statusBadge(item.status)}
                                     </div>
                                     <p className="text-xs mt-0.5 truncate" style={{ color: "oklch(0.5 0.01 250)" }}>
-                                        {item.event_name || item.activity || item.activity_name} · {item.student_department} · {new Date(item.submitted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                                        {item.event_name || item.activity || item.activity_name} · {item.student_department} · Sem {item.student_semester || 'N/A'} · {new Date(item.submitted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                                     </p>
                                 </div>
                                 <div className="text-right shrink-0">

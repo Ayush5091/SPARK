@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
         );
         return NextResponse.json({ activity_id: rows[0].id });
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Error" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Error" }, { status: authStatus ?? 400 });
     }
 }

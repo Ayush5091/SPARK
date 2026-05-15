@@ -235,6 +235,7 @@ export default function ProfileScreen() {
     const usn = studentInfo?.usn || "N/A";
     const phoneNumber = studentInfo?.phone_number || "Not set";
     const department = studentInfo?.department || "Not set";
+    const semester = studentInfo?.semester || "Not set";
     const completedCount = studentInfo?.completed_activities || 0;
 
     return (
@@ -372,6 +373,14 @@ export default function ProfileScreen() {
                                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Department</span>
                                 </div>
                                 <p className="text-sm font-semibold text-text-light dark:text-text-dark">{department}</p>
+                            </div>
+
+                            <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="material-symbols-outlined text-primary dark:text-white">calendar_month</span>
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Semester</span>
+                                </div>
+                                <p className="text-sm font-semibold text-text-light dark:text-text-dark">{semester}</p>
                             </div>
 
                             <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">

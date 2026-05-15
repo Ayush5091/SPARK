@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -18,7 +18,8 @@ export async function GET(request: Request) {
 
         return NextResponse.json(rows[0]);
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Unauthorized" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Unauthorized" }, { status: authStatus ?? 400 });
     }
 }
 
@@ -35,6 +36,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json({ message: "Admin profile updated successfully" });
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Error updating admin profile" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Error updating admin profile" }, { status: authStatus ?? 400 });
     }
 }

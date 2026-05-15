@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -17,7 +17,8 @@ export async function GET(request: Request) {
 
         return NextResponse.json(rows);
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Error" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Error" }, { status: authStatus ?? 400 });
     }
 }
 
@@ -36,6 +37,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json({ message: "Notifications marked as read", updated: rows.length });
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Error" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Error" }, { status: authStatus ?? 400 });
     }
 }

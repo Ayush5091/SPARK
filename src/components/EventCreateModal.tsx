@@ -616,34 +616,24 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Time *</label>
-                    <div className="relative">
-                      <input
-                        type="datetime-local"
-                        name="start_time"
-                        value={formData.start_time}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 material-icons-outlined text-gray-400 pointer-events-none">
-                        access_time
-                      </span>
-                    </div>
+                    <input
+                      type="datetime-local"
+                      name="start_time"
+                      value={formData.start_time}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Time *</label>
-                    <div className="relative">
-                      <input
-                        type="datetime-local"
-                        name="end_time"
-                        value={formData.end_time}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 material-icons-outlined text-gray-400 pointer-events-none">
-                        access_time
-                      </span>
-                    </div>
+                    <input
+                      type="datetime-local"
+                      name="end_time"
+                      value={formData.end_time}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    />
                   </div>
                 </div>
 
@@ -666,47 +656,7 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
                   </div>
                 )}
 
-                {/* Quick End Time Buttons */}
-                {formData.start_time && (
-                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
-                    <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-3">Set End Time (duration from start):</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const start = new Date(formData.start_time);
-                          const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // +2 hours
-                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
-                        }}
-                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        +2 hours
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const start = new Date(formData.start_time);
-                          const end = new Date(start.getTime() + 4 * 60 * 60 * 1000); // +4 hours
-                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
-                        }}
-                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        +4 hours
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const start = new Date(formData.start_time);
-                          const end = new Date(start.getTime() + 8 * 60 * 60 * 1000); // +8 hours
-                          setFormData(prev => ({ ...prev, end_time: formatDateTimeLocal(end) }));
-                        }}
-                        className="px-3 py-2 bg-white dark:bg-gray-700 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        +8 hours
-                      </button>
-                    </div>
-                  </div>
-                )}
+
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Tolerance (minutes)</label>

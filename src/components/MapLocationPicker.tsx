@@ -1,7 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Layer, MapLayerMouseEvent, MapRef, Marker, Popup, Source } from "react-map-gl/maplibre";
+
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+    road?: string;
+    suburb?: string;
+  };
+}
 
 interface MapLocationPickerProps {
   initialLat?: number;
@@ -11,7 +28,7 @@ interface MapLocationPickerProps {
   onRadiusChange: (radius: number) => void;
 }
 
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
 function createCircleGeoJson(longitude: number, latitude: number, radiusInMeters: number, points = 72) {
   const coordinates: [number, number][] = [];
@@ -40,6 +57,13 @@ function createCircleGeoJson(longitude: number, latitude: number, radiusInMeters
   };
 }
 
+/** Extracts a clean, short display name from a Nominatim result */
+function getShortName(result: NominatimResult): string {
+  const parts = result.display_name.split(",");
+  // Take first 2-3 meaningful parts for a concise name
+  return parts.slice(0, 3).map(s => s.trim()).join(", ");
+}
+
 export default function MapLocationPicker({
   initialLat = 12.971598,
   initialLng = 77.594566,
@@ -52,6 +76,14 @@ export default function MapLocationPicker({
   const [radius, setRadius] = useState(initialRadius);
   const [locationName, setLocationName] = useState("Selected Location");
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     setPosition({ latitude: initialLat, longitude: initialLng });
   }, [initialLat, initialLng]);
@@ -59,6 +91,85 @@ export default function MapLocationPicker({
   useEffect(() => {
     setRadius(initialRadius);
   }, [initialRadius]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const searchLocation = useCallback(async (query: string) => {
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Build the search URL — bias towards the current map viewport if available
+      const params = new URLSearchParams({
+        format: "json",
+        q: query,
+        limit: "10",
+        addressdetails: "1",
+        dedupe: "1",
+      });
+
+      // Bias results towards the current map view (without restricting to it)
+      const bounds = mapRef.current?.getMap()?.getBounds();
+      if (bounds) {
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        params.set("viewbox", `${sw.lng},${ne.lat},${ne.lng},${sw.lat}`);
+        params.set("bounded", "0"); // prefer viewbox results but don't exclude others
+      }
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data: NominatimResult[] = await response.json();
+      setSearchResults(data);
+      setShowResults(data.length > 0);
+    } catch (error) {
+      console.error("Geocoding search failed:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchLocation(value), 350);
+  };
+
+  const handleSelectResult = async (result: NominatimResult) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    const name = getShortName(result);
+
+    setPosition({ latitude: lat, longitude: lng });
+    setLocationName(name);
+    setSearchQuery(name);
+    setShowResults(false);
+    setSearchResults([]);
+    onLocationSelect(lat, lng, name);
+
+    mapRef.current?.flyTo({
+      center: [lng, lat],
+      zoom: 15,
+      duration: 1200,
+      essential: true,
+    });
+  };
 
   const radiusOverlay = useMemo(
     () => createCircleGeoJson(position.longitude, position.latitude, radius),
@@ -106,6 +217,68 @@ export default function MapLocationPicker({
 
   return (
     <div className="w-full space-y-4">
+      {/* ── Search Bar ── */}
+      <div ref={searchContainerRef} className="relative" style={{ zIndex: 10 }}>
+        <div className="relative">
+          <span className="material-icons-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg pointer-events-none">
+            search
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchInput(e.target.value)}
+            onFocus={() => { if (searchResults.length > 0) setShowResults(true); }}
+            placeholder="Search for a place, address, or landmark…"
+            className="w-full pl-11 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-shadow"
+          />
+          {isSearching && (
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 dark:border-gray-600 border-t-primary" />
+            </div>
+          )}
+          {!isSearching && searchQuery && (
+            <button
+              type="button"
+              onClick={() => { setSearchQuery(""); setSearchResults([]); setShowResults(false); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <span className="material-icons-outlined text-lg">close</span>
+            </button>
+          )}
+        </div>
+
+        {/* ── Results Dropdown ── */}
+        {showResults && searchResults.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden max-h-72 overflow-y-auto">
+            {searchResults.map((result) => (
+              <button
+                key={result.place_id}
+                type="button"
+                onClick={() => handleSelectResult(result)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors border-b border-gray-100 dark:border-gray-700/50 last:border-b-0 group"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="material-icons-outlined text-gray-400 dark:text-gray-500 group-hover:text-primary text-lg mt-0.5 shrink-0 transition-colors">
+                    location_on
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {result.display_name.split(",")[0]}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                      {result.display_name.split(",").slice(1, 4).join(",").trim()}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+            <div className="px-4 py-2 text-[10px] text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/80 text-right">
+              Search by OpenStreetMap / Nominatim
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="h-80 w-full overflow-hidden rounded-xl border border-gray-300 dark:border-gray-600" style={{ zIndex: 1 }}>
         <Map
           ref={mapRef}
@@ -174,7 +347,8 @@ export default function MapLocationPicker({
           <div className="text-sm text-gray-700 dark:text-gray-300">
             <p className="mb-1 font-medium">How to use:</p>
             <ul className="space-y-1 text-xs">
-              <li>- Click anywhere on the map to set event location</li>
+              <li>- <strong>Search</strong> for any place, address, or landmark using the search bar above</li>
+              <li>- Or click anywhere on the map to set event location</li>
               <li>- Adjust radius using the slider below</li>
               <li>- The monochrome ring shows the accepted area for photo verification</li>
             </ul>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 // GET - Get student's event submissions
 export async function GET(request: NextRequest) {
@@ -55,9 +55,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Get event submissions error:', error);
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || 'Internal server error' },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }
@@ -146,6 +147,7 @@ export async function HEAD(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Check submission eligibility error:', error);
-    return new NextResponse(null, { status: 500 });
+    const authStatus = getAuthErrorStatus(error);
+    return new NextResponse(null, { status: authStatus ?? 500 });
   }
 }

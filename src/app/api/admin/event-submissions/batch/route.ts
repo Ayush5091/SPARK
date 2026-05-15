@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 // POST - Batch approve or reject multiple submissions
 export async function POST(request: NextRequest) {
@@ -93,9 +93,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Batch review error:', error);
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || 'Internal server error' },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }

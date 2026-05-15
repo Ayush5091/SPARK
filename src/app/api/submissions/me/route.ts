@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { requireAuth } from '@/lib/auth';
+import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -29,6 +29,7 @@ export async function GET(request: Request) {
             activity_date: r.activity_date
         })));
     } catch (err: any) {
-        return NextResponse.json({ detail: err?.message || "Unauthorized" }, { status: 400 });
+        const authStatus = getAuthErrorStatus(err);
+        return NextResponse.json({ detail: err?.message || "Unauthorized" }, { status: authStatus ?? 400 });
     }
 }

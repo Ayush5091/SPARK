@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { getAuthErrorStatus, requireAuth } from "@/lib/auth";
 
 export async function PATCH(
   request: NextRequest,
@@ -33,9 +33,10 @@ export async function PATCH(
 
     return NextResponse.json({ event_id: rows[0].id, capacity: rows[0].capacity });
   } catch (error: any) {
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || "Internal server error" },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }

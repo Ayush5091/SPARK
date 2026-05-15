@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { getAuthErrorStatus, requireAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,9 +88,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ event_id: eventId });
   } catch (error: any) {
+    const authStatus = getAuthErrorStatus(error);
     return NextResponse.json(
       { detail: error.message || "Internal server error" },
-      { status: 500 }
+      { status: authStatus ?? 500 }
     );
   }
 }
