@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from app.routes import students, activities, requests, submissions, auth
@@ -30,9 +31,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+session_secret = os.getenv("SESSION_SECRET_KEY")
+if not session_secret:
+    raise RuntimeError("SESSION_SECRET_KEY environment variable is not set")
+
 app.add_middleware(
     SessionMiddleware,
-    secret_key="alongstringthatitypedforfunasafillerhiimadvaith"
+    secret_key=session_secret
 )
 
 app.include_router(auth.router, prefix='/auth')
