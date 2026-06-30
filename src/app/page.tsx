@@ -8,6 +8,9 @@ import AdminDashboard from "@/components/AdminDashboard";
 import EventFocusMap, { EventMapPoint } from "@/components/EventFocusMap";
 import EventColorChangeCard from "@/components/EventColorChangeCard";
 import EventDetailsModal from "@/components/EventDetailsModal";
+import { CinematicHero } from "@/components/ui/cinematic-landing-hero";
+import SparkFeaturesSection from "@/components/SparkFeaturesSection";
+import StudentHomeDashboard from "@/components/StudentHomeDashboard";
 
 interface Event {
   id: number;
@@ -52,7 +55,7 @@ export default function Home() {
     if (isLoading) return;
 
     if (!user) {
-      router.push("/login");
+      // No redirect — unauthenticated users see the public landing page
       return;
     }
 
@@ -261,7 +264,36 @@ export default function Home() {
     };
   }, [filteredEvents]);
 
-  if (isLoading || isInitializing || !user || profileLoading) {
+  if (isLoading || isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary text-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="overflow-x-hidden w-full">
+        <CinematicHero
+          className="w-full"
+          brandName="SPARK"
+          tagline1="Your Campus Life,"
+          tagline2="Fully Tracked."
+          description="Discover live AICTE events, submit geo-verified photo proof, and earn activity points — no paperwork, no registers."
+          metricValue={100}
+          metricLabel="Points per cycle"
+          cta1Text="Student Login"
+          cta1Href="/login"
+          cta2Text="Coordinator Login"
+          cta2Href="/login"
+        />
+        <SparkFeaturesSection />
+      </div>
+    );
+  }
+
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary text-primary"></div>
@@ -274,212 +306,15 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Landing Page Section */}
-      <section
-        ref={landingRef}
-        className="min-h-screen flex flex-col relative overflow-hidden snap-start"
-      >
-        <div className="relative flex-1 px-6 md:px-10 py-12 md:py-16 bg-[#f6f2ec]">
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-32 top-16 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(255,182,140,0.55),transparent_68%)]"></div>
-            <div className="absolute right-[-6%] top-[-10%] h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle,rgba(65,128,110,0.35),transparent_65%)]"></div>
-            <div className="absolute bottom-[-20%] left-1/3 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(35,82,88,0.25),transparent_70%)]"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(130deg,rgba(250,248,243,0.85)_0%,rgba(246,242,236,0.6)_45%,rgba(242,237,231,0.95)_100%)]"></div>
-          </div>
-
-          <div className="relative mx-auto w-full max-w-6xl">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <UserAvatar
-                  name={profile?.name || user?.name}
-                  className="w-12 h-12 md:w-14 md:h-14 text-lg md:text-xl shadow-lg border-2 border-white/70"
-                />
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[#5b6b64]">Student Dashboard</p>
-                  <p className="text-lg font-semibold text-[#0c1e1b]">Welcome back, {profile?.name?.split(" ")[0] || "student"}.</p>
-                </div>
-              </div>
-
-              <div className="relative">
-                <button
-                  onClick={toggleNotifications}
-                  className="relative flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm font-semibold text-[#0c1e1b] shadow-[0_18px_40px_-28px_rgba(6,24,20,0.7)] transition-transform hover:-translate-y-0.5"
-                >
-                  <span className="material-icons-outlined text-lg">notifications</span>
-                  Alerts
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#e75d4e] border-2 border-[#f6f2ec]"></span>
-                  )}
-                </button>
-
-                {isNotificationsOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)}></div>
-                    <div className="absolute right-0 mt-3 w-80 max-h-96 overflow-y-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-20 py-2">
-                      <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="font-bold text-gray-800">Notifications</h3>
-                      </div>
-                      <div className="flex flex-col">
-                        {notifications.length === 0 ? (
-                          <p className="text-gray-500 text-sm p-4 text-center">No notifications yet.</p>
-                        ) : (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                                !n.is_read ? "bg-amber-50/40" : ""
-                              }`}
-                            >
-                              <p className="text-sm text-gray-700">{n.message}</p>
-                              <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-10 grid grid-cols-1 gap-10">
-              <div className="space-y-6">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#0c1e1b]">
-                  Your week, curated by real-world moments.
-                </h1>
-                <p className="text-base md:text-lg text-[#4f5f58] max-w-xl">
-                  Swipe into live experiences, earn verified points, and keep a clear timeline of what counts toward your journey.
-                </p>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.4fr_0.8fr_0.8fr]">
-                  <div className="rounded-3xl bg-white/80 border border-white/70 p-5 shadow-[0_24px_60px_-40px_rgba(10,30,25,0.6)]">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#6b7a73]">Total Points</p>
-                      <span className="text-sm font-semibold text-[#0c1e1b]">{totalPoints}</span>
-                    </div>
-                    <div className="mt-4">
-                      <div className="relative h-4 rounded-full bg-[#e7e1d7] overflow-hidden">
-                        <div
-                          className="absolute inset-0 rounded-full bg-[linear-gradient(90deg,#d0472a_0%,#ff7b47_45%,#ffe0a3_100%)] shadow-[0_0_20px_rgba(255,120,80,0.65),0_0_36px_rgba(255,190,120,0.45)]"
-                          style={{ width: `${pointsProgress}%` }}
-                        ></div>
-                        <div className="absolute inset-0 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0)_60%)]"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-white/80 border border-white/70 p-4 shadow-[0_20px_50px_-35px_rgba(10,30,25,0.6)]">
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#6b7a73]">Activities</p>
-                    <p className="mt-2 text-2xl font-bold text-[#0c1e1b]">{profile?.completed_activities || 0}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/80 border border-white/70 p-4 shadow-[0_20px_50px_-35px_rgba(10,30,25,0.6)]">
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#6b7a73]">Available</p>
-                    <p className="mt-2 text-2xl font-bold text-[#0c1e1b]">{visibleEvents.length}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-b from-[#f6f2ec] via-white to-white h-20 md:h-28"></div>
-
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-[#0c1e1b]/40 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-[#0c1e1b]/60 rounded-full mt-2 animate-pulse"></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Conditional Header for Events Section */}
-      {showHeader && (
-        <header className="fixed top-0 left-0 right-0 z-50 pt-4 pb-4 px-6 md:px-10 flex justify-between items-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 transform transition-all duration-300 ease-out">
-          <button
-            onClick={scrollToLanding}
-            className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 px-3 py-2 rounded-xl transition-colors"
-          >
-            <span className="material-icons-outlined text-gray-600 dark:text-gray-300">arrow_back</span>
-            <div className="text-left">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-300">Back to</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white">Landing</div>
-            </div>
-          </button>
-
-          <div className="text-center">
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Events</div>
-            <div className="text-lg font-bold text-gray-900 dark:text-white">{filteredEvents.length} Available</div>
-          </div>
-        </header>
-      )}
-
-      {/* Events Filter Section */}
-      <div className="px-6 md:px-10 pt-6 pb-4 bg-white dark:bg-gray-900">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-6xl mx-auto">
-          {["all", "upcoming", "ongoing"].map((filterOption) => (
-            <button
-              key={filterOption}
-              onClick={() => setFilter(filterOption)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ease-out whitespace-nowrap ${
-                filter === filterOption
-                  ? "bg-black text-white shadow-lg shadow-black/30 scale-105"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-black hover:text-white hover:scale-105 active:scale-95"
-              }`}
-            >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Events Content Section */}
-      <div className="flex-1 px-6 md:px-10 pb-24 max-w-6xl mx-auto w-full bg-white dark:bg-gray-900">
-        {eventsLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="h-24 w-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="material-icons-outlined text-4xl text-gray-400">event_busy</span>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No events found</h3>
-            <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters to see more events.</p>
-          </div>
-        ) : (
-          <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-8 lg:space-y-0 lg:items-start">
-            <section className={`sticky z-10 lg:self-start lg:z-auto transition-all duration-300 ${showHeader ? 'top-24' : 'top-4'}`}>
-              <EventFocusMap events={mapEvents} activeEventId={activeMapEventId} />
-            </section>
-
-            <section className="min-w-0 space-y-3 lg:space-y-5 mt-4 lg:mt-0">
-              {filteredEvents.map((event, index) => (
-                <div
-                  key={event.id}
-                  ref={(node) => {
-                    cardRefs.current[event.id] = node;
-                  }}
-                  className="min-w-0 snap-start snap-always scroll-mt-[18rem] md:scroll-mt-28 lg:scroll-mt-0 py-1 lg:py-0"
-                >
-                  <div className="w-full">
-                    <EventColorChangeCard
-                      event={event}
-                      isActive={event.id === activeEventId}
-                      index={index}
-                      onOpen={setSelectedEvent}
-                    />
-                  </div>
-                </div>
-              ))}
-            </section>
-          </div>
-        )}
-      </div>
-
-      <EventDetailsModal
-        event={selectedEvent}
-        isOpen={Boolean(selectedEvent)}
-        onClose={() => setSelectedEvent(null)}
-      />
-    </div>
+    <StudentHomeDashboard
+      name={profile?.name || user?.name || "Student"}
+      totalPoints={Number(profile?.total_points || 0)}
+      completedEvents={profile?.completed_activities || 0}
+      pendingEvents={0} // To be implemented later based on backend schema
+      notifications={notifications}
+      unreadCount={unreadCount}
+      isNotificationsOpen={isNotificationsOpen}
+      onToggleNotifications={toggleNotifications}
+    />
   );
 }

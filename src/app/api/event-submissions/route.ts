@@ -37,7 +37,17 @@ export async function GET(request: NextRequest) {
     const submissions = rows.map(submission => {
       let verificationResult = null;
       try {
-        verificationResult = submission.verification_result ? JSON.parse(submission.verification_result) : null;
+        if (submission.verification_result) {
+          if (typeof submission.verification_result === 'object') {
+            verificationResult = submission.verification_result;
+          } else if (typeof submission.verification_result === 'string') {
+            if (submission.verification_result === '[object Object]') {
+              verificationResult = null;
+            } else {
+              verificationResult = JSON.parse(submission.verification_result);
+            }
+          }
+        }
       } catch (e) {
         console.error('Error parsing verification_result:', e);
       }

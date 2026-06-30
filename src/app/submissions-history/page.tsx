@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AdminReviewModal from '@/components/AdminReviewModal';
 
 export default function SubmissionsHistoryScreen() {
@@ -132,109 +133,142 @@ export default function SubmissionsHistoryScreen() {
         return null;
     }
 
-    return (
-        <div className="flex flex-col min-h-screen">
-            <header className="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 md:px-10 pt-10 md:pt-16 pb-4">
-                <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto w-full">
-                    <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-text-main dark:text-white">Submissions</h1>
-                    <div className="flex items-center gap-4">
-                        <button className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-gray-800 shadow-sm text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-100 dark:border-gray-700">
-                            <span className="material-symbols-outlined text-xl md:text-2xl">notifications</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div className="relative flex w-full max-w-xl mx-auto p-1.5 bg-gray-200/50 dark:bg-gray-800/80 rounded-full">
-                    <div className={`absolute left-1.5 top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white dark:bg-gray-700 rounded-full shadow-sm z-0 transition-transform duration-300 ${activeTab === 'verified' ? 'translate-x-[calc(100%+6px)]' : ''}`}></div>
-                    <button onClick={() => setActiveTab('pending')} className={`relative z-10 flex-1 py-2.5 md:py-3 text-sm md:text-base font-semibold text-center rounded-full transition-colors ${activeTab === 'pending' ? 'text-text-main dark:text-white' : 'text-slate-500 dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}>
-                        Pending Updates
-                    </button>
-                    <button onClick={() => setActiveTab('verified')} className={`relative z-10 flex-1 py-2.5 md:py-3 text-sm md:text-base font-medium text-center rounded-full transition-colors ${activeTab === 'verified' ? 'text-text-main dark:text-white' : 'text-slate-500 dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}>
-                        Verified History
-                    </button>
-                </div>
-            </header>
-
-            <main className="flex-1 px-5 md:px-10 py-8 space-y-6 pb-24 max-w-5xl mx-auto w-full">
-                <div className="flex items-center justify-between px-2 mb-2">
-                    <span className="text-xs md:text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400">
-                        {activeTab === 'pending' ? `In Progress (${pendingItems.length})` : `Completed (${verifiedItems.length})`}
-                    </span>
-                    <span className="text-sm font-medium text-primary cursor-pointer hover:text-blue-700 transition-colors">View Guidelines</span>
-                </div>
-
-                {loading ? (
-                    <div className="flex justify-center p-8"><p className="text-gray-500">Loading history...</p></div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {currentItems.length === 0 ? (
-                            <div className="col-span-full py-12 text-center text-gray-500 dark:text-gray-400">
-                                No {activeTab} records found.
-                            </div>
-                        ) : currentItems.map((item, idx) => {
-                            const statusInfo = getStatusDisplay(item);
-                            const actName = item.activity || 'Unknown Activity';
-                            const pointsText = `+${item.points ?? 0} Pts`;
-                            const dateStr = item.date ? new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-                            const isAdmin = user?.role === 'admin';
-
-                            return (
-                                <div
-                                    key={idx}
-                                    onClick={() => {
-                                        if (isAdmin && item.status === 'pending' && item.type === 'submission') {
-                                            setSelectedItem(item);
-                                            setIsModalOpen(true);
-                                        }
-                                    }}
-                                    className={`group relative flex flex-col ${item.status === 'verified' ? 'bg-white/80 dark:bg-gray-900/60' : 'bg-white dark:bg-gray-900'} rounded-[2rem] p-6 shadow-soft hover:shadow-xl transition-all duration-300 border border-transparent hover:border-primary/20 ${isAdmin && item.status === 'pending' && item.type === 'submission' ? 'cursor-pointer' : ''}`}
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg md:text-xl font-bold text-text-main dark:text-white leading-tight mb-1.5">
-                                                {item.student_name ? `${item.student_name} - ${actName}` : actName}
-                                            </h3>
-                                            <p className="text-sm text-slate-500 dark:text-gray-400 font-medium">{dateStr}</p>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold mb-2 ${item.status === 'verified' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-100 dark:border-green-800/30' : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-300'}`}>
-                                                {pointsText}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-auto flex items-center justify-between pt-5 border-t border-gray-50 dark:border-gray-800/60">
-                                        <div className="flex items-center gap-2.5">
-                                            {item.status === 'verified' ? (
-                                                <span className="material-symbols-outlined text-green-500 text-[20px]">verified</span>
-                                            ) : (
-                                                <span className="relative flex h-3 w-3">
-                                                    {item.status !== 'rejected' && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusInfo.dot}`}></span>}
-                                                    <span className={`relative inline-flex rounded-full h-3 w-3 ${statusInfo.dot}`}></span>
-                                                </span>
-                                            )}
-                                            <span className={`text-sm font-bold tracking-wide ${statusInfo.color}`}>{statusInfo.text}</span>
-                                        </div>
-
-                                        {user?.role === 'student' && item.status === 'approved' && item.type === 'request' && (
-                                            <button onClick={(e) => { e.stopPropagation(); router.push('/submit-proof'); }} className="flex items-center justify-center px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all text-sm font-bold">
-                                                Submit Proof
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </main>
-
-            <AdminReviewModal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); setSelectedItem(null); }}
-                item={selectedItem}
-                onApprove={selectedItem?.type === 'request' ? undefined : handleVerify}
-                isSubmitting={isSubmitting}
-            />
+  return (
+    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+      <header className="flex flex-col px-6 pt-10 pb-4 gap-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+          >
+            <span className="material-symbols-outlined text-2xl">arrow_back</span>
+          </Link>
+          <div className="w-12"></div>
         </div>
-    );
+
+        <div>
+          <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+            Submissions
+          </span>
+          <h1 className="text-3xl font-black tracking-tight text-black mt-1">
+            Activity Ledger
+          </h1>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="relative flex w-full p-1 bg-[#F0F0F3] shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff] rounded-full">
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#F0F0F3] rounded-full shadow-[2px_2px_6px_#d1d1d3,-2px_-2px_6px_#ffffff] transition-transform duration-300 ease-out ${
+              activeTab === "verified" ? "translate-x-full" : "translate-x-0"
+            }`}
+          ></div>
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`relative z-10 flex-1 py-2.5 text-xs font-bold text-center rounded-full transition-colors ${
+              activeTab === "pending" ? "text-black" : "text-gray-400 hover:text-black"
+            }`}
+          >
+            Pending Updates
+          </button>
+          <button
+            onClick={() => setActiveTab("verified")}
+            className={`relative z-10 flex-1 py-2.5 text-xs font-bold text-center rounded-full transition-colors ${
+              activeTab === "verified" ? "text-black" : "text-gray-400 hover:text-black"
+            }`}
+          >
+            Verified History
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 px-6 py-6 pb-28">
+        <div className="flex items-center justify-between px-1 mb-6">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            {activeTab === "pending" ? `In Progress (${pendingItems.length})` : `Completed (${verifiedItems.length})`}
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Loading history...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {currentItems.length === 0 ? (
+              <div className="col-span-full rounded-3xl bg-[#F0F0F3] p-10 text-center text-xs font-bold uppercase tracking-wider text-gray-500 shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] border border-gray-100/50">
+                No {activeTab} records found.
+              </div>
+            ) : (
+              currentItems.map((item, idx) => {
+                const statusInfo = getStatusDisplay(item);
+                const actName = item.activity || "Unknown Activity";
+                const pointsText = `+${item.points ?? 0} PTS`;
+                const dateStr = item.date ? new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+                const isAdmin = user?.role === "admin";
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      if (isAdmin && item.status === "pending" && item.type === "submission") {
+                        setSelectedItem(item);
+                        setIsModalOpen(true);
+                      }
+                    }}
+                    className={`rounded-3xl bg-[#F0F0F3] p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col justify-between transition-all duration-300 hover:shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] ${
+                      isAdmin && item.status === "pending" && item.type === "submission" ? "cursor-pointer" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h3 className="text-lg font-black tracking-tight text-black leading-tight mb-1">
+                          {item.student_name ? `${item.student_name} - ${actName}` : actName}
+                        </h3>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{dateStr}</p>
+                      </div>
+                      <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white shadow-[2px_2px_6px_#d1d1d3] uppercase shrink-0">
+                        {pointsText}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200/50">
+                      <div className="flex items-center gap-2">
+                        <span className={`relative flex h-2.5 w-2.5 rounded-full ${statusInfo.dot}`}></span>
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${statusInfo.color}`}>
+                          {statusInfo.text}
+                        </span>
+                      </div>
+
+                      {user?.role === "student" && item.status === "approved" && item.type === "request" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push("/submit-proof");
+                          }}
+                          className="rounded-full bg-black px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white shadow-[2px_2px_6px_#d1d1d3] transition-transform active:scale-95"
+                        >
+                          Submit Proof
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </main>
+
+      <AdminReviewModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedItem(null);
+        }}
+        item={selectedItem}
+        onApprove={selectedItem?.type === "request" ? undefined : handleVerify}
+        isSubmitting={isSubmitting}
+      />
+    </div>
+  );
 }

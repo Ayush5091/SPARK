@@ -72,16 +72,35 @@ export async function GET(request: NextRequest) {
       let photoMetadata = null;
 
       try {
-        verificationResult = submission.verification_result ? JSON.parse(submission.verification_result) : null;
+        if (submission.verification_result) {
+          if (typeof submission.verification_result === 'object') {
+            verificationResult = submission.verification_result;
+          } else if (typeof submission.verification_result === 'string') {
+            if (submission.verification_result === '[object Object]') {
+              verificationResult = null;
+            } else {
+              verificationResult = JSON.parse(submission.verification_result);
+            }
+          }
+        }
       } catch (e) {
-        // Already parsed (JSONB auto-parses in some drivers)
-        verificationResult = submission.verification_result;
+        verificationResult = submission.verification_result === '[object Object]' ? null : submission.verification_result;
       }
 
       try {
-        photoMetadata = submission.photo_metadata ? JSON.parse(submission.photo_metadata) : null;
+        if (submission.photo_metadata) {
+          if (typeof submission.photo_metadata === 'object') {
+            photoMetadata = submission.photo_metadata;
+          } else if (typeof submission.photo_metadata === 'string') {
+            if (submission.photo_metadata === '[object Object]') {
+              photoMetadata = null;
+            } else {
+              photoMetadata = JSON.parse(submission.photo_metadata);
+            }
+          }
+        }
       } catch (e) {
-        photoMetadata = submission.photo_metadata;
+        photoMetadata = submission.photo_metadata === '[object Object]' ? null : submission.photo_metadata;
       }
 
       // Auto-update semester for display

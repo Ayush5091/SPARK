@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import MapLocationPicker from "@/components/MapLocationPicker";
 
 interface EventSubmission {
@@ -180,49 +181,52 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f6f4ef]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(18,80,99,0.28),transparent_70%)]"></div>
-        <div className="absolute right-[-10%] top-[-5%] h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(245,181,125,0.32),transparent_68%)]"></div>
-        <div className="absolute bottom-[-10%] left-1/4 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(70,120,90,0.22),transparent_70%)]"></div>
-      </div>
+    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+      <header className="flex flex-col px-6 pt-10 pb-4 gap-6">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff] transition-all"
+          >
+            <span className="material-symbols-outlined text-2xl">arrow_back</span>
+          </Link>
 
-      <header className="sticky top-0 z-20 border-b border-black/5 bg-white/70 px-6 pb-4 pt-10 backdrop-blur-xl md:px-10 md:pt-16">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#4c6a63]">
-              Student Events
-            </p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0f1f1b] md:text-5xl">
-              Your Event Ledger
-            </h1>
-            <p className="mt-2 text-sm text-[#5a6f68] md:text-base">
-              Keep tabs on what you have registered for and what you have completed.
-            </p>
-          </div>
           {user?.role === "student" && (
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="hidden items-center gap-2 rounded-full bg-[#0f1f1b] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_-18px_rgba(6,24,20,0.8)] transition-transform hover:-translate-y-0.5 md:flex"
+              className="flex items-center gap-2 rounded-full bg-black px-5 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-[4px_4px_10px_#9ca3af] transition-transform active:scale-95"
             >
-              <span className="material-icons-outlined text-lg">add</span>
+              <span className="material-icons-outlined text-sm">add</span>
               Start Event
             </button>
           )}
         </div>
 
-        <div className="relative mx-auto mt-8 flex w-full max-w-xl overflow-hidden rounded-full border border-white/40 bg-white/40 p-1.5 shadow-[0_12px_40px_-24px_rgba(6,24,20,0.6)] backdrop-blur-xl">
+        <div>
+          <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+            Student Events
+          </span>
+          <h1 className="text-3xl font-black tracking-tight text-black mt-1">
+            Your Event Ledger
+          </h1>
+          <p className="text-gray-500 font-medium text-xs mt-1">
+            Keep tabs on what you have registered for and what you have completed.
+          </p>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="relative flex w-full p-1 bg-[#F0F0F3] shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff] rounded-full mt-2">
           <div
-            className={`absolute left-1.5 top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] rounded-full bg-white shadow-[0_8px_20px_-10px_rgba(6,24,20,0.65)] transition-transform duration-300 ${
-              activeTab === "completed" ? "translate-x-[calc(100%+6px)]" : ""
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#F0F0F3] rounded-full shadow-[2px_2px_6px_#d1d1d3,-2px_-2px_6px_#ffffff] transition-transform duration-300 ease-out ${
+              activeTab === "completed" ? "translate-x-full" : "translate-x-0"
             }`}
           ></div>
           <button
             type="button"
             onClick={() => setActiveTab("registered")}
-            className={`relative z-10 flex-1 rounded-full py-2.5 text-sm font-semibold transition-colors md:text-base ${
-              activeTab === "registered" ? "text-[#0f1f1b]" : "text-[#6b7f77]"
+            className={`relative z-10 flex-1 py-2.5 text-xs font-bold text-center rounded-full transition-colors ${
+              activeTab === "registered" ? "text-black" : "text-gray-400 hover:text-black"
             }`}
           >
             Registered
@@ -230,8 +234,8 @@ export default function EventsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("completed")}
-            className={`relative z-10 flex-1 rounded-full py-2.5 text-sm font-semibold transition-colors md:text-base ${
-              activeTab === "completed" ? "text-[#0f1f1b]" : "text-[#6b7f77]"
+            className={`relative z-10 flex-1 py-2.5 text-xs font-bold text-center rounded-full transition-colors ${
+              activeTab === "completed" ? "text-black" : "text-gray-400 hover:text-black"
             }`}
           >
             Completed
@@ -239,44 +243,54 @@ export default function EventsPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:px-10">
+      <main className="flex-1 px-6 py-6 pb-28">
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-gray-500">Loading events...</div>
+          <div className="flex items-center justify-center py-16 text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Loading events...
+          </div>
         ) : currentEvents.length === 0 ? (
-          <div className="rounded-3xl border border-white/70 bg-white/80 p-10 text-center text-[#6b7f77] shadow-[0_20px_60px_-40px_rgba(12,24,20,0.6)] backdrop-blur">
+          <div className="rounded-3xl bg-[#F0F0F3] p-10 text-center text-xs font-bold uppercase tracking-wider text-gray-500 shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] border border-gray-100/50">
             No {activeTab} events yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {currentEvents.map((event) => (
               <div
                 key={event.id}
-                className="group relative overflow-hidden rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_22px_70px_-45px_rgba(6,24,20,0.6)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_-40px_rgba(6,24,20,0.7)]"
+                className="rounded-3xl bg-[#F0F0F3] p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col justify-between transition-all duration-300 hover:shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff]"
               >
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(135deg,rgba(18,80,99,0.08),rgba(245,181,125,0.08))]"></div>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#4c6a63]">
+                    <span className="text-gray-500 text-[10px] font-bold tracking-widest uppercase">
                       {event.category}
-                    </p>
-                    <h3 className="mt-2 text-lg font-bold text-[#0f1f1b]">
+                    </span>
+                    <h3 className="mt-1 text-lg font-black tracking-tight text-black">
                       {event.event_name}
                     </h3>
                   </div>
-                  <span className="rounded-full bg-[#0f1f1b]/10 px-3 py-1 text-xs font-semibold text-[#0f1f1b]">
+                  <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white shadow-[2px_2px_6px_#d1d1d3] uppercase shrink-0">
                     {event.status === "verified"
-                      ? `${event.points_awarded ?? event.event_points} pts`
-                      : "Points pending"}
+                      ? `${event.points_awarded ?? event.event_points} PTS`
+                      : "PENDING"}
                   </span>
                 </div>
 
-                <div className="mt-4 text-sm text-[#5a6f68]">
-                  <p>Start: {new Date(event.start_time).toLocaleString()}</p>
-                  <p>End: {new Date(event.end_time).toLocaleString()}</p>
-                  <p>Location: {event.location_name}</p>
+                <div className="mt-4 text-xs text-gray-500 font-medium space-y-1">
+                  <p className="flex items-center gap-1.5">
+                    <span className="material-icons-outlined text-sm">schedule</span>
+                    <span>Start: {new Date(event.start_time).toLocaleString()}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <span className="material-icons-outlined text-sm">schedule</span>
+                    <span>End: {new Date(event.end_time).toLocaleString()}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <span className="material-icons-outlined text-sm">location_on</span>
+                    <span>Location: {event.location_name}</span>
+                  </p>
                 </div>
 
-                <div className="mt-4 inline-flex items-center rounded-full bg-[#f0ebe2] px-3 py-1 text-xs font-semibold text-[#6b7f77]">
+                <div className="mt-5 inline-flex self-start items-center rounded-full bg-[#F0F0F3] px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-500 shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]">
                   {event.status === "pending_review"
                     ? "Registered"
                     : event.points_awarded == null
@@ -287,47 +301,46 @@ export default function EventsPage() {
             ))}
           </div>
         )}
-
       </main>
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F0F0F3]/80 backdrop-blur-sm px-4 py-8">
           <div className="absolute inset-0" onClick={handleCloseModal} />
-          <div className="relative z-10 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="relative z-10 w-full max-w-sm max-h-[85vh] overflow-y-auto rounded-3xl bg-[#F0F0F3] p-6 shadow-[12px_12px_24px_#d1d1d3,-12px_-12px_24px_#ffffff] border border-white/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#4c6a63]">Personal Event</p>
-                <h2 className="mt-2 text-2xl font-bold text-[#0f1f1b]">Start Event</h2>
+                <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Personal Event</span>
+                <h2 className="text-xl font-black text-black mt-1">Start Event</h2>
               </div>
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="rounded-full p-2 text-[#5a6f68] hover:bg-black/5"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-[#F0F0F3] text-black shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d1d3] transition-all"
               >
-                <span className="material-icons-outlined">close</span>
+                <span className="material-icons-outlined text-lg">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="mt-6 space-y-4">
+            <form onSubmit={handleCreate} className="mt-6 space-y-5">
               <div>
-                <label className="text-sm font-medium text-[#0f1f1b]">Event Name</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Event Name</label>
                 <input
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
+                  className="mt-2 w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black placeholder-gray-400 outline-none focus:ring-0"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium text-[#0f1f1b]">Category</label>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Category</label>
+                <div className="relative mt-2">
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
+                    className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black outline-none focus:ring-0 appearance-none cursor-pointer"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
@@ -335,66 +348,68 @@ export default function EventsPage() {
                       </option>
                     ))}
                   </select>
-                </div>
-                <div className="rounded-2xl border border-black/10 bg-[#f6f4ef] p-4 text-sm text-[#5a6f68]">
-                  Points are set by admin after review.
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
+                    <span className="material-symbols-outlined text-lg">expand_more</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-[#F0F0F3] shadow-[inset_2px_2px_5px_#d1d1d3,inset_-2px_-2px_5px_#ffffff] p-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 text-center">
+                Points are set by admin after review.
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-[#0f1f1b]">Start</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Start Time</label>
                   <input
                     name="start_time"
                     type="datetime-local"
                     value={formData.start_time}
                     onChange={handleInputChange}
-                    className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
+                    className="mt-2 w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black outline-none focus:ring-0 [color-scheme:light]"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[#0f1f1b]">End</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">End Time</label>
                   <input
                     name="end_time"
                     type="datetime-local"
                     value={formData.end_time}
                     onChange={handleInputChange}
-                    className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
+                    className="mt-2 w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black outline-none focus:ring-0 [color-scheme:light]"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-[#0f1f1b]">Description</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
+                  className="mt-2 w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl p-5 text-sm text-black placeholder-gray-400 outline-none focus:ring-0 resize-none"
                 />
               </div>
 
-              <div className="rounded-2xl border border-black/10 bg-white/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#4c6a63]">Location</p>
-                <div className="mt-4 space-y-4">
+              <div className="rounded-2xl bg-[#F0F0F3] shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] p-4 border border-white/20">
+                <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase ml-1">Location Map</span>
+                <div className="mt-3 space-y-4">
                   <MapLocationPicker
                     initialLat={parseFloat(formData.latitude)}
                     initialLng={parseFloat(formData.longitude)}
                     initialRadius={parseInt(formData.location_radius_meters, 10)}
-                    onLocationSelect={(lat, lng, name) =>
-                      {
-                        setMapTouched(true);
-                        setFormData((prev) => ({
-                          ...prev,
-                          latitude: lat.toString(),
-                          longitude: lng.toString(),
-                          location_name: name,
-                        }));
-                      }
-                    }
+                    onLocationSelect={(lat, lng, name) => {
+                      setMapTouched(true);
+                      setFormData((prev) => ({
+                        ...prev,
+                        latitude: lat.toString(),
+                        longitude: lng.toString(),
+                        location_name: name,
+                      }));
+                    }}
                     onRadiusChange={(radius) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -402,35 +417,35 @@ export default function EventsPage() {
                       }))
                     }
                   />
-                  <div className="text-xs font-medium text-[#6b7f77]">
-                    {mapTouched ? "Location selected" : "Pick a spot on the map to continue"}
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-center text-gray-400">
+                    {mapTouched ? "Location Selected" : "Tap map to set position"}
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#0f1f1b]">Location Name</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Location Label</label>
                     <input
                       name="location_name"
                       value={formData.location_name}
                       onChange={handleInputChange}
-                      className="mt-2 w-full rounded-2xl border border-black/10 px-4 py-3 text-sm text-[#0f1f1b]"
-                      placeholder="Location"
+                      className="mt-2 w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black placeholder-gray-400 outline-none focus:ring-0"
+                      placeholder="e.g. Auditorium"
                       required
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="rounded-xl border border-black/10 px-4 py-2 text-sm font-semibold text-[#5a6f68]"
+                  className="rounded-2xl bg-[#F0F0F3] shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] px-5 py-3.5 text-xs font-bold uppercase text-gray-500 active:shadow-[inset_2px_2px_4px_#d1d1d3] transition-all flex-1 text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="rounded-xl bg-[#0f1f1b] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  className="rounded-2xl bg-black px-5 py-3.5 text-xs font-bold uppercase text-white shadow-[4px_4px_8px_#b8b8ba] active:scale-95 disabled:opacity-50 transition-all flex-1 text-center"
                 >
                   {isCreating ? "Creating..." : "Create Event"}
                 </button>

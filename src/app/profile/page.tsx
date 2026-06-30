@@ -173,56 +173,55 @@ export default function ProfileScreen() {
 
     if (isLoading || isInitializing || !user || profileLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary text-primary"></div>
+            <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F0F0F3]">
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Loading profile...</div>
             </div>
         );
     }
 
     if (user?.role === 'admin') {
-        // Simple admin profile with settings access
         return (
-            <div className="flex flex-col min-h-screen">
+            <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
                 {/* Header */}
-                <header className="pt-8 md:pt-10 pb-4 px-6 md:px-10 flex items-center justify-between sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
+                <header className="flex items-center justify-between px-6 pt-10 pb-6">
                     <div className="flex items-center gap-3">
-                        <UserAvatar name={profile?.name || user?.name} className="w-10 h-10 md:w-12 md:h-12 text-lg md:text-xl shadow-lg bg-black text-white dark:bg-white dark:text-black" />
-                        <div>
-                            <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Admin</h1>
-                            <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">Profile</h2>
+                        <UserAvatar name={profile?.name || user?.name} className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-lg font-bold shadow-[4px_4px_10px_#d1d1d3,-4px_-4px_10px_#ffffff]" />
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Admin</span>
+                            <span className="text-lg font-black tracking-tight text-black">Profile</span>
                         </div>
                     </div>
                     <Link
                         href="/settings"
-                        className="p-2 rounded-full hover:bg-subtle-light dark:hover:bg-subtle-dark transition-colors text-primary dark:text-white"
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
                     >
                         <span className="material-icons-outlined text-2xl">settings</span>
                     </Link>
                 </header>
 
                 {/* Admin Profile Content */}
-                <div className="flex-1 px-6 md:px-10 pb-24 space-y-8 max-w-2xl mx-auto w-full">
-                    <div className="bg-card-light dark:bg-card-dark rounded-2xl p-8 shadow-soft text-center">
-                        <UserAvatar name={profile?.name || user?.name} className="w-24 h-24 text-4xl mx-auto mb-4 bg-black text-white dark:bg-white dark:text-black" />
-                        <h3 className="text-2xl font-bold text-primary dark:text-white">{profile?.name || user?.name || "Admin"}</h3>
-                        <span className="inline-block bg-black text-white text-xs font-bold px-3 py-1 rounded mt-2 uppercase tracking-wide shadow-sm">Administrator</span>
-                        <p className="text-text-muted-light dark:text-text-muted-dark mt-4">{profile?.email || "N/A"}</p>
+                <div className="flex-1 px-6 py-6 space-y-8 flex flex-col">
+                    <div className="bg-[#F0F0F3] rounded-3xl p-8 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] text-center border border-white/20">
+                        <UserAvatar name={profile?.name || user?.name} className="w-24 h-24 text-4xl mx-auto mb-4 bg-gray-900 text-white flex items-center justify-center rounded-full shadow-[4px_4px_10px_#d1d1d3]" />
+                        <h3 className="text-2xl font-black tracking-tight text-black">{profile?.name || user?.name || "Admin"}</h3>
+                        <span className="inline-block bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-full mt-3 uppercase tracking-widest shadow-[2px_2px_6px_#d1d1d3]">Administrator</span>
+                        <p className="text-gray-500 font-medium text-sm mt-4">{profile?.email || "N/A"}</p>
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <Link href="/settings" className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-md active:scale-95 transition-all group border border-transparent hover:border-subtle-light dark:hover:border-subtle-dark">
-                            <div className="h-12 w-12 rounded-xl bg-subtle-light dark:bg-subtle-dark flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                                <span className="material-icons-outlined text-2xl text-primary dark:text-white group-hover:text-white">settings</span>
+                    <div className="grid grid-cols-2 gap-5">
+                        <Link href="/settings" className="bg-[#F0F0F3] p-6 rounded-3xl shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-white/20">
+                            <div className="h-12 w-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                                <span className="material-icons-outlined text-2xl">settings</span>
                             </div>
-                            <span className="text-sm font-semibold text-text-light dark:text-text-dark">Settings</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-black">Settings</span>
                         </Link>
 
-                        <button onClick={logout} className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-md active:scale-95 transition-all group border border-transparent hover:border-red-200 dark:hover:border-red-800">
-                            <div className="h-12 w-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors">
-                                <span className="material-icons-outlined text-2xl text-red-600 dark:text-red-400 group-hover:text-white">logout</span>
+                        <button onClick={logout} className="bg-[#F0F0F3] p-6 rounded-3xl shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-white/20">
+                            <div className="h-12 w-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                                <span className="material-icons-outlined text-2xl">logout</span>
                             </div>
-                            <span className="text-sm font-semibold text-red-600 dark:text-red-400">Logout</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-red-600">Logout</span>
                         </button>
                     </div>
                 </div>
@@ -239,31 +238,36 @@ export default function ProfileScreen() {
     const completedCount = studentInfo?.completed_activities || 0;
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
             {/* Header */}
-            <header className="pt-8 md:pt-10 pb-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
+            <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-md">
                 <div className="flex items-center gap-3">
-                    <UserAvatar name={name} className="w-10 h-10 md:w-12 md:h-12 text-lg md:text-xl shadow-lg" />
-                    <div>
-                        <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Dashboard,</h1>
-                        <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">{name}</h2>
+                    <Link
+                        href="/"
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+                    >
+                        <span className="material-symbols-outlined text-2xl">arrow_back</span>
+                    </Link>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Dashboard</span>
+                        <span className="text-lg font-black tracking-tight text-black">{name.split(" ")[0]}</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={toggleNotifications}
-                        className="relative p-2 rounded-full hover:bg-subtle-light dark:hover:bg-subtle-dark transition-colors text-primary dark:text-white"
+                        className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
                     >
                         <span className="material-icons-outlined text-2xl">notifications</span>
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background-light dark:border-background-dark"></span>
+                            <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-black border-2 border-[#F0F0F3]"></span>
                         )}
                     </button>
 
                     <Link
                         href="/settings"
-                        className="p-2 rounded-full hover:bg-subtle-light dark:hover:bg-subtle-dark transition-colors text-primary dark:text-white"
+                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
                     >
                         <span className="material-icons-outlined text-2xl">settings</span>
                     </Link>
@@ -272,18 +276,18 @@ export default function ProfileScreen() {
                     {isNotificationsOpen && (
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)}></div>
-                            <div className="absolute right-0 top-16 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[#202020] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-20 py-2">
-                                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                                    <h3 className="font-bold text-gray-800 dark:text-white">Notifications</h3>
+                            <div className="absolute right-6 top-24 mt-2 w-72 max-h-80 overflow-y-auto bg-[#F0F0F3] rounded-3xl shadow-[8px_8px_20px_#d1d1d3,-8px_-8px_20px_#ffffff] border border-white/20 z-20 py-2">
+                                <div className="px-4 py-2 border-b border-gray-200/50 flex justify-between items-center">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-black">Notifications</h3>
                                 </div>
                                 <div className="flex flex-col">
                                     {notifications.length === 0 ? (
-                                        <p className="text-gray-500 text-sm p-4 text-center">No notifications yet.</p>
+                                        <p className="text-gray-500 text-xs p-4 text-center font-semibold uppercase">No notifications yet.</p>
                                     ) : (
                                         notifications.map(n => (
-                                            <div key={n.id} className={`p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${!n.is_read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300">{n.message}</p>
-                                                <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()} {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            <div key={n.id} className={`p-4 border-b border-gray-200/30 transition-colors ${!n.is_read ? 'bg-black/5' : ''}`}>
+                                                <p className="text-xs font-medium text-black leading-relaxed">{n.message}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold mt-1.5 uppercase">{new Date(n.created_at).toLocaleDateString()} {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                             </div>
                                         ))
                                     )}
@@ -295,165 +299,136 @@ export default function ProfileScreen() {
             </header>
 
             {/* Main Content */}
-            <div className="flex-1 px-6 md:px-10 pb-24 space-y-8 max-w-7xl mx-auto w-full">
-
-                {/* Points Card */}
-                <section className="space-y-4">
-                    <div className="bg-primary text-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-soft relative overflow-hidden group">
-                        <div className="absolute -right-10 -top-10 w-40 h-40 md:w-64 md:h-64 bg-white opacity-5 rounded-full blur-2xl md:blur-3xl"></div>
-                        <div className="flex justify-between items-start mb-6 md:mb-8 relative z-10">
-                            <div>
-                                <p className="text-sm md:text-base font-medium text-gray-300 mb-1">Total Activity Points</p>
-                                <h3 className="text-3xl md:text-5xl font-bold tracking-tight mt-1">{totalPoints} <span className="text-lg md:text-2xl font-normal text-gray-400">/ {targetPoints}</span></h3>
-                            </div>
-                            <div className="relative h-16 w-16 md:h-24 md:w-24">
-                                <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                                    <path className="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
-                                    <path className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3"></path>
-                                </svg>
-                                <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center">
-                                    <span className="text-xs md:text-sm font-bold">{progressPercent}%</span>
+            <div className="flex-1 px-6 py-6 pb-28 flex flex-col md:grid md:grid-cols-2 md:gap-8 space-y-8 md:space-y-0">
+                {/* Left Column */}
+                <div className="space-y-8">
+                    {/* Points Card */}
+                    <section className="w-full">
+                        <div className="bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20 relative overflow-hidden">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase block mb-1">Total Activity Points</span>
+                                    <h3 className="text-3xl font-black text-black tracking-tight">{totalPoints} <span className="text-sm font-bold text-gray-400">/ {targetPoints}</span></h3>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Chart */}
-                        <div className="mt-2 md:mt-6 pt-4 md:pt-6 border-t border-gray-800 relative z-10">
-                            <div className="relative flex justify-between items-end h-24 md:h-32 w-full">
-                                {/* SVG Line and Gradient */}
-                                <svg className="w-full h-full overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                                            <stop offset="0%" style={{ stopColor: 'white', stopOpacity: 0.2 }}></stop>
-                                            <stop offset="100%" style={{ stopColor: 'white', stopOpacity: 0 }}></stop>
-                                        </linearGradient>
-                                    </defs>
-                                    <path className="chart-path drop-shadow-md" d={pathD} fill="none" stroke="white" strokeLinecap="round" strokeWidth="3"></path>
-                                    <path d={`${pathD} V100 H0 Z`} fill="url(#gradient)" opacity="0.5" stroke="none"></path>
-                                </svg>
-
-                                {/* HTML Pointer */}
-                                <div
-                                    className="absolute w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#1A1A1A] border-2 border-white shadow-lg z-20"
-                                    style={{
-                                        left: `100%`,
-                                        bottom: `${100 - (finalPoint.y / 100 * 100)}%`,
-                                        transform: 'translate(-50%, 50%)'
-                                    }}
-                                />
-                            </div>
-                            <div className="flex justify-between mt-2 text-[10px] md:text-xs text-gray-400 font-medium px-1">
-                                {chartData.labels.map((label, idx) => (
-                                    <span key={idx} className={idx === chartData.labels.length - 1 ? "text-white" : ""}>{label}</span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Profile Info & Recent Activities */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-                    {/* Profile Info Cards */}
-                    <section className="lg:col-span-4 space-y-4">
-                        <h3 className="text-lg md:text-xl font-bold text-text-light dark:text-text-dark mb-4">Profile Info</h3>
-
-                        <div className="space-y-4">
-                            <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className="material-symbols-outlined text-primary dark:text-white">badge</span>
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">USN</span>
-                                </div>
-                                <p className="text-sm font-semibold text-text-light dark:text-text-dark">{usn}</p>
-                            </div>
-
-                            <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className="material-symbols-outlined text-primary dark:text-white">school</span>
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Department</span>
-                                </div>
-                                <p className="text-sm font-semibold text-text-light dark:text-text-dark">{department}</p>
-                            </div>
-
-                            <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className="material-symbols-outlined text-primary dark:text-white">calendar_month</span>
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Semester</span>
-                                </div>
-                                <p className="text-sm font-semibold text-text-light dark:text-text-dark">{semester}</p>
-                            </div>
-
-                            <div className="bg-card-light dark:bg-card-dark p-4 rounded-2xl shadow-soft">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className="material-symbols-outlined text-primary dark:text-white">call</span>
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact</span>
-                                </div>
-                                <p className="text-sm font-semibold text-text-light dark:text-text-dark">{phoneNumber}</p>
-                            </div>
-
-                            {/* Stats Cards */}
-                            <div className="grid grid-cols-2 gap-4 pt-4">
-                                <div className="bg-primary text-white rounded-2xl p-4 flex flex-col justify-between h-24 relative overflow-hidden shadow-soft group">
-                                    <div className="absolute -right-2 -top-2 w-12 h-12 bg-white/10 rounded-full blur-lg group-hover:bg-white/20 transition-all"></div>
-                                    <span className="material-symbols-outlined text-white/80 text-lg relative z-10">star</span>
-                                    <div className="relative z-10">
-                                        <p className="text-2xl font-bold tracking-tight">{totalPoints}</p>
-                                        <p className="text-xs font-medium text-white/70 mt-0.5">Points</p>
+                                <div className="relative h-16 w-16 shrink-0">
+                                    <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
+                                        <path className="text-[#e0e0e3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
+                                        <path className="text-black" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3"></path>
+                                    </svg>
+                                    <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center">
+                                        <span className="text-[10px] font-black text-black">{progressPercent}%</span>
                                     </div>
                                 </div>
-                                <div className="bg-card-light dark:bg-card-dark text-primary dark:text-white rounded-2xl p-4 flex flex-col justify-between h-24 shadow-soft border border-slate-100 dark:border-slate-800">
-                                    <span className="material-symbols-outlined text-slate-400 text-lg">assignment_turned_in</span>
-                                    <div>
-                                        <p className="text-2xl font-bold tracking-tight">{completedCount}</p>
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Completed</p>
-                                    </div>
+                            </div>
+
+                            {/* Chart */}
+                            <div className="pt-4 border-t border-gray-200/50">
+                                <div className="relative flex justify-between items-end h-20 w-full">
+                                    <svg className="w-full h-full overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
+                                        <defs>
+                                            <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                                                <stop offset="0%" style={{ stopColor: 'black', stopOpacity: 0.15 }}></stop>
+                                                <stop offset="100%" style={{ stopColor: 'black', stopOpacity: 0 }}></stop>
+                                            </linearGradient>
+                                        </defs>
+                                        <path className="chart-path" d={pathD} fill="none" stroke="black" strokeLinecap="round" strokeWidth="3"></path>
+                                        <path d={`${pathD} V100 H0 Z`} fill="url(#gradient)" opacity="0.5" stroke="none"></path>
+                                    </svg>
+
+                                    <div
+                                        className="absolute w-2.5 h-2.5 rounded-full bg-black border-2 border-[#F0F0F3] shadow-lg z-20"
+                                        style={{
+                                            left: `100%`,
+                                            bottom: `${100 - (finalPoint.y / 100 * 100)}%`,
+                                            transform: 'translate(-50%, 50%)'
+                                        }}
+                                    />
+                                </div>
+                                <div className="flex justify-between mt-2 text-[9px] text-gray-400 font-bold uppercase px-1">
+                                    {chartData.labels.map((label, idx) => (
+                                        <span key={idx} className={idx === chartData.labels.length - 1 ? "text-black font-black" : ""}>{label}</span>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    {/* Recent Activities */}
-                    <section className="lg:col-span-8 space-y-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg md:text-xl font-bold text-text-light dark:text-text-dark">Recent Activities</h3>
-                            <button className="flex items-center gap-1 text-xs md:text-sm font-semibold text-text-muted-light dark:text-text-muted-dark bg-card-light dark:bg-card-dark shadow-sm border border-subtle-light dark:border-subtle-dark hover:bg-subtle-light dark:hover:bg-subtle-dark px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-colors">
-                                Sort by <span className="material-icons-outlined text-sm">keyboard_arrow_down</span>
-                            </button>
+                    {/* Stats Summary Widgets */}
+                    <section className="grid grid-cols-2 gap-4">
+                        <div className="bg-[#F0F0F3] rounded-2xl p-4 flex flex-col justify-between h-24 shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <span className="material-symbols-outlined text-black text-lg">star</span>
+                            <div>
+                                <p className="text-2xl font-black text-black leading-none">{totalPoints}</p>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mt-1">Total Points</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="bg-[#F0F0F3] rounded-2xl p-4 flex flex-col justify-between h-24 shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <span className="material-symbols-outlined text-black text-lg">assignment_turned_in</span>
+                            <div>
+                                <p className="text-2xl font-black text-black leading-none">{completedCount}</p>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mt-1">Completed Events</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-8">
+                    {/* Profile Info Section */}
+                    <section className="space-y-4">
+                        <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase ml-1">Profile Info</span>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">USN</span>
+                                <p className="text-xs font-black text-black truncate uppercase tracking-wider">{usn}</p>
+                            </div>
+
+                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Department</span>
+                                <p className="text-xs font-black text-black truncate uppercase tracking-wider">{department}</p>
+                            </div>
+
+                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Semester</span>
+                                <p className="text-xs font-black text-black uppercase tracking-wider">{semester}</p>
+                            </div>
+
+                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Contact</span>
+                                <p className="text-xs font-black text-black uppercase tracking-wider">{phoneNumber}</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Recent Activities */}
+                    <section className="space-y-4">
+                        <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase ml-1">Recent Activities</span>
+
+                        <div className="flex flex-col gap-4">
                             {recentActivities.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    No recent activities. Time to join some events!
+                                <div className="rounded-2xl bg-[#F0F0F3] p-6 text-center text-xs font-bold uppercase tracking-wider text-gray-400 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50">
+                                    No recent activities.
                                 </div>
                             ) : recentActivities.map((activity, idx) => (
-                                <div key={idx} className={`bg-card-light dark:bg-card-dark p-4 md:p-5 rounded-2xl shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${activity.status === 'verified' ? 'opacity-80 hover:opacity-100' : 'hover:shadow-md border-2 border-transparent hover:border-subtle-light dark:hover:border-subtle-dark'}`}>
-                                    <div className="flex items-center gap-4 md:gap-5">
-                                        {(() => {
-                                            const catInfo = getCategoryIconInfo(activity.category);
-                                            return (
-                                                <div className={`h-12 w-12 md:h-14 md:w-14 shrink-0 rounded-xl flex items-center justify-center ${catInfo.bg} ${catInfo.text}`}>
-                                                    <span className="material-icons-outlined md:text-3xl">
-                                                        {catInfo.icon}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })()}
-                                        <div>
-                                            <h4 className="text-sm md:text-base font-bold text-text-light dark:text-text-dark">{activity.activity_name || activity.activity || 'Activity'}</h4>
-                                            <p className="text-xs md:text-sm text-text-muted-light dark:text-text-muted-dark mt-0.5 md:mt-1">
+                                <div key={idx} className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20 flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                                            <span className="material-icons-outlined text-xl">
+                                                {getCategoryIconInfo(activity.category).icon}
+                                            </span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h4 className="text-xs font-black text-black truncate">{activity.activity_name || activity.activity || 'Activity'}</h4>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
                                                 {new Date(activity.submitted_at).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center md:flex-col md:items-end justify-between md:justify-center gap-1 md:gap-2">
-                                        <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full uppercase tracking-wider ${activity.status === 'verified'
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
-                                            }`}>
-                                            {activity.status}
-                                        </span>
-                                    </div>
+                                    <span className="rounded-full bg-[#F0F0F3] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-black shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]">
+                                        {activity.status}
+                                    </span>
                                 </div>
                             ))}
                         </div>

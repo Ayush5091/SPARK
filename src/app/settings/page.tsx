@@ -67,163 +67,159 @@ export default function SettingsScreen() {
     const phoneNumber = userInfo?.phone_number || "Not set";
     const department = userInfo?.department || "Not set";
 
-    return (
-        <div className="flex flex-col min-h-screen">
-            {/* Header */}
-            <header className="pt-8 md:pt-10 pb-4 px-6 md:px-10 flex items-center gap-4 sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
-                <Link
-                    href="/profile"
-                    className="p-2 rounded-full hover:bg-subtle-light dark:hover:bg-subtle-dark transition-colors text-primary dark:text-white"
-                >
-                    <span className="material-icons-outlined text-2xl">arrow_back</span>
-                </Link>
-                <div>
-                    <h1 className="text-sm md:text-base font-medium text-text-muted-light dark:text-text-muted-dark">Profile</h1>
-                    <h2 className="text-lg md:text-2xl font-bold leading-tight text-primary dark:text-white">Settings</h2>
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <div className="flex-1 px-6 md:px-10 pb-24 space-y-8 max-w-2xl mx-auto w-full">
-
-                {/* Profile Avatar Section */}
-                <div className="flex flex-col items-center py-8 bg-gradient-to-b from-white to-background-light dark:from-[#202020] dark:to-background-dark rounded-2xl">
-                    <div className="relative group">
-                        <UserAvatar name={name} className="w-24 h-24 md:w-32 md:h-32 text-4xl md:text-5xl" />
-                        <div className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg">
-                            <span className="material-symbols-outlined text-[16px] md:text-[20px]">edit</span>
-                        </div>
-                    </div>
-                    <div className="mt-4 text-center">
-                        <h3 className="text-primary dark:text-white text-xl md:text-2xl font-bold tracking-tight">{name}</h3>
-                        {!isAdmin && (
-                            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium mt-1">{department}</p>
-                        )}
-                        {isAdmin && (
-                            <span className="inline-block bg-black text-white text-xs font-bold px-2 py-1 rounded mt-2 uppercase tracking-wide shadow-sm">Administrator</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Personal Information Section */}
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg md:text-xl font-bold text-primary dark:text-white">Personal Information</h3>
-                        <button
-                            onClick={() => setIsEditing(!isEditing)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                isEditing
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                                    : 'bg-primary text-white hover:bg-gray-900'
-                            }`}
-                        >
-                            {isEditing ? 'Cancel' : 'Edit'}
-                        </button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {/* Name Field (Admin Only) */}
-                        {isAdmin && (
-                            <div className="p-4 bg-[#F8F9FA] dark:bg-[#2a2a2a] rounded-2xl">
-                                <label className="block text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    Name
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={editData.name}
-                                        onChange={e => setEditData({ ...editData, name: e.target.value })}
-                                        className="w-full bg-transparent border-b-2 border-primary focus:outline-none dark:text-white text-lg font-semibold pb-1"
-                                        placeholder="Enter Name"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-semibold text-primary dark:text-white">{name}</p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* USN Field (Students Only) */}
-                        {!isAdmin && (
-                            <div className="p-4 bg-[#F8F9FA] dark:bg-[#2a2a2a] rounded-2xl">
-                                <label className="block text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    USN
-                                </label>
-                                <p className="text-lg font-semibold text-primary dark:text-white">{usn}</p>
-                                <p className="text-xs text-slate-400 mt-1">USN cannot be changed</p>
-                            </div>
-                        )}
-
-                        {/* Email Field */}
-                        <div className="p-4 bg-[#F8F9FA] dark:bg-[#2a2a2a] rounded-2xl">
-                            <label className="block text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                Email
-                            </label>
-                            <p className="text-lg font-semibold text-primary dark:text-white truncate">{email}</p>
-                            <p className="text-xs text-slate-400 mt-1">Email cannot be changed</p>
-                        </div>
-
-                        {/* Phone Number Field (Students Only) */}
-                        {!isAdmin && (
-                            <div className="p-4 bg-[#F8F9FA] dark:bg-[#2a2a2a] rounded-2xl">
-                                <label className="block text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    Phone Number
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={editData.phone_number}
-                                        onChange={e => setEditData({ ...editData, phone_number: e.target.value })}
-                                        className="w-full bg-transparent border-b-2 border-primary focus:outline-none dark:text-white text-lg font-semibold pb-1"
-                                        placeholder="Enter phone number"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-semibold text-primary dark:text-white">{phoneNumber}</p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Department Field (Students Only) */}
-                        {!isAdmin && (
-                            <div className="p-4 bg-[#F8F9FA] dark:bg-[#2a2a2a] rounded-2xl">
-                                <label className="block text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    Department
-                                </label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={editData.department}
-                                        onChange={e => setEditData({ ...editData, department: e.target.value })}
-                                        className="w-full bg-transparent border-b-2 border-primary focus:outline-none dark:text-white text-lg font-semibold pb-1"
-                                        placeholder="Enter department"
-                                    />
-                                ) : (
-                                    <p className="text-lg font-semibold text-primary dark:text-white">{department}</p>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-4">
-                    {isEditing && (
-                        <button
-                            disabled={saving}
-                            onClick={handleSave}
-                            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 md:py-5 rounded-xl md:rounded-2xl shadow-lg transition-all active:scale-[0.98]"
-                        >
-                            {saving ? "Saving..." : "Save Changes"}
-                        </button>
-                    )}
-
-                    <button
-                        onClick={logout}
-                        className="w-full text-red-500 dark:text-red-400 font-medium py-3 text-lg hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                    >
-                        Logout
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="max-w-md md:max-w-3xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+      {/* Header */}
+      <header className="flex items-center gap-4 px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-sm">
+        <Link
+          href="/profile"
+          className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+        >
+          <span className="material-icons-outlined text-2xl">arrow_back</span>
+        </Link>
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Profile</span>
+          <h2 className="text-lg font-black tracking-tight text-black">Settings</h2>
         </div>
-    );
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 px-6 py-6 pb-28 space-y-8">
+        {/* Profile Avatar Section */}
+        <div className="flex flex-col items-center py-6 bg-[#F0F0F3] rounded-3xl shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] border border-white/20">
+          <div className="relative group">
+            <UserAvatar name={name} className="w-24 h-24 text-4xl bg-gray-900 text-white flex items-center justify-center rounded-full shadow-[4px_4px_10px_#d1d1d3]" />
+          </div>
+          <div className="mt-4 text-center">
+            <h3 className="text-black text-xl font-black tracking-tight">{name}</h3>
+            {!isAdmin && (
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mt-1">{department}</p>
+            )}
+            {isAdmin && (
+              <span className="inline-block bg-black text-white text-[9px] font-bold px-2.5 py-1 rounded-full mt-2 uppercase tracking-widest shadow-[2px_2px_6px_#d1d1d3]">
+                Administrator
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Personal Information Section */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500">Personal Info</h3>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-2xl shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d1d3] transition-all ${
+                isEditing ? 'text-red-600' : 'text-black'
+              }`}
+            >
+              {isEditing ? 'Cancel' : 'Edit'}
+            </button>
+          </div>
+
+          <div className="space-y-5">
+            {/* Name Field (Admin Only) */}
+            {isAdmin && (
+              <div className="p-5 bg-[#F0F0F3] rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  Name
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={e => setEditData({ ...editData, name: e.target.value })}
+                    className="w-full bg-[#F0F0F3] shadow-[inset_2px_2px_5px_#d1d1d3,inset_-2px_-2px_5px_#ffffff] border-none rounded-xl px-4 py-2 text-sm text-black outline-none focus:ring-0"
+                    placeholder="Enter Name"
+                  />
+                ) : (
+                  <p className="text-sm font-black text-black">{name}</p>
+                )}
+              </div>
+            )}
+
+            {/* USN Field (Students Only) */}
+            {!isAdmin && (
+              <div className="p-5 bg-[#F0F0F3] rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                  USN
+                </label>
+                <p className="text-sm font-black text-black uppercase tracking-wider">{usn}</p>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">USN cannot be changed</p>
+              </div>
+            )}
+
+            {/* Email Field */}
+            <div className="p-5 bg-[#F0F0F3] rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+              <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                Email
+              </label>
+              <p className="text-sm font-black text-black truncate">{email}</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">Email cannot be changed</p>
+            </div>
+
+            {/* Phone Number Field (Students Only) */}
+            {!isAdmin && (
+              <div className="p-5 bg-[#F0F0F3] rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  Phone Number
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.phone_number}
+                    onChange={e => setEditData({ ...editData, phone_number: e.target.value })}
+                    className="w-full bg-[#F0F0F3] shadow-[inset_2px_2px_5px_#d1d1d3,inset_-2px_-2px_5px_#ffffff] border-none rounded-xl px-4 py-2 text-sm text-black outline-none focus:ring-0"
+                    placeholder="Enter phone number"
+                  />
+                ) : (
+                  <p className="text-sm font-black text-black tracking-wider">{phoneNumber}</p>
+                )}
+              </div>
+            )}
+
+            {/* Department Field (Students Only) */}
+            {!isAdmin && (
+              <div className="p-5 bg-[#F0F0F3] rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  Department
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editData.department}
+                    onChange={e => setEditData({ ...editData, department: e.target.value })}
+                    className="w-full bg-[#F0F0F3] shadow-[inset_2px_2px_5px_#d1d1d3,inset_-2px_-2px_5px_#ffffff] border-none rounded-xl px-4 py-2 text-sm text-black outline-none focus:ring-0"
+                    placeholder="Enter department"
+                  />
+                ) : (
+                  <p className="text-sm font-black text-black tracking-wider uppercase">{department}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-4 pt-4">
+          {isEditing && (
+            <button
+              disabled={saving}
+              onClick={handleSave}
+              className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-[4px_4px_10px_#b8b8ba] active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          )}
+
+          <button
+            onClick={logout}
+            className="w-full h-12 bg-[#F0F0F3] text-red-600 font-bold text-xs uppercase tracking-widest rounded-2xl shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d1d3] transition-all flex items-center justify-center"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
