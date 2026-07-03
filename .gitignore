@@ -42,3 +42,11 @@ __pycache__/
 
 stitch_screens/
 page_history.txt
+
+# agent and tool metadata
+/.agents/
+/.codex/
+/.impeccable/
+
+# IDE settings
+/.vscode/
