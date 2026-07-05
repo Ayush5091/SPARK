@@ -183,28 +183,6 @@ This enables transparent activity evaluation throughout a student's academic jou
 
 ---
 
-# Technology Stack
-
-## Frontend
-
-- Next.js
-- React
-- Tailwind CSS
-
-## Backend
-
-- FastAPI
-
-## Database
-
-- PostgreSQL
-
-## Mobile
-
-- React Native
-
----
-
 # Security & Data Integrity
 
 SPARK is designed around reliable institutional record keeping.
