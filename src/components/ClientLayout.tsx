@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Navigation from "./Navigation";
+import AicteAssistant from "./AicteAssistant";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useEffect } from "react";
 
@@ -33,6 +34,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <main className={`flex-1 min-w-0 w-full max-w-full overflow-x-clip pb-24 md:pb-0 ${isPublicPage ? '' : 'md:ml-64'}`}>
                 {children}
             </main>
+            <AicteAssistant hasBottomNav={!isPublicPage} />
         </div>
     );
 }
