@@ -2,7 +2,7 @@
 // Self-contained: only shares the Postgres pool with the rest of SPARK.
 
 import db from "@/lib/db";
-import { chat, embedQuery } from "./nvidia";
+import { chat, embedQuery, type ChatMessage } from "./nvidia";
 
 const TOP_K = 6;
 // Cosine similarity below this is treated as "not about this question". Unrelated questions
@@ -64,25 +64,34 @@ Rules:
 - Answer in complete sentences that restate what is being answered (e.g. "Students must earn X points for Y [1]."), not bare values.
 - Be concise and clear. Use short bullet points or a small table when it helps.`;
 
-export async function askAicte(question: string): Promise<RagAnswer> {
+export type PreparedAnswer = { chunks: Chunk[]; messages: ChatMessage[] };
+
+/** Retrieves context and builds the prompt. Returns null when nothing relevant was found (no LLM call needed). */
+export async function prepareAnswer(question: string): Promise<PreparedAnswer | null> {
   const chunks = (await retrieve(question)).filter((c) => c.score >= MIN_SCORE);
-  if (!chunks.length) return { answer: NOT_FOUND_ANSWER, found: false, sources: [] };
+  if (!chunks.length) return null;
 
   const context = chunks
     .map((c, i) => `[${i + 1}] ${c.document}${c.section ? ` — ${c.section}` : ""}\n${c.content}`)
     .join("\n\n---\n\n");
 
-  const answer = await chat([
-    { role: "system", content: SYSTEM_PROMPT },
-    {
-      role: "user",
-      content:
-        `Context passages:\n\n${context}\n\n---\n\nQuestion: ${question}\n\n` +
-        // Repeated next to the question: the model follows these far more reliably here than in the system prompt alone.
-        `Answer from the passages only, in full sentences, citing passage numbers like [1].`,
-    },
-  ]);
+  return {
+    chunks,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content:
+          `Context passages:\n\n${context}\n\n---\n\nQuestion: ${question}\n\n` +
+          // Repeated next to the question: the model follows these far more reliably here than in the system prompt alone.
+          `Answer from the passages only, in full sentences, citing passage numbers like [1].`,
+      },
+    ],
+  };
+}
 
+/** Works out whether the model answered, and which passages it cited. */
+export function finalizeAnswer(answer: string, chunks: Chunk[]): RagAnswer {
   const found = !answer.includes(NOT_FOUND_ANSWER.slice(0, 40));
   const cited = new Set([...answer.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
 
@@ -100,4 +109,10 @@ export async function askAicte(question: string): Promise<RagAnswer> {
         }))
       : [],
   };
+}
+
+export async function askAicte(question: string): Promise<RagAnswer> {
+  const prepared = await prepareAnswer(question);
+  if (!prepared) return { answer: NOT_FOUND_ANSWER, found: false, sources: [] };
+  return finalizeAnswer(await chat(prepared.messages), prepared.chunks);
 }
