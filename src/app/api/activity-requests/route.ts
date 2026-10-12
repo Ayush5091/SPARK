@@ -3,10 +3,26 @@ import db from '@/lib/db';
 import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 import { sendEmailAsync } from '@/lib/mail';
 
+// Student-supplied text goes into admin emails, so it must not be able to inject HTML
+const escapeHtml = (value: string) =>
+    String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
+
 export async function POST(request: Request) {
     try {
         const student = requireAuth(request, 'student');
         const { activity_id, description } = await request.json();
+
+        const activityCheck = await db.query(
+            `SELECT id FROM activities WHERE id = $1 AND COALESCE(is_active, true) = true`,
+            [activity_id]
+        );
+        if (activityCheck.rows.length === 0) {
+            return NextResponse.json({ detail: "Activity not found" }, { status: 404 });
+        }
+
+        if (description && String(description).length > 1000) {
+            return NextResponse.json({ detail: "Description is too long" }, { status: 400 });
+        }
 
         const { rows } = await db.query(
             `INSERT INTO activity_requests(student_id, activity_id, description)
@@ -32,9 +48,9 @@ export async function POST(request: Request) {
           <h3>New Activity Request</h3>
           <p>A new activity request has been submitted.</p>
           <ul>
-            <li><strong>Student:</strong> ${studentName}</li>
-            <li><strong>Activity:</strong> ${activityName}</li>
-            <li><strong>Description:</strong> ${description || 'No description provided'}</li>
+            <li><strong>Student:</strong> ${escapeHtml(studentName)}</li>
+            <li><strong>Activity:</strong> ${escapeHtml(activityName)}</li>
+            <li><strong>Description:</strong> ${escapeHtml(description || 'No description provided')}</li>
           </ul>
         `;
                 // Intentionally fire and forget to simulate BackgroundTasks

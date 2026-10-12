@@ -32,7 +32,12 @@ export async function POST(request: NextRequest) {
     let userLocation: { latitude: number; longitude: number; timestamp: number } | null = null;
     if (userLocationStr) {
       try {
-        userLocation = JSON.parse(userLocationStr);
+        const parsed = JSON.parse(userLocationStr);
+        const lat = Number(parsed?.latitude);
+        const lng = Number(parsed?.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+          userLocation = { latitude: lat, longitude: lng, timestamp: Date.now() };
+        }
       } catch (error) {
         console.error('Failed to parse user location:', error);
       }
@@ -45,17 +50,19 @@ export async function POST(request: NextRequest) {
     // Get event details from database
     const eventQuery = await db.query(
       `SELECT id, name, latitude, longitude, start_time, end_time,
-              location_radius_meters, time_tolerance_minutes, points
+              location_radius_meters, time_tolerance_minutes, points, capacity,
+              COALESCE(is_personal, false) AS is_personal, personal_owner_id
        FROM events
        WHERE id = $1 AND status = 'active'`,
       [eventId]
     );
 
-    if (eventQuery.rows.length === 0) {
+    const eventData = eventQuery.rows[0];
+
+    // Another student's personal event is treated as nonexistent
+    if (!eventData || (eventData.is_personal && Number(eventData.personal_owner_id) !== Number(studentId))) {
       return NextResponse.json({ detail: 'Event not found or inactive' }, { status: 404 });
     }
-
-    const eventData = eventQuery.rows[0];
     const eventDetails: EventDetails = {
       id: eventData.id,
       name: eventData.name,
@@ -67,15 +74,39 @@ export async function POST(request: NextRequest) {
       time_tolerance_minutes: eventData.time_tolerance_minutes || 30
     };
 
-    // Verify photo against event (now with user location fallback)
-    const verificationResult = await verifyPhotoSubmission(photoBuffer, eventDetails, userLocation);
-
     // Check if student already has a submission for this event
     const existingSubmissionQuery = await db.query(
       `SELECT id, status, points_awarded FROM event_submissions
        WHERE student_id = $1 AND event_id = $2`,
       [studentId, eventId]
     );
+
+    // Once an admin (or auto-verification) has decided, the student cannot resubmit
+    // to overturn a rejection or overwrite admin-awarded points.
+    const existingStatus = existingSubmissionQuery.rows[0]?.status;
+    if (existingStatus && existingStatus !== 'pending_review') {
+      return NextResponse.json(
+        { detail: `Your submission for this event has already been ${existingStatus === 'verified' ? 'verified' : 'reviewed'} and cannot be changed` },
+        { status: 409 }
+      );
+    }
+
+    if (existingSubmissionQuery.rows.length === 0 && eventData.capacity) {
+      const countQuery = await db.query('SELECT COUNT(*) FROM event_submissions WHERE event_id = $1', [eventId]);
+      if (Number(countQuery.rows[0].count) >= Number(eventData.capacity)) {
+        return NextResponse.json({ detail: 'Event capacity reached' }, { status: 403 });
+      }
+    }
+
+    // Verify photo against event (now with user location fallback)
+    const verificationResult = await verifyPhotoSubmission(photoBuffer, eventDetails, userLocation);
+
+    // A personal event's location and time are chosen by the student, so matching them
+    // proves nothing: always send these to an admin for review.
+    if (eventData.is_personal && verificationResult.isValid) {
+      verificationResult.isValid = false;
+      verificationResult.reason = 'Personal events require admin review';
+    }
 
     let submissionId: number;
     let isUpdate = false;
