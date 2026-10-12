@@ -88,7 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const data = await res.json();
                 setProfile(data);
             } else {
-                if ([400, 401, 403].includes(res.status)) {
+                // Only an auth failure should end the session; 5xx is often a transient DB error
+                if ([401, 403].includes(res.status)) {
                     clearAuth();
                 }
                 setProfile(null);

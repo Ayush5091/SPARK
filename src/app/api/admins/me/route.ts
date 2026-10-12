@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         return NextResponse.json(rows[0]);
     } catch (err: any) {
         const authStatus = getAuthErrorStatus(err);
-        return NextResponse.json({ detail: err?.message || "Unauthorized" }, { status: authStatus ?? 400 });
+        return NextResponse.json({ detail: err?.message || "Internal server error" }, { status: authStatus ?? 500 });
     }
 }
 
