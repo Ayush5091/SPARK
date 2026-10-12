@@ -1,10 +1,24 @@
 "use client";
 
 import React from "react";
-import { Bell, Home, Calendar, Clock, User, Plus } from "lucide-react";
+import { Bell, Home, Calendar, Clock, User, Plus, MapPin } from "lucide-react";
 import Link from "next/link";
 
+export interface StudentHomeEvent {
+  id: number;
+  name: string;
+  category: string;
+  points: number;
+  location_name: string;
+  start_time: string;
+  end_time: string;
+  is_ongoing: boolean;
+  is_upcoming: boolean;
+}
+
 export interface StudentHomeDashboardProps {
+  events: StudentHomeEvent[];
+  eventsLoading: boolean;
   name: string;
   totalPoints: number;
   completedEvents: number;
@@ -15,7 +29,17 @@ export interface StudentHomeDashboardProps {
   onToggleNotifications: () => void;
 }
 
+const formatEventTime = (start: string, end: string) => {
+  const s = new Date(start);
+  const e = new Date(end);
+  const day = s.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  const time = (d: Date) => d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  return `${day} · ${time(s)} – ${time(e)}`;
+};
+
 export default function StudentHomeDashboard({
+  events = [],
+  eventsLoading = false,
   name,
   totalPoints,
   completedEvents,
@@ -134,16 +158,75 @@ export default function StudentHomeDashboard({
         </div>
       </section>
 
-      {/* 4. Call to Action (Empty State) */}
+      {/* 4. Live & upcoming events */}
       <section className="px-6 mb-10">
-        <div className="w-full rounded-3xl bg-[#F0F0F3] p-6 shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] flex flex-col items-center justify-center text-center gap-4 border border-gray-100/50">
-          <p className="text-black font-bold text-lg">
-            No active events right now.
-          </p>
-          <Link href="/events" className="text-sm font-bold text-gray-500 hover:text-black transition-colors flex items-center gap-2">
-            Explore Upcoming Events <span className="text-lg">→</span>
-          </Link>
-        </div>
+        <h2 className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-4">
+          Live &amp; Upcoming Events
+        </h2>
+
+        {eventsLoading ? (
+          <div className="w-full rounded-3xl bg-[#F0F0F3] p-6 shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] text-center">
+            <p className="text-gray-500 font-bold text-sm uppercase tracking-wider">Loading events…</p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="w-full rounded-3xl bg-[#F0F0F3] p-6 shadow-[inset_6px_6px_12px_#d1d1d3,inset_-6px_-6px_12px_#ffffff] flex flex-col items-center justify-center text-center gap-4 border border-gray-100/50">
+            <p className="text-black font-bold text-lg">
+              No active events right now.
+            </p>
+            <Link href="/events" className="text-sm font-bold text-gray-500 hover:text-black transition-colors flex items-center gap-2">
+              View My Events <span className="text-lg">→</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-3xl bg-[#F0F0F3] p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col gap-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                      event.is_ongoing ? "bg-black text-white" : "bg-[#e0e0e3] text-gray-600"
+                    }`}
+                  >
+                    {event.is_ongoing ? "Happening Now" : "Upcoming"}
+                  </span>
+                  <span className="text-sm font-black text-black">+{event.points} pts</span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-black leading-snug tracking-tight text-black">{event.name}</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-1">{event.category}</p>
+                </div>
+
+                <div className="flex flex-col gap-1.5 text-xs font-semibold text-gray-600">
+                  <span className="flex items-start gap-2">
+                    <MapPin size={14} strokeWidth={2.5} className="shrink-0 mt-px" />
+                    {event.location_name}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Clock size={14} strokeWidth={2.5} className="shrink-0" />
+                    {formatEventTime(event.start_time, event.end_time)}
+                  </span>
+                </div>
+
+                {event.is_ongoing ? (
+                  <Link
+                    href={`/events/${event.id}/camera`}
+                    className="mt-1 text-center rounded-2xl bg-black text-white text-sm font-bold py-3 transition-transform active:scale-[0.98]"
+                  >
+                    Check in with photo
+                  </Link>
+                ) : (
+                  <p className="mt-1 text-center rounded-2xl text-sm font-bold py-3 text-gray-500 shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff]">
+                    Check-in opens when the event starts
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

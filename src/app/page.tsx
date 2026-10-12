@@ -61,9 +61,12 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
+        // Notifications are student-only; admins would just get a 403
         const [eventsRes, notifRes] = await Promise.all([
           fetch("/api/events", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } }),
+          user.role === "student"
+            ? fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } })
+            : Promise.resolve(null),
         ]);
 
         if (eventsRes.ok) {
@@ -71,7 +74,7 @@ export default function Home() {
           setEvents(Array.isArray(eventsData) ? eventsData : []);
         }
 
-        if (notifRes.ok) {
+        if (notifRes?.ok) {
           const notificationData = await notifRes.json();
           setNotifications(Array.isArray(notificationData) ? notificationData : []);
         }
@@ -307,6 +310,8 @@ export default function Home() {
 
   return (
     <StudentHomeDashboard
+      events={visibleEvents}
+      eventsLoading={eventsLoading}
       name={profile?.name || user?.name || "Student"}
       totalPoints={Number(profile?.total_points || 0)}
       completedEvents={profile?.completed_activities || 0}
