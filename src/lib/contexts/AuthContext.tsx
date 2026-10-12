@@ -122,6 +122,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Expiry was only checked on page load, so after the token lapsed every API call
+    // quietly returned 401 and pages showed empty data. End the session at expiry instead,
+    // and re-check when the tab regains focus (timers don't fire reliably in background tabs).
+    useEffect(() => {
+        if (!token) return;
+        const payload = parseJwt(token);
+        if (!payload || isTokenExpired(payload)) {
+            clearAuth(true);
+            return;
+        }
+
+        // setTimeout fires immediately for delays above ~24.8 days, so cap it
+        const delay = Math.min(payload.exp * 1000 - Date.now(), 2 ** 31 - 1);
+        const timer = window.setTimeout(() => {
+            if (isTokenExpired(payload)) clearAuth(true);
+        }, delay);
+        const checkExpiry = () => {
+            if (document.visibilityState === 'visible' && isTokenExpired(payload)) clearAuth(true);
+        };
+        document.addEventListener('visibilitychange', checkExpiry);
+        window.addEventListener('focus', checkExpiry);
+        return () => {
+            window.clearTimeout(timer);
+            document.removeEventListener('visibilitychange', checkExpiry);
+            window.removeEventListener('focus', checkExpiry);
+        };
+    }, [token, parseJwt, isTokenExpired, clearAuth]);
+
     const login = useCallback((newToken: string) => {
         localStorage.setItem('access_token', newToken);
         setToken(newToken);
