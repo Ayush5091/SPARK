@@ -194,13 +194,8 @@ export async function verifyPhotoSubmission(
     metadata.longitude = userLocation.longitude;
   }
 
-  // If photo doesn't have timestamp but we have user location with timestamp, use it
-  if (!metadata.timestamp && userLocation?.timestamp) {
-    console.log('Using manual timestamp as fallback');
-    metadata.timestamp = new Date(userLocation.timestamp);
-  }
-
-  // If still no timestamp, use current time (photo capture time)
+  // If photo has no timestamp, use server time. A client-supplied timestamp is never
+  // trusted, otherwise a student could claim a photo was taken during the event window.
   if (!metadata.timestamp) {
     console.log('Using current time as photo timestamp');
     metadata.timestamp = new Date();
@@ -217,8 +212,7 @@ export async function verifyPhotoSubmission(
     timeMatch: result.timeMatch,
     distanceFromEvent: result.distanceFromEvent,
     reason: result.reason,
-    usedManualLocation: userLocation && (!result.metadata.latitude || !result.metadata.longitude),
-    usedManualTimestamp: userLocation?.timestamp && !result.metadata.timestamp
+    usedManualLocation: userLocation && (!result.metadata.latitude || !result.metadata.longitude)
   });
 
   return result;

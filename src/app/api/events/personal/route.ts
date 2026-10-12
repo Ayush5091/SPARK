@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { getAuthErrorStatus, requireAuth } from "@/lib/auth";
 
+// Personal events are student-authored, so keep them tightly bounded.
+// They are worth 0 points and always need admin review (see photo-verification).
+const ALLOWED_CATEGORIES = ["technical", "cultural", "sports", "professional", "community service", "national initiative"];
+const MAX_PENDING_PERSONAL_EVENTS = 5;
+const MAX_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
 export async function POST(request: NextRequest) {
   try {
     const authData = requireAuth(request, "student");
@@ -27,6 +34,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!ALLOWED_CATEGORIES.includes(String(category).toLowerCase())) {
+      return NextResponse.json({ detail: "Invalid category" }, { status: 400 });
+    }
+
+    if (String(name).length > 120 || String(location_name).length > 200 || String(description || "").length > 1000) {
+      return NextResponse.json(
+        { detail: "Name, location or description is too long" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof latitude !== "number" || typeof longitude !== "number" || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return NextResponse.json({ detail: "Latitude and longitude must be numbers" }, { status: 400 });
+    }
+
     if (latitude < -90 || latitude > 90) {
       return NextResponse.json(
         { detail: "Latitude must be between -90 and 90" },
@@ -44,10 +66,38 @@ export async function POST(request: NextRequest) {
     const startDate = new Date(start_time);
     const endDate = new Date(end_time);
 
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return NextResponse.json({ detail: "Invalid start or end time" }, { status: 400 });
+    }
+
     if (startDate >= endDate) {
       return NextResponse.json(
         { detail: "Start time must be before end time" },
         { status: 400 }
+      );
+    }
+
+    const now = Date.now();
+    if (endDate.getTime() - startDate.getTime() > MAX_DURATION_MS) {
+      return NextResponse.json({ detail: "Personal events can last at most 7 days" }, { status: 400 });
+    }
+    if (endDate.getTime() < now - MAX_WINDOW_MS || startDate.getTime() > now + MAX_WINDOW_MS) {
+      return NextResponse.json(
+        { detail: "Personal events must be within 30 days of today" },
+        { status: 400 }
+      );
+    }
+
+    const pendingQuery = await db.query(
+      `SELECT COUNT(*) FROM events e
+       JOIN event_submissions es ON es.event_id = e.id AND es.student_id = e.personal_owner_id
+       WHERE e.is_personal = true AND e.personal_owner_id = $1 AND es.status = 'pending_review'`,
+      [studentId]
+    );
+    if (Number(pendingQuery.rows[0].count) >= MAX_PENDING_PERSONAL_EVENTS) {
+      return NextResponse.json(
+        { detail: `You can have at most ${MAX_PENDING_PERSONAL_EVENTS} personal events awaiting review` },
+        { status: 429 }
       );
     }
 
@@ -62,12 +112,12 @@ export async function POST(request: NextRequest) {
       [
         name,
         description || null,
-        category,
+        String(category).toLowerCase(),
         0,
         latitude,
         longitude,
         location_name,
-        location_radius_meters,
+        Math.min(Math.max(Number(location_radius_meters) || 100, 50), 500),
         1,
         start_time,
         end_time,
