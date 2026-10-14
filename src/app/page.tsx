@@ -8,8 +8,7 @@ import AdminDashboard from "@/components/AdminDashboard";
 import EventFocusMap, { EventMapPoint } from "@/components/EventFocusMap";
 import EventColorChangeCard from "@/components/EventColorChangeCard";
 import EventDetailsModal from "@/components/EventDetailsModal";
-import { CinematicHero } from "@/components/ui/cinematic-landing-hero";
-import SparkFeaturesSection from "@/components/SparkFeaturesSection";
+import SparkLanding from "@/components/landing/SparkLanding";
 import StudentHomeDashboard from "@/components/StudentHomeDashboard";
 
 interface Event {
@@ -90,7 +89,8 @@ export default function Home() {
 
   // Enhanced scroll tracking for landing page and header visibility
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    // Mandatory scroll snap would fight the landing page's scroll-driven phone
+    if (typeof window === 'undefined' || !user) return;
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -112,7 +112,7 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasScrolled]);
+  }, [hasScrolled, user]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -276,24 +276,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return (
-      <div className="overflow-x-hidden w-full">
-        <CinematicHero
-          className="w-full"
-          brandName="SPARK"
-          tagline1="Your Campus Life,"
-          tagline2="Fully Tracked."
-          description="Discover live AICTE events, submit geo-verified photo proof, and earn activity points — no paperwork, no registers."
-          metricValue={100}
-          metricLabel="Points per cycle"
-          cta1Text="Student Login"
-          cta1Href="/login"
-          cta2Text="Coordinator Login"
-          cta2Href="/login"
-        />
-        <SparkFeaturesSection />
-      </div>
-    );
+    return <SparkLanding />;
   }
 
   if (profileLoading) {

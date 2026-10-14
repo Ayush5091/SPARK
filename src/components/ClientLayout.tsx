@@ -29,7 +29,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
 
     return (
-        <div className={`flex min-h-screen w-full max-w-full overflow-x-clip ${isPublicPage ? 'bg-white' : 'bg-[#F0F0F3]'}`}>
+        <div className={`flex min-h-screen w-full max-w-full overflow-x-clip ${isPublicPage && pathname !== '/' ? 'bg-white' : 'bg-[#F0F0F3]'}`}>
             {!isPublicPage && <Navigation />}
             <main className={`flex-1 min-w-0 w-full max-w-full overflow-x-clip pb-24 md:pb-0 ${isPublicPage ? '' : 'md:ml-64'}`}>
                 {children}
