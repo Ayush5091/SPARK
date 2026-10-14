@@ -129,6 +129,10 @@ export async function POST(request: NextRequest) {
     const startDate = new Date(start_time);
     const endDate = new Date(end_time);
 
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return NextResponse.json({ detail: 'Invalid start or end time' }, { status: 400 });
+    }
+
     if (startDate >= endDate) {
       return NextResponse.json(
         { detail: 'Start time must be before end time' },
@@ -136,8 +140,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
-    // Insert event
+    // Insert parsed instants (stored as UTC), not the raw strings: a zone-less
+    // "2026-10-15T09:00" would otherwise be stored as 09:00 UTC.
     const { rows } = await db.query(
       `INSERT INTO events
        (name, description, category, points, latitude, longitude, location_name,
@@ -146,7 +150,7 @@ export async function POST(request: NextRequest) {
        RETURNING id`,
       [
         name, description, category, points, latitude, longitude, location_name,
-        location_radius_meters, capacity, start_time, end_time, time_tolerance_minutes, adminId
+        location_radius_meters, capacity, startDate, endDate, time_tolerance_minutes, adminId
       ]
     );
 

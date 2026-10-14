@@ -22,6 +22,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ subm
             return NextResponse.json({ detail: "Submission not found or already verified" }, { status: 404 });
         }
 
+        // The student is told the points were awarded, so actually award them
+        await db.query(
+            `UPDATE students st
+             SET total_points = COALESCE(st.total_points, 0) + a.points
+             FROM submissions su
+             JOIN activity_requests r ON su.request_id = r.id
+             JOIN activities a ON r.activity_id = a.id
+             WHERE su.id = $1 AND st.id = r.student_id`,
+            [submission_id]
+        );
+
         try {
             const studentData = await db.query(`
         SELECT st.id as student_id, st.email, st.name as student_name, a.name as activity_name, a.points 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
+import { evidenceUrl } from '@/lib/storage';
 
 // GET - Get student's event submissions
 export async function GET(request: NextRequest) {
@@ -16,7 +17,8 @@ export async function GET(request: NextRequest) {
              es.submitted_at, es.reviewed_at, es.review_notes,
              es.points_awarded, es.verification_result,
              e.name as event_name, e.points as event_points,
-              e.category, e.start_time, e.end_time, e.location_name
+              e.category, e.start_time, e.end_time, e.location_name,
+              es.evidence_key, es.evidence_filename, COALESCE(e.is_personal, false) AS is_personal
       FROM event_submissions es
       JOIN events e ON es.event_id = e.id
       WHERE es.student_id = $1
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
     const { rows } = await db.query(queryStr, params);
 
     // Parse JSON fields and add computed fields
-    const submissions = rows.map(submission => {
+    const submissions = await Promise.all(rows.map(async submission => {
       let verificationResult = null;
       try {
         if (submission.verification_result) {
@@ -52,14 +54,25 @@ export async function GET(request: NextRequest) {
         console.error('Error parsing verification_result:', e);
       }
 
+      const { evidence_key, ...rest } = submission;
+      let evidence_url: string | null = null;
+      if (evidence_key) {
+        try {
+          evidence_url = await evidenceUrl(evidence_key, submission.evidence_filename);
+        } catch (e) {
+          console.error('Failed to sign evidence URL', e);
+        }
+      }
+
       return {
-        ...submission,
+        ...rest,
+        evidence_url,
         verification_result: verificationResult,
         is_pending: submission.status === 'pending_review',
         is_verified: submission.status === 'verified',
         is_rejected: submission.status === 'rejected'
       };
-    });
+    }));
 
     return NextResponse.json(submissions);
 

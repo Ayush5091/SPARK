@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       try {
         // Get submission with event details
         const subQuery = await db.query(
-          `SELECT es.*, e.points, e.name as event_name
+          `SELECT es.*, e.points, e.name as event_name, COALESCE(e.is_personal, false) AS is_personal
            FROM event_submissions es
            JOIN events e ON es.event_id = e.id
            WHERE es.id = $1 AND es.status = 'pending_review'`,
@@ -47,16 +47,30 @@ export async function POST(request: NextRequest) {
         }
 
         const submission = subQuery.rows[0];
+
+        // Personal activities are worth 0 until a reviewer sets the points, so approving
+        // them in bulk would silently award nothing.
+        if (action === 'approve' && submission.is_personal) {
+          errors.push({ id: submissionId, error: 'Personal activities need points set individually' });
+          continue;
+        }
+
         const pointsAwarded = action === 'approve' ? submission.points : 0;
 
-        // Update submission status
-        await db.query(
+        // The status condition makes this the single point of decision, so two reviewers
+        // acting at once can't both award points
+        const updated = await db.query(
           `UPDATE event_submissions
            SET status = $1, reviewed_at = NOW(), reviewed_by = $2,
                review_notes = $3, points_awarded = $4
-           WHERE id = $5`,
+           WHERE id = $5 AND status = 'pending_review'
+           RETURNING id`,
           [newStatus, adminId, review_notes || null, pointsAwarded, submissionId]
         );
+        if (updated.rowCount === 0) {
+          errors.push({ id: submissionId, error: 'Not found or already processed' });
+          continue;
+        }
 
         // Award points if approved
         if (action === 'approve') {

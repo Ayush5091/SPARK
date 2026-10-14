@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 import { verifyPhotoSubmission, EventDetails } from '@/lib/photo-verification';
+import { deleteEvidence, EvidenceError, PHOTO_TYPES, putEvidence, readEvidence } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,9 +24,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'Event ID is required' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!photo.type.startsWith('image/')) {
-      return NextResponse.json({ detail: 'File must be an image' }, { status: 400 });
+    let evidence;
+    try {
+      evidence = await readEvidence(photo, PHOTO_TYPES);
+    } catch (error) {
+      if (error instanceof EvidenceError) {
+        return NextResponse.json({ detail: error.message }, { status: 400 });
+      }
+      throw error;
     }
 
     // Parse user location data (from browser geolocation)
@@ -43,9 +49,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Convert photo to buffer
-    const arrayBuffer = await photo.arrayBuffer();
-    const photoBuffer = Buffer.from(arrayBuffer);
+    const photoBuffer = evidence.buffer;
 
     // Get event details from database
     const eventQuery = await db.query(
@@ -66,8 +70,9 @@ export async function POST(request: NextRequest) {
     const eventDetails: EventDetails = {
       id: eventData.id,
       name: eventData.name,
-      latitude: parseFloat(eventData.latitude),
-      longitude: parseFloat(eventData.longitude),
+      // A personal activity may have no venue pin; it is reviewed by an admin either way
+      latitude: eventData.latitude == null ? NaN : parseFloat(eventData.latitude),
+      longitude: eventData.longitude == null ? NaN : parseFloat(eventData.longitude),
       start_time: new Date(eventData.start_time),
       end_time: new Date(eventData.end_time),
       location_radius_meters: eventData.location_radius_meters || 100,
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Check if student already has a submission for this event
     const existingSubmissionQuery = await db.query(
-      `SELECT id, status, points_awarded FROM event_submissions
+      `SELECT id, status, points_awarded, evidence_key FROM event_submissions
        WHERE student_id = $1 AND event_id = $2`,
       [studentId, eventId]
     );
@@ -103,10 +108,14 @@ export async function POST(request: NextRequest) {
 
     // A personal event's location and time are chosen by the student, so matching them
     // proves nothing: always send these to an admin for review.
-    if (eventData.is_personal && verificationResult.isValid) {
+    if (eventData.is_personal) {
       verificationResult.isValid = false;
       verificationResult.reason = 'Personal events require admin review';
     }
+
+    // Keep the photo so reviewers can see it, not just its metadata
+    const evidenceKey = await putEvidence(`submissions/${studentId}/${eventId}`, evidence, photo.name || 'photo.jpg');
+    const previousEvidenceKey: string | null = existingSubmissionQuery.rows[0]?.evidence_key ?? null;
 
     let submissionId: number;
     let isUpdate = false;
@@ -125,7 +134,10 @@ export async function POST(request: NextRequest) {
              status = $3,
              submitted_at = NOW(),
              auto_verified = $4,
-             points_awarded = $5
+             points_awarded = $5,
+             evidence_key = $7,
+             evidence_content_type = $8,
+             evidence_filename = $9
          WHERE id = $6`,
         [
           JSON.stringify(verificationResult.metadata),
@@ -133,15 +145,20 @@ export async function POST(request: NextRequest) {
           verificationResult.isValid ? 'verified' : 'pending_review',
           verificationResult.isValid,
           verificationResult.isValid ? eventData.points : 0,
-          submissionId
+          submissionId,
+          evidenceKey,
+          evidence.contentType,
+          photo.name || 'photo.jpg'
         ]
       );
+      if (previousEvidenceKey) await deleteEvidence(previousEvidenceKey);
     } else {
       // Create new submission record
       const submissionQuery = await db.query(
         `INSERT INTO event_submissions
-         (student_id, event_id, photo_metadata, verification_result, status, submitted_at, auto_verified, points_awarded)
-         VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
+         (student_id, event_id, photo_metadata, verification_result, status, submitted_at, auto_verified, points_awarded,
+          evidence_key, evidence_content_type, evidence_filename)
+         VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7, $8, $9, $10)
          RETURNING id`,
         [
           studentId,
@@ -150,7 +167,10 @@ export async function POST(request: NextRequest) {
           JSON.stringify(verificationResult),
           verificationResult.isValid ? 'verified' : 'pending_review',
           verificationResult.isValid,
-          verificationResult.isValid ? eventData.points : 0
+          verificationResult.isValid ? eventData.points : 0,
+          evidenceKey,
+          evidence.contentType,
+          photo.name || 'photo.jpg'
         ]
       );
 
@@ -200,37 +220,13 @@ export async function POST(request: NextRequest) {
       notificationMessage = `Your submission for "${eventData.name}" has been ${verificationResult.isValid ? 'automatically verified' : 'submitted for review'}.${verificationResult.isValid ? ` You've been awarded ${eventData.points} points!` : ''}`;
     }
 
-    if (verificationResult.isValid) {
-      // Create notification for successful submission/update
-      await db.query(
-        `INSERT INTO notifications (student_id, message, is_read, created_at)
-         VALUES ($1, $2, false, NOW())`,
-        [studentId, notificationMessage]
-      );
-    } else {
-      // Create notification for manual review
-      await db.query(
-        `INSERT INTO notifications (student_id, message, is_read, created_at)
-         VALUES ($1, $2, false, NOW())`,
-        [studentId, notificationMessage]
-      );
-
-      // Notify admins about pending review (only for new submissions or updates that need review)
-      if (!isUpdate || !verificationResult.isValid) {
-        const adminQuery = await db.query('SELECT id FROM admins');
-        const adminNotificationMessage = isUpdate
-          ? `Student updated their photo submission for "${eventData.name}" - requires manual review.`
-          : `New photo submission for "${eventData.name}" requires manual review.`;
-
-        for (const admin of adminQuery.rows) {
-          await db.query(
-            `INSERT INTO notifications (student_id, message, is_read, created_at)
-             VALUES ($1, $2, false, NOW())`,
-            [admin.id, adminNotificationMessage]
-          );
-        }
-      }
-    }
+    // Admins find pending submissions in their review queue. The notifications table only
+    // addresses students, so writing admin alerts there sent them to unrelated students.
+    await db.query(
+      `INSERT INTO notifications (student_id, message, is_read, created_at)
+       VALUES ($1, $2, false, NOW())`,
+      [studentId, notificationMessage]
+    );
 
     return NextResponse.json({
       submission_id: submissionId,

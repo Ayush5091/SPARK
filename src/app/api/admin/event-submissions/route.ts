@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getAuthErrorStatus, requireAuth } from '@/lib/auth';
 import { calculateSemester } from '@/lib/student';
+import { evidenceUrl } from '@/lib/storage';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,8 @@ export async function GET(request: NextRequest) {
             SELECT es.id, es.student_id, es.event_id, es.status,
               es.submitted_at, es.verification_result, es.photo_metadata,
               es.points_awarded, es.review_notes,
+              es.evidence_key, es.evidence_content_type, es.evidence_filename,
+              COALESCE(e.is_personal, false) AS is_personal, e.description AS event_description,
              s.name as student_name, s.email as student_email, s.usn, s.department as student_department,
              s.semester as student_semester,
              s.total_points as student_total_points,
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest) {
     const { rows } = await db.query(queryStr, params);
 
     // Parse JSON fields
-    const submissions = rows.map(submission => {
+    const submissions = await Promise.all(rows.map(async submission => {
       let verificationResult = null;
       let photoMetadata = null;
 
@@ -106,13 +109,25 @@ export async function GET(request: NextRequest) {
       // Auto-update semester for display
       const currentSemester = calculateSemester(submission.student_email, submission.usn);
 
+      // Signed links are generated locally and expire after 15 minutes
+      const { evidence_key, ...rest } = submission;
+      let evidence_url: string | null = null;
+      if (evidence_key) {
+        try {
+          evidence_url = await evidenceUrl(evidence_key, submission.evidence_filename);
+        } catch (e) {
+          console.error('Failed to sign evidence URL', e);
+        }
+      }
+
       return {
-        ...submission,
+        ...rest,
+        evidence_url,
         student_semester: currentSemester ?? submission.student_semester,
         verification_result: verificationResult,
         photo_metadata: photoMetadata
       };
-    });
+    }));
 
     return NextResponse.json(submissions);
 
@@ -150,7 +165,7 @@ export async function PUT(request: NextRequest) {
 
     // Get submission details
     const submissionQuery = await db.query(
-      `SELECT es.*, e.points, e.name as event_name
+      `SELECT es.*, e.points, e.name as event_name, COALESCE(e.is_personal, false) AS is_personal
        FROM event_submissions es
        JOIN events e ON es.event_id = e.id
        WHERE es.id = $1 AND es.status = 'pending_review'`,
@@ -166,27 +181,43 @@ export async function PUT(request: NextRequest) {
 
     const submission = submissionQuery.rows[0];
     const newStatus = action === 'approve' ? 'verified' : 'rejected';
-    const safePoints = points_awarded !== undefined && points_awarded !== null
-      ? Number(points_awarded)
-      : submission.points;
+    const hasPoints = points_awarded !== undefined && points_awarded !== null && points_awarded !== '';
 
-    if (action === 'approve' && (Number.isNaN(safePoints) || safePoints < 0)) {
+    // A personal activity has no preset value, so the reviewer must decide what it's worth
+    if (action === 'approve' && submission.is_personal && !hasPoints) {
       return NextResponse.json(
-        { detail: 'Points awarded must be a non-negative number' },
+        { detail: 'Set the points to award for this personal activity' },
+        { status: 400 }
+      );
+    }
+
+    const safePoints = hasPoints ? Number(points_awarded) : submission.points;
+
+    if (action === 'approve' && (!Number.isInteger(safePoints) || safePoints < 0 || safePoints > 100)) {
+      return NextResponse.json(
+        { detail: 'Points awarded must be a whole number from 0 to 100' },
         { status: 400 }
       );
     }
 
     const pointsAwarded = action === 'approve' ? safePoints : 0;
 
-    // Update submission
-    await db.query(
+    // The status condition makes this the single point of decision, so two reviewers
+    // acting at once can't both award points
+    const updated = await db.query(
       `UPDATE event_submissions
        SET status = $1, reviewed_at = NOW(), reviewed_by = $2,
            review_notes = $3, points_awarded = $4
-       WHERE id = $5`,
+       WHERE id = $5 AND status = 'pending_review'
+       RETURNING id`,
       [newStatus, adminId, review_notes, pointsAwarded, submission_id]
     );
+    if (updated.rowCount === 0) {
+      return NextResponse.json(
+        { detail: 'Submission not found or not pending review' },
+        { status: 404 }
+      );
+    }
 
     // Award points if approved
     if (action === 'approve') {

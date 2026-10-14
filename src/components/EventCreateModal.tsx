@@ -250,6 +250,9 @@ export default function EventCreateModal({ isOpen, onClose, onEventCreated, init
         },
         body: JSON.stringify({
           ...formData,
+          // datetime-local values are the admin's local time; send an unambiguous UTC instant
+          start_time: new Date(formData.start_time).toISOString(),
+          end_time: new Date(formData.end_time).toISOString(),
           points: parseInt(formData.points),
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           latitude: parseFloat(formData.latitude),
