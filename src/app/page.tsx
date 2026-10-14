@@ -39,6 +39,7 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [activeEventId, setActiveEventId] = useState<number | null>(null);
@@ -60,13 +61,26 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        // Notifications are student-only; admins would just get a 403
-        const [eventsRes, notifRes] = await Promise.all([
+        // Notifications and submissions are student-only; admins would just get a 403
+        const isStudent = user.role === "student";
+        const [eventsRes, notifRes, submissionsRes] = await Promise.all([
           fetch("/api/events", { headers: { Authorization: `Bearer ${token}` } }),
-          user.role === "student"
+          isStudent
             ? fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } })
             : Promise.resolve(null),
+          isStudent
+            ? fetch("/api/event-submissions", { headers: { Authorization: `Bearer ${token}` } })
+            : Promise.resolve(null),
         ]);
+
+        if (submissionsRes?.ok) {
+          const submissionData = await submissionsRes.json();
+          setPendingCount(
+            Array.isArray(submissionData)
+              ? submissionData.filter((s: any) => s.status === "pending_review").length
+              : 0
+          );
+        }
 
         if (eventsRes.ok) {
           const eventsData = await eventsRes.json();
@@ -298,7 +312,7 @@ export default function Home() {
       name={profile?.name || user?.name || "Student"}
       totalPoints={Number(profile?.total_points || 0)}
       completedEvents={profile?.completed_activities || 0}
-      pendingEvents={0} // To be implemented later based on backend schema
+      pendingEvents={pendingCount}
       notifications={notifications}
       unreadCount={unreadCount}
       isNotificationsOpen={isNotificationsOpen}

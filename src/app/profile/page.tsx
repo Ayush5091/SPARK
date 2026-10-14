@@ -29,9 +29,9 @@ export default function ProfileScreen() {
                 // Also refresh profile data to ensure we have latest points
                 await refreshProfile();
 
-                const [reqRes, subRes, notifRes] = await Promise.all([
-                    fetch('/api/activity-requests/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('/api/submissions/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+                // Submissions to admin-published and personal events are the source of points
+                const [subRes, notifRes] = await Promise.all([
+                    fetch('/api/event-submissions', { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch('/api/notifications', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
@@ -39,33 +39,20 @@ export default function ProfileScreen() {
                     setNotifications(await notifRes.json());
                 }
 
-                // Merge requests and submissions for Dashboard History
-                let history: any[] = [];
-                if (reqRes.ok && subRes.ok) {
-                    const requests = await reqRes.json();
-                    const submissions = await subRes.json();
-
-                    const subMap = new Map();
-                    if (Array.isArray(submissions)) {
-                        submissions.forEach((s: any) => subMap.set(s.request_id || s.id, s));
-                    }
-
-                    if (Array.isArray(requests)) {
-                        requests.forEach((r: any) => {
-                            const sub = subMap.get(r.request_id || r.id);
-                            if (sub) {
-                                history.push({ ...sub, type: 'submission', date: sub.submitted_at, activity: sub.activity || r.activity || r.activity_name });
-                            } else {
-                                history.push({ ...r, type: 'request', date: r.requested_at, activity: r.activity || r.activity_name });
-                            }
-                        });
-                    }
-                    history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                }
+                const submissions: any[] = subRes.ok ? await subRes.json() : [];
+                const history = (Array.isArray(submissions) ? submissions : [])
+                    .map((sub: any) => ({
+                        ...sub,
+                        activity: sub.event_name,
+                        date: sub.reviewed_at || sub.submitted_at,
+                        status: sub.status === 'pending_review' ? 'in review' : sub.status,
+                    }))
+                    .filter((item: any) => item.date)
+                    .sort((x: any, y: any) => new Date(y.date).getTime() - new Date(x.date).getTime());
 
                 setRecentActivities(history.slice(0, 3)); // Only latest 3
 
-                // Calculate past 6 months data for the graph
+                // Points earned per month over the last six months
                 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 const currentDate = new Date();
                 const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -73,26 +60,19 @@ export default function ProfileScreen() {
                     return { monthLabel: months[d.getMonth()], year: d.getFullYear(), month: d.getMonth(), points: 0 };
                 });
 
-                // Aggregate verified submission points and approved requests
                 history.forEach((item: any) => {
-                    if ((item.status === 'verified' || item.status === 'approved') && item.date) {
+                    if (item.status === 'verified') {
                         const d = new Date(item.date);
                         const bucket = last6Months.find(m => m.month === d.getMonth() && m.year === d.getFullYear());
                         if (bucket) {
-                            bucket.points += (item.points || 0);
+                            bucket.points += Number(item.points_awarded || 0);
                         }
                     }
                 });
 
-                const data = last6Months.map(b => b.points);
-                const maxVal = Math.max(10, ...data); // Ensure there's at least some scale
-
-                // Fallback static data if no history so graph doesn't look empty and flat
-                if (data.every(v => v === 0)) {
-                    setChartData({ labels: last6Months.map(m => m.monthLabel), data: [10, 20, 15, 30, 25, 40], maxVal: 50 });
-                } else {
-                    setChartData({ labels: last6Months.map(m => m.monthLabel), data, maxVal });
-                }
+                // An empty history shows an empty chart, never placeholder numbers
+                const data = last6Months.map(m => m.points);
+                setChartData({ labels: last6Months.map(m => m.monthLabel), data, maxVal: Math.max(10, ...data) });
             } catch (err) {
                 console.error("Failed to load dashboard data");
             }
@@ -173,7 +153,7 @@ export default function ProfileScreen() {
 
     if (isLoading || isInitializing || !user || profileLoading) {
         return (
-            <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F0F0F3]">
+            <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F8F9FA]">
                 <div className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Loading profile...</div>
             </div>
         );
@@ -181,11 +161,11 @@ export default function ProfileScreen() {
 
     if (user?.role === 'admin') {
         return (
-            <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
+            <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F8F9FA] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
                 {/* Header */}
                 <header className="flex items-center justify-between px-6 pt-10 pb-6">
                     <div className="flex items-center gap-3">
-                        <UserAvatar name={profile?.name || user?.name} className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-lg font-bold shadow-[4px_4px_10px_#d1d1d3,-4px_-4px_10px_#ffffff]" />
+                        <UserAvatar name={profile?.name || user?.name} className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-lg font-bold" />
                         <div className="flex flex-col">
                             <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Admin</span>
                             <span className="text-lg font-black tracking-tight text-black">Profile</span>
@@ -193,7 +173,7 @@ export default function ProfileScreen() {
                     </div>
                     <Link
                         href="/settings"
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
+                        className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card transition-all active:bg-[#E9ECEF]"
                     >
                         <span className="material-icons-outlined text-2xl">settings</span>
                     </Link>
@@ -201,24 +181,24 @@ export default function ProfileScreen() {
 
                 {/* Admin Profile Content */}
                 <div className="flex-1 px-6 py-6 space-y-8 flex flex-col">
-                    <div className="bg-[#F0F0F3] rounded-3xl p-8 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] text-center border border-white/20">
-                        <UserAvatar name={profile?.name || user?.name} className="w-24 h-24 text-4xl mx-auto mb-4 bg-gray-900 text-white flex items-center justify-center rounded-full shadow-[4px_4px_10px_#d1d1d3]" />
+                    <div className="rounded-2xl p-8 ui-card text-center">
+                        <UserAvatar name={profile?.name || user?.name} className="w-24 h-24 text-4xl mx-auto mb-4 bg-gray-900 text-white flex items-center justify-center rounded-full " />
                         <h3 className="text-2xl font-black tracking-tight text-black">{profile?.name || user?.name || "Admin"}</h3>
-                        <span className="inline-block bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-full mt-3 uppercase tracking-widest shadow-[2px_2px_6px_#d1d1d3]">Administrator</span>
+                        <span className="inline-block bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-full mt-3 uppercase tracking-widest ">Administrator</span>
                         <p className="text-gray-500 font-medium text-sm mt-4">{profile?.email || "N/A"}</p>
                     </div>
 
                     {/* Quick Actions */}
                     <div className="grid grid-cols-2 gap-5">
-                        <Link href="/settings" className="bg-[#F0F0F3] p-6 rounded-3xl shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-white/20">
-                            <div className="h-12 w-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                        <Link href="/settings"className="p-6 rounded-2xl ui-card flex flex-col items-center justify-center gap-3 transition-transform active:scale-95">
+                            <div className="h-12 w-12 rounded-2xl bg-black text-white flex items-center justify-center ">
                                 <span className="material-icons-outlined text-2xl">settings</span>
                             </div>
                             <span className="text-xs font-bold uppercase tracking-wider text-black">Settings</span>
                         </Link>
 
-                        <button onClick={logout} className="bg-[#F0F0F3] p-6 rounded-3xl shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-white/20">
-                            <div className="h-12 w-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                        <button onClick={logout} className="p-6 rounded-2xl ui-card flex flex-col items-center justify-center gap-3 transition-transform active:scale-95">
+                            <div className="h-12 w-12 rounded-2xl bg-red-600 text-white flex items-center justify-center ">
                                 <span className="material-icons-outlined text-2xl">logout</span>
                             </div>
                             <span className="text-xs font-bold uppercase tracking-wider text-red-600">Logout</span>
@@ -238,13 +218,13 @@ export default function ProfileScreen() {
     const completedCount = studentInfo?.completed_activities || 0;
 
     return (
-        <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
+        <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F8F9FA] font-sans relative pb-24 md:pb-12 overflow-hidden text-black flex flex-col">
             {/* Header */}
-            <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-md">
+            <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F8F9FA]/90 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                     <Link
                         href="/"
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+                        className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card active:bg-[#E9ECEF] transition-all"
                     >
                         <span className="material-symbols-outlined text-2xl">arrow_back</span>
                     </Link>
@@ -257,17 +237,17 @@ export default function ProfileScreen() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={toggleNotifications}
-                        className="relative flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
+                        className="relative flex items-center justify-center w-12 h-12 rounded-full text-black ui-card transition-all active:bg-[#E9ECEF]"
                     >
                         <span className="material-icons-outlined text-2xl">notifications</span>
                         {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-black border-2 border-[#F0F0F3]"></span>
+                            <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-black border-2 border-white"></span>
                         )}
                     </button>
 
                     <Link
                         href="/settings"
-                        className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] transition-all active:shadow-[inset_4px_4px_8px_#d1d1d3]"
+                        className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card transition-all active:bg-[#E9ECEF]"
                     >
                         <span className="material-icons-outlined text-2xl">settings</span>
                     </Link>
@@ -276,8 +256,8 @@ export default function ProfileScreen() {
                     {isNotificationsOpen && (
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setIsNotificationsOpen(false)}></div>
-                            <div className="absolute right-6 top-24 mt-2 w-72 max-h-80 overflow-y-auto bg-[#F0F0F3] rounded-3xl shadow-[8px_8px_20px_#d1d1d3,-8px_-8px_20px_#ffffff] border border-white/20 z-20 py-2">
-                                <div className="px-4 py-2 border-b border-gray-200/50 flex justify-between items-center">
+                            <div className="absolute right-6 top-24 mt-2 w-72 max-h-80 overflow-y-auto rounded-2xl ui-card z-20 py-2">
+                                <div className="px-4 py-2 border-b border-[#E9ECEF] flex justify-between items-center">
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-black">Notifications</h3>
                                 </div>
                                 <div className="flex flex-col">
@@ -304,7 +284,7 @@ export default function ProfileScreen() {
                 <div className="space-y-8">
                     {/* Points Card */}
                     <section className="w-full">
-                        <div className="bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20 relative overflow-hidden">
+                        <div className="rounded-2xl p-6 ui-card relative overflow-hidden">
                             <div className="flex justify-between items-center mb-6">
                                 <div>
                                     <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase block mb-1">Total Activity Points</span>
@@ -312,7 +292,7 @@ export default function ProfileScreen() {
                                 </div>
                                 <div className="relative h-16 w-16 shrink-0">
                                     <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                                        <path className="text-[#e0e0e3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
+                                        <path className="text-[#E9ECEF]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"fill="none"stroke="currentColor"strokeWidth="3"></path>
                                         <path className="text-black" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3"></path>
                                     </svg>
                                     <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center">
@@ -322,7 +302,7 @@ export default function ProfileScreen() {
                             </div>
 
                             {/* Chart */}
-                            <div className="pt-4 border-t border-gray-200/50">
+                            <div className="pt-4 border-t border-[#E9ECEF]">
                                 <div className="relative flex justify-between items-end h-20 w-full">
                                     <svg className="w-full h-full overflow-visible" viewBox="0 0 300 100" preserveAspectRatio="none">
                                         <defs>
@@ -336,7 +316,7 @@ export default function ProfileScreen() {
                                     </svg>
 
                                     <div
-                                        className="absolute w-2.5 h-2.5 rounded-full bg-black border-2 border-[#F0F0F3] shadow-lg z-20"
+                                        className="absolute w-2.5 h-2.5 rounded-full bg-black border-2 border-white shadow-lg z-20"
                                         style={{
                                             left: `100%`,
                                             bottom: `${100 - (finalPoint.y / 100 * 100)}%`,
@@ -355,7 +335,7 @@ export default function ProfileScreen() {
 
                     {/* Stats Summary Widgets */}
                     <section className="grid grid-cols-2 gap-4">
-                        <div className="bg-[#F0F0F3] rounded-2xl p-4 flex flex-col justify-between h-24 shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                        <div className="rounded-2xl p-4 flex flex-col justify-between h-24 ui-card">
                             <span className="material-symbols-outlined text-black text-lg">star</span>
                             <div>
                                 <p className="text-2xl font-black text-black leading-none">{totalPoints}</p>
@@ -363,7 +343,7 @@ export default function ProfileScreen() {
                             </div>
                         </div>
 
-                        <div className="bg-[#F0F0F3] rounded-2xl p-4 flex flex-col justify-between h-24 shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                        <div className="rounded-2xl p-4 flex flex-col justify-between h-24 ui-card">
                             <span className="material-symbols-outlined text-black text-lg">assignment_turned_in</span>
                             <div>
                                 <p className="text-2xl font-black text-black leading-none">{completedCount}</p>
@@ -380,22 +360,22 @@ export default function ProfileScreen() {
                         <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase ml-1">Profile Info</span>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <div className="p-4 rounded-2xl ui-card">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">USN</span>
                                 <p className="text-xs font-black text-black truncate uppercase tracking-wider">{usn}</p>
                             </div>
 
-                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <div className="p-4 rounded-2xl ui-card">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Department</span>
                                 <p className="text-xs font-black text-black truncate uppercase tracking-wider">{department}</p>
                             </div>
 
-                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <div className="p-4 rounded-2xl ui-card">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Semester</span>
                                 <p className="text-xs font-black text-black uppercase tracking-wider">{semester}</p>
                             </div>
 
-                            <div className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20">
+                            <div className="p-4 rounded-2xl ui-card">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Contact</span>
                                 <p className="text-xs font-black text-black uppercase tracking-wider">{phoneNumber}</p>
                             </div>
@@ -408,13 +388,13 @@ export default function ProfileScreen() {
 
                         <div className="flex flex-col gap-4">
                             {recentActivities.length === 0 ? (
-                                <div className="rounded-2xl bg-[#F0F0F3] p-6 text-center text-xs font-bold uppercase tracking-wider text-gray-400 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50">
+                                <div className="rounded-2xl p-6 text-center text-xs font-bold uppercase tracking-wider text-gray-400 ui-well">
                                     No recent activities.
                                 </div>
                             ) : recentActivities.map((activity, idx) => (
-                                <div key={idx} className="bg-[#F0F0F3] p-4 rounded-2xl shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20 flex items-center justify-between gap-4">
+                                <div key={idx} className="p-4 rounded-2xl ui-card flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+                                        <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-900 text-white flex items-center justify-center ">
                                             <span className="material-icons-outlined text-xl">
                                                 {getCategoryIconInfo(activity.category).icon}
                                             </span>
@@ -422,11 +402,11 @@ export default function ProfileScreen() {
                                         <div className="min-w-0">
                                             <h4 className="text-xs font-black text-black truncate">{activity.activity_name || activity.activity || 'Activity'}</h4>
                                             <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
-                                                {new Date(activity.submitted_at).toLocaleDateString()}
+                                                {new Date(activity.date).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="rounded-full bg-[#F0F0F3] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-black shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]">
+                                    <span className="rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-black ui-well">
                                         {activity.status}
                                     </span>
                                 </div>

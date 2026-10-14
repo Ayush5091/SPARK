@@ -6,7 +6,7 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArrowDown, ArrowRight, Check, MapPin, SlidersHorizontal, Users, X } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Lightbulb, MapPin, SlidersHorizontal, Users, X } from "lucide-react";
 import type { PhoneIntro, PhonePose } from "./PhoneScene";
 import { PhoneScreen, SCREEN_H, SCREEN_W } from "./PhoneScreens";
 
@@ -16,9 +16,9 @@ if (typeof window !== "undefined") {
 
 const PhoneScene = dynamic(() => import("./PhoneScene"), { ssr: false });
 
-const RAISED = "shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff]";
-const RAISED_SM = "shadow-[4px_4px_10px_#d1d1d3,-4px_-4px_10px_#ffffff]";
-const INSET = "shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff]";
+const RAISED = "ui-card";
+const RAISED_SM = "ui-card";
+const INSET = "ui-well";
 
 const TAU = Math.PI * 2;
 
@@ -48,55 +48,36 @@ const MOBILE_POSES: PhonePose[] = [
 // Which phone screen each anchor shows
 const SCREEN_FOR_ANCHOR = [0, 1, 2, 3, 4, 5, 0];
 
-const CHECKS = ["Event live", "At the venue", "Live photo", "Points added"];
+const CHECKS = ["Find an event", "Go there", "Take a photo", "Get points"];
 
+// The student's side of a check-in, one step per screen
 const STAGES = [
   {
-    title: "Check-in opens when the event does.",
-    body: "Coordinators publish every event with a venue, a time window and the points it is worth. The camera only opens while the event is running, with 30 minutes of grace on either side.",
-    readout: [
-      ["Window", "2:00 – 4:00 PM"],
-      ["Grace", "± 30 min"],
-    ],
-    tone: "text-blue-700",
-    status: "Live now",
+    title: "Find an event that's on.",
+    body: "Open SPARK to see what's happening on campus and around town. Every event shows where it is, when it runs and how many points it's worth.",
+    tip: "Check-in opens as soon as the event starts.",
   },
   {
-    title: "Your phone shows you're actually there.",
-    body: "When you open the camera, SPARK takes a GPS fix and measures how far you are from the venue. Anywhere inside the event's radius counts, 100 m unless the coordinator sets a different one.",
-    readout: [
-      ["Distance", "38 m"],
-      ["Radius", "100 m"],
-    ],
-    tone: "text-green-700",
-    status: "Inside radius",
+    title: "Head to the venue.",
+    body: "Just turn up. Keep your phone's location on and SPARK confirms you're at the event for you. There's nothing to fill in.",
+    tip: "Allow location access when your phone asks.",
   },
   {
-    title: "One photo, taken on the spot.",
-    body: "Check-ins come straight from the camera. There is no gallery upload, so an old photo can't stand in for showing up, and the capture time is checked against the event window.",
-    readout: [
-      ["Captured", "2:47 PM"],
-      ["Accepted", "1:30 – 4:30 PM"],
-    ],
-    tone: "text-green-700",
-    status: "In window",
+    title: "Take a photo while you're there.",
+    body: "Tap Check in with photo and snap the activity right from the app. That photo is your proof: no forms, no signatures, no attendance sheets.",
+    tip: "Photos come straight from the camera, so take it during the event.",
   },
   {
-    title: "Both checks pass. The points are yours.",
-    body: "When distance and time both check out, the submission is approved on the spot. Points go straight onto your scorecard and a notification confirms it. No register, no signature, no waiting.",
-    readout: [
-      ["Awarded", "+20 pts"],
-      ["Scorecard", "80 / 100"],
-    ],
-    tone: "text-amber-800",
-    status: "Auto-verified",
+    title: "Your points are added.",
+    body: "If you're at the venue during the event, your check-in is verified automatically and the points land on your scorecard straight away, with a notification to confirm.",
+    tip: "If something can't be confirmed, a coordinator takes a quick look instead.",
   },
 ];
 
 const QUEUE = [
-  { name: "Aarav M.", event: "Hackathon Day 2", issue: "180 m from venue", detail: "limit 100 m" },
-  { name: "Sneha K.", event: "Blood Donation Drive", issue: "No location data", detail: "GPS was off" },
-  { name: "Kabir S.", event: "Guest Lecture: VLSI", issue: "52 min after window", detail: "grace 30 min" },
+  { name: "Aarav M.", event: "Hackathon Day 2", issue: "Too far from the venue" },
+  { name: "Sneha K.", event: "Blood Donation Drive", issue: "Location was turned off" },
+  { name: "Kabir S.", event: "Guest Lecture: VLSI", issue: "Taken after the event ended" },
 ];
 
 let webglSupport: boolean | undefined;
@@ -243,7 +224,7 @@ export default function SparkLanding() {
   );
 
   return (
-    <div ref={rootRef} className="relative w-full bg-[#F0F0F3] font-body text-black antialiased selection:bg-black selection:text-white">
+    <div ref={rootRef} className="relative w-full bg-[#F8F9FA] font-body text-black antialiased selection:bg-black selection:text-white">
       {/* The 3D phone lives in a fixed layer and travels with the reader */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         {webgl && (
@@ -258,10 +239,10 @@ export default function SparkLanding() {
       </div>
       {webgl === false && <FallbackPhone stage={stage} />}
 
-      <header className="sticky top-0 z-30 bg-[#F0F0F3]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30 bg-[#F8F9FA]/80 backdrop-blur-md">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:h-20">
           <Link href="/" className="flex items-center gap-2.5 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black">
-            <span className={`flex h-9 w-9 items-center justify-center rounded-xl bg-black text-sm font-black text-white ${RAISED_SM}`}>S</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-black text-sm font-black text-white">S</span>
             <span className="text-lg font-black tracking-tight">SPARK</span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
@@ -273,7 +254,7 @@ export default function SparkLanding() {
             </a>
             <Link
               href="/login"
-              className={`ml-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-shadow active:shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] ${RAISED_SM}`}
+              className={`ml-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors hover:border-[#1A1A1A] active:bg-[#E9ECEF] ${RAISED_SM}`}
             >
               Sign in
             </Link>
@@ -291,26 +272,26 @@ export default function SparkLanding() {
               <span className="hero-line block overflow-hidden pb-[0.06em]"><span className="block text-gray-400">Points in.</span></span>
             </h1>
             <p className="hero-fade mt-6 max-w-[42ch] text-base font-medium leading-relaxed text-gray-600 sm:text-lg">
-              SPARK checks your photo against the event&apos;s location and time, so your AICTE activity points land the moment you check in, not after a stack of signatures.
+              Go to an event, take a photo, and your AICTE activity points are added for you. No registers, no signatures, no chasing anyone.
             </p>
             <div className="hero-fade mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/login"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 text-sm font-bold text-white shadow-[6px_6px_14px_#bdbdc0,-6px_-6px_14px_#ffffff] transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
+                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-black px-6 py-4 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
               >
                 Student login
                 <ArrowRight size={16} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
               <Link
                 href="/login"
-                className={`inline-flex items-center justify-center rounded-2xl px-6 py-4 text-sm font-bold transition-shadow active:shadow-[inset_4px_4px_8px_#d1d1d3,inset_-4px_-4px_8px_#ffffff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black ${RAISED}`}
+                className={`inline-flex items-center justify-center rounded-2xl px-6 py-4 text-sm font-bold transition-colors hover:border-[#1A1A1A] active:bg-[#E9ECEF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black ${RAISED}`}
               >
                 Coordinator login
               </Link>
             </div>
           </div>
           <a href="#how" className="hero-fade absolute bottom-8 left-6 hidden items-center gap-2 text-sm font-bold text-gray-500 transition-colors hover:text-black lg:flex">
-            <ArrowDown size={16} strokeWidth={2.5} aria-hidden="true" /> Follow one check-in
+            <ArrowDown size={16} strokeWidth={2.5} aria-hidden="true" /> See how it works
           </a>
         </section>
 
@@ -324,23 +305,16 @@ export default function SparkLanding() {
                 data-anchor
                 className={`mx-auto flex min-h-[100svh] max-w-6xl items-end px-4 pb-10 sm:px-6 lg:items-center lg:pb-0 ${copyRight ? "lg:justify-end" : ""}`}
               >
-                <div className={`reveal w-full rounded-3xl bg-[#F0F0F3]/90 p-5 backdrop-blur-sm sm:p-6 lg:max-w-[30rem] lg:bg-transparent lg:p-0 lg:backdrop-blur-none ${RAISED} lg:shadow-none`}>
+                <div className={`reveal w-full ui-card rounded-2xl bg-white/95 p-5 backdrop-blur-sm sm:p-6 lg:max-w-[30rem] lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none`}>
                   <CheckRail done={i + 1} />
                   <h2 className="mt-4 text-[clamp(1.75rem,4.4vw,3.25rem)] font-black leading-[1.02] tracking-[-0.035em] lg:mt-6" style={{ textWrap: "balance" }}>
                     {s.title}
                   </h2>
                   <p className="mt-3 max-w-[52ch] text-[15px] font-medium leading-relaxed text-gray-600 sm:text-base lg:mt-4">{s.body}</p>
-                  <div className={`mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 lg:mt-6 ${INSET}`}>
-                    {s.readout.map(([k, v]) => (
-                      <div key={k}>
-                        <p className="text-xs font-bold text-gray-500">{k}</p>
-                        <p className="font-mono text-lg font-bold tracking-tight">{v}</p>
-                      </div>
-                    ))}
-                    <span className={`ml-auto flex items-center gap-1.5 text-sm font-bold ${s.tone}`}>
-                      <Check size={15} strokeWidth={3} aria-hidden="true" /> {s.status}
-                    </span>
-                  </div>
+                  <p className={`mt-5 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold text-[#495057] lg:mt-6 ${INSET}`}>
+                    <Lightbulb size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-[#1A1A1A]" aria-hidden="true" />
+                    {s.tip}
+                  </p>
                 </div>
               </section>
             );
@@ -351,13 +325,13 @@ export default function SparkLanding() {
         <section id="coordinators" data-anchor className="mx-auto flex min-h-[100svh] max-w-6xl scroll-mt-16 items-center px-4 py-24 sm:px-6">
           <div className="w-full lg:max-w-[34rem]">
             <h2 className="reveal text-[clamp(2rem,4.4vw,3.25rem)] font-black leading-[1.02] tracking-[-0.035em]" style={{ textWrap: "balance" }}>
-              Coordinators only see the edge cases.
+              Coordinators only step in when needed.
             </h2>
             <p className="reveal mt-4 max-w-[52ch] text-base font-medium leading-relaxed text-gray-600">
-              Photos taken outside the radius or the time window, or without location data, go to a review queue with the distance and timing already worked out. Approve to award the points, or reject with a note.
+              Most check-ins are approved on their own. The few that can&apos;t be confirmed go to a coordinator, who approves or rejects them in a tap.
             </p>
 
-            <div className={`queue-panel reveal mt-8 rounded-3xl p-5 sm:p-6 ${RAISED}`} aria-label="Example review queue">
+            <div className={`queue-panel reveal mt-8 rounded-2xl p-5 sm:p-6 ${RAISED}`} aria-label="Example review queue">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-black tracking-tight">Review queue</h3>
                 <span className="rounded-full bg-black px-2.5 py-1 text-xs font-bold text-white">{QUEUE.length} pending</span>
@@ -373,7 +347,7 @@ export default function SparkLanding() {
                         {q.name} <span className="block font-semibold text-gray-500 sm:inline">{q.event}</span>
                       </p>
                       <p className="mt-0.5 text-xs font-bold text-red-700">
-                        {q.issue} <span className="font-semibold text-gray-500">({q.detail})</span>
+                        {q.issue}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-2" aria-hidden="true">
@@ -409,7 +383,7 @@ export default function SparkLanding() {
 
         {/* Close */}
         <section data-anchor className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
-          <div className={`reveal flex flex-col justify-center rounded-[2rem] p-8 sm:p-14 lg:min-h-[34rem] ${RAISED}`}>
+          <div className={`reveal flex flex-col justify-center rounded-2xl p-8 sm:p-14 lg:min-h-[34rem] border border-[#E9ECEF]`}>
             <h2 className="max-w-[16ch] text-[clamp(2.4rem,6vw,4.5rem)] font-black leading-[0.95] tracking-[-0.045em]" style={{ textWrap: "balance" }}>
               Your next event already counts.
             </h2>
@@ -426,7 +400,7 @@ export default function SparkLanding() {
               </Link>
               <Link
                 href="/login"
-                className={`inline-flex items-center justify-center rounded-2xl px-6 py-4 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black ${INSET}`}
+                className={`inline-flex items-center justify-center rounded-2xl px-6 py-4 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black border border-[#DEE2E6] bg-white transition-colors hover:border-[#1A1A1A]`}
               >
                 Coordinator login
               </Link>

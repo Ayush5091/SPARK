@@ -10,6 +10,7 @@ interface ReviewModalProps {
     onApprove?: (id: number, pointsAwarded?: number) => void;
     onReject?: (id: number, notes?: string) => void;
     isSubmitting?: boolean;
+    error?: string | null;
 }
 
 export default function AdminReviewModal({
@@ -18,7 +19,8 @@ export default function AdminReviewModal({
     item,
     onApprove,
     onReject,
-    isSubmitting = false
+    isSubmitting = false,
+    error = null
 }: ReviewModalProps) {
     const [pointsInput, setPointsInput] = useState<string>('');
     const [showRejectForm, setShowRejectForm] = useState(false);
@@ -26,7 +28,8 @@ export default function AdminReviewModal({
 
     useEffect(() => {
         if (!item) return;
-        const defaultPoints = item.points_awarded ?? item.event_points ?? item.points ?? '';
+        // Personal activities have no preset value, so start empty and make the reviewer choose
+        const defaultPoints = item.is_personal ? '' : (item.points_awarded ?? item.event_points ?? item.points ?? '');
         setPointsInput(defaultPoints?.toString?.() ?? '');
         setShowRejectForm(false);
         setRejectNotes('');
@@ -69,7 +72,7 @@ export default function AdminReviewModal({
     return (
         <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: 'oklch(0.15 0.01 250 / 0.6)' }}
+            style={{ backgroundColor: 'oklch(0.15 0 0 / 0.6)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -80,8 +83,8 @@ export default function AdminReviewModal({
                 className="w-full max-w-2xl overflow-hidden shadow-2xl"
                 style={{
                     borderRadius: '24px',
-                    backgroundColor: 'oklch(0.99 0.005 250)',
-                    border: '1px solid oklch(0.92 0.008 250)',
+                    backgroundColor: 'oklch(0.99 0 0)',
+                    border: '1px solid oklch(0.92 0 0)',
                 }}
                 initial={{ opacity: 0, scale: 0.92, y: 24 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -93,8 +96,8 @@ export default function AdminReviewModal({
                 <div
                     className="px-6 py-4 flex justify-between items-center"
                     style={{
-                        borderBottom: '1px solid oklch(0.92 0.008 250)',
-                        backgroundColor: 'oklch(0.97 0.006 250)',
+                        borderBottom: '1px solid oklch(0.92 0 0)',
+                        backgroundColor: 'oklch(0.97 0 0)',
                     }}
                 >
                     <div className="flex items-center gap-3">
@@ -102,21 +105,21 @@ export default function AdminReviewModal({
                             className="h-9 w-9 flex items-center justify-center"
                             style={{
                                 borderRadius: '12px',
-                                backgroundColor: 'oklch(0.45 0.18 160)',
+                                backgroundColor: 'oklch(0.2 0 0)',
                             }}
                         >
-                            <span className="material-symbols-outlined text-lg" style={{ color: 'oklch(0.98 0.005 160)' }}>
+                            <span className="material-symbols-outlined text-lg" style={{ color: 'oklch(0.98 0 0)' }}>
                                 task_alt
                             </span>
                         </div>
-                        <h2 className="text-lg font-semibold" style={{ color: 'oklch(0.18 0.015 250)' }}>
+                        <h2 className="text-lg font-semibold" style={{ color: 'oklch(0.18 0 0)' }}>
                             Review Submission
                         </h2>
                     </div>
                     <button
                         onClick={onClose}
                         className="p-2 transition-colors"
-                        style={{ borderRadius: '10px', color: 'oklch(0.55 0.01 250)' }}
+                        style={{ borderRadius: '10px', color: 'oklch(0.55 0 0)' }}
                         disabled={isSubmitting}
                     >
                         <span className="material-symbols-outlined">close</span>
@@ -129,19 +132,19 @@ export default function AdminReviewModal({
                     {/* Student + Date Row */}
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0.015 250)' }}>Student</p>
-                            <p className="text-base font-semibold mt-1" style={{ color: 'oklch(0.18 0.015 250)' }}>{item.student_name}</p>
+                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0 0)' }}>Student</p>
+                            <p className="text-base font-semibold mt-1" style={{ color: 'oklch(0.18 0 0)' }}>{item.student_name}</p>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                                 {item.student_department && (
-                                    <p className="text-sm" style={{ color: 'oklch(0.5 0.015 250)' }}>{item.student_department}</p>
+                                    <p className="text-sm" style={{ color: 'oklch(0.5 0 0)' }}>{item.student_department}</p>
                                 )}
-                                <div className="w-1 h-1 rounded-full opacity-30" style={{ backgroundColor: 'oklch(0.5 0.015 250)' }} />
-                                <p className="text-sm font-medium" style={{ color: 'oklch(0.45 0.1 250)' }}>Semester {item.student_semester || 'N/A'}</p>
+                                <div className="w-1 h-1 rounded-full opacity-30" style={{ backgroundColor: 'oklch(0.5 0 0)' }} />
+                                <p className="text-sm font-medium" style={{ color: 'oklch(0.45 0 0)' }}>Semester {item.student_semester || 'N/A'}</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0.015 250)' }}>Submitted</p>
-                            <p className="text-sm font-medium mt-1" style={{ color: 'oklch(0.25 0.015 250)' }}>{dateStr}</p>
+                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0 0)' }}>Submitted</p>
+                            <p className="text-sm font-medium mt-1" style={{ color: 'oklch(0.25 0 0)' }}>{dateStr}</p>
                         </div>
                     </div>
 
@@ -150,50 +153,85 @@ export default function AdminReviewModal({
                         style={{
                             padding: '16px',
                             borderRadius: '16px',
-                            backgroundColor: 'oklch(0.97 0.008 160)',
-                            border: '1px solid oklch(0.92 0.015 160)',
+                            backgroundColor: 'oklch(0.97 0 0)',
+                            border: '1px solid oklch(0.92 0 0)',
                         }}
                     >
                         <div>
-                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.45 0.05 160)' }}>Event</p>
-                            <p className="text-base font-semibold mt-1" style={{ color: 'oklch(0.2 0.03 160)' }}>{item.activity || item.activity_name}</p>
+                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.45 0 0)' }}>Event</p>
+                            <p className="text-base font-semibold mt-1" style={{ color: 'oklch(0.2 0 0)' }}>{item.event_name || item.activity || item.activity_name}</p>
+                            {item.is_personal && (
+                                <p className="text-xs mt-1" style={{ color: 'oklch(0.45 0 0)' }}>
+                                    Logged by the student{item.location_name ? ` · ${item.location_name}` : ''}
+                                    {item.start_time ? ` · ${new Date(item.start_time).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                                </p>
+                            )}
                             <div className="flex items-center gap-2 mt-2">
                                 <span
                                     className="inline-flex items-center px-2.5 py-1 text-xs font-semibold"
                                     style={{
                                         borderRadius: '8px',
-                                        backgroundColor: 'oklch(0.45 0.18 160)',
-                                        color: 'oklch(0.98 0.005 160)',
+                                        backgroundColor: 'oklch(0.2 0 0)',
+                                        color: 'oklch(0.98 0 0)',
                                     }}
                                 >
-                                    {eventDefaultPoints} pts default
+                                    {item.is_personal ? 'Points set by reviewer' : `${eventDefaultPoints} pts default`}
                                 </span>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.45 0.05 160)' }}>Student total</p>
-                            <p className="text-2xl font-bold mt-1" style={{ color: 'oklch(0.3 0.06 160)' }}>{studentTotalPoints}</p>
-                            <p className="text-xs" style={{ color: 'oklch(0.5 0.03 160)' }}>points earned</p>
+                            <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.45 0 0)' }}>Student total</p>
+                            <p className="text-2xl font-bold mt-1" style={{ color: 'oklch(0.3 0 0)' }}>{studentTotalPoints}</p>
+                            <p className="text-xs" style={{ color: 'oklch(0.5 0 0)' }}>points earned</p>
                         </div>
                     </div>
 
                     {/* Description */}
-                    {item.description && (
+                    {(item.description || item.event_description) && (
                         <div>
-                            <p className="text-xs font-semibold tracking-wider uppercase mb-2" style={{ color: 'oklch(0.55 0.015 250)' }}>Notes</p>
+                            <p className="text-xs font-semibold tracking-wider uppercase mb-2" style={{ color: 'oklch(0.55 0 0)' }}>Notes</p>
                             <div
                                 className="p-4 text-sm leading-relaxed"
                                 style={{
                                     borderRadius: '14px',
-                                    backgroundColor: 'oklch(0.97 0.005 250)',
-                                    border: '1px solid oklch(0.92 0.008 250)',
-                                    color: 'oklch(0.35 0.01 250)',
+                                    backgroundColor: 'oklch(0.97 0 0)',
+                                    border: '1px solid oklch(0.92 0 0)',
+                                    color: 'oklch(0.35 0 0)',
                                 }}
                             >
-                                {item.description}
+                                {item.description || item.event_description}
                             </div>
                         </div>
                     )}
+
+                    {/* Uploaded proof: the camera photo or the student's report/certificate */}
+                    <div>
+                        <p className="text-xs font-semibold tracking-wider uppercase mb-2" style={{ color: 'oklch(0.55 0 0)' }}>Proof</p>
+                        {item.evidence_url ? (
+                            item.evidence_content_type?.startsWith('image/') ? (
+                                <a href={item.evidence_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden" style={{ borderRadius: '14px', border: '1px solid oklch(0.92 0 0)' }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={item.evidence_url} alt={`Proof submitted by ${item.student_name}`} className="w-full max-h-80 object-contain" style={{ backgroundColor: 'oklch(0.95 0 0)' }} />
+                                </a>
+                            ) : (
+                                <a
+                                    href={item.evidence_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 p-4 text-sm font-semibold transition-colors"
+                                    style={{ borderRadius: '14px', backgroundColor: 'oklch(0.97 0 0)', border: '1px solid oklch(0.92 0 0)', color: 'oklch(0.25 0 0)' }}
+                                >
+                                    <span className="material-symbols-outlined">description</span>
+                                    <span className="flex-1 truncate">{item.evidence_filename || 'Open document'}</span>
+                                    <span className="material-symbols-outlined text-base">open_in_new</span>
+                                </a>
+                            )
+                        ) : (
+                            <p className="p-4 text-sm" style={{ borderRadius: '14px', backgroundColor: 'oklch(0.95 0.03 75)', color: 'oklch(0.35 0.08 75)' }}>
+                                No file was stored with this submission. Older submissions only kept photo metadata.
+                            </p>
+                        )}
+                    </div>
 
                     {/* Verification Evidence */}
                     {(verificationResult || photoMetadata) && (
@@ -201,14 +239,14 @@ export default function AdminReviewModal({
                             className="space-y-3 p-4"
                             style={{
                                 borderRadius: '16px',
-                                backgroundColor: 'oklch(0.97 0.005 250)',
-                                border: '1px solid oklch(0.92 0.008 250)',
+                                backgroundColor: 'oklch(0.97 0 0)',
+                                border: '1px solid oklch(0.92 0 0)',
                             }}
                         >
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0.015 250)' }}>Verification Evidence</p>
-                                    <p className="text-xs mt-0.5" style={{ color: 'oklch(0.6 0.01 250)' }}>Photo metadata and automated checks.</p>
+                                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'oklch(0.55 0 0)' }}>Verification Evidence</p>
+                                    <p className="text-xs mt-0.5" style={{ color: 'oklch(0.6 0 0)' }}>Photo metadata and automated checks.</p>
                                 </div>
                                 <span
                                     className="inline-flex items-center px-3 py-1 text-xs font-semibold"
@@ -227,12 +265,12 @@ export default function AdminReviewModal({
                                     className="p-3 text-sm"
                                     style={{
                                         borderRadius: '12px',
-                                        backgroundColor: 'oklch(0.99 0.003 250)',
-                                        border: '1px solid oklch(0.93 0.006 250)',
+                                        backgroundColor: 'oklch(0.99 0 0)',
+                                        border: '1px solid oklch(0.93 0 0)',
                                     }}
                                 >
-                                    <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'oklch(0.55 0.01 250)' }}>Capture Data</p>
-                                    <div className="space-y-1" style={{ color: 'oklch(0.35 0.01 250)' }}>
+                                    <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'oklch(0.55 0 0)' }}>Capture Data</p>
+                                    <div className="space-y-1" style={{ color: 'oklch(0.35 0 0)' }}>
                                         <p>Camera: {photoMetadata?.make || photoMetadata?.model ? [photoMetadata?.make, photoMetadata?.model].filter(Boolean).join(' ') : 'Unavailable'}</p>
                                         <p>Time: {photoMetadata?.timestamp ? new Date(photoMetadata.timestamp).toLocaleString() : 'Unavailable'}</p>
                                         <p>GPS: {photoMetadata?.latitude && photoMetadata?.longitude ? `${photoMetadata.latitude}, ${photoMetadata.longitude}` : 'Unavailable'}</p>
@@ -243,12 +281,12 @@ export default function AdminReviewModal({
                                     className="p-3 text-sm"
                                     style={{
                                         borderRadius: '12px',
-                                        backgroundColor: 'oklch(0.99 0.003 250)',
-                                        border: '1px solid oklch(0.93 0.006 250)',
+                                        backgroundColor: 'oklch(0.99 0 0)',
+                                        border: '1px solid oklch(0.93 0 0)',
                                     }}
                                 >
-                                    <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'oklch(0.55 0.01 250)' }}>Checks</p>
-                                    <div className="space-y-1" style={{ color: 'oklch(0.35 0.01 250)' }}>
+                                    <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'oklch(0.55 0 0)' }}>Checks</p>
+                                    <div className="space-y-1" style={{ color: 'oklch(0.35 0 0)' }}>
                                         <p>Location: <span className="font-semibold" style={{ color: verificationResult?.locationMatch ? 'oklch(0.45 0.15 150)' : 'oklch(0.5 0.18 25)' }}>{verificationResult?.locationMatch ? 'Match' : 'Mismatch'}</span></p>
                                         <p>Time: <span className="font-semibold" style={{ color: verificationResult?.timeMatch ? 'oklch(0.45 0.15 150)' : 'oklch(0.5 0.18 25)' }}>{verificationResult?.timeMatch ? 'Match' : 'Mismatch'}</span></p>
                                         <p>Distance: <span className="font-semibold">{verificationResult?.distanceFromEvent != null ? `${Math.round(verificationResult.distanceFromEvent)} m` : 'N/A'}</span></p>
@@ -276,7 +314,7 @@ export default function AdminReviewModal({
 
                     {/* Points Allocation */}
                     <div>
-                        <p className="text-xs font-semibold tracking-wider uppercase mb-3" style={{ color: 'oklch(0.55 0.015 250)' }}>Points Allocation</p>
+                        <p className="text-xs font-semibold tracking-wider uppercase mb-3" style={{ color: 'oklch(0.55 0 0)' }}>Points Allocation</p>
 
                         <div className="flex items-center gap-3">
                             <div className="flex-1 relative">
@@ -288,9 +326,9 @@ export default function AdminReviewModal({
                                     className="w-full px-4 py-3 text-lg font-semibold outline-none transition-all"
                                     style={{
                                         borderRadius: '14px',
-                                        border: '2px solid oklch(0.88 0.015 250)',
-                                        backgroundColor: 'oklch(0.99 0.003 250)',
-                                        color: 'oklch(0.18 0.015 250)',
+                                        border: '2px solid oklch(0.88 0 0)',
+                                        backgroundColor: 'oklch(0.99 0 0)',
+                                        color: 'oklch(0.18 0 0)',
                                     }}
                                 />
                                 {currentPoints !== eventDefaultPoints && (
@@ -316,7 +354,7 @@ export default function AdminReviewModal({
                             </button>
                             <button type="button" onClick={() => setPointsInput(String(eventDefaultPoints))}
                                 className="px-3 py-1.5 text-xs font-semibold transition-all"
-                                style={{ borderRadius: '8px', border: '1px solid oklch(0.85 0.03 250)', color: 'oklch(0.4 0.08 250)', backgroundColor: 'oklch(0.95 0.01 250)' }}>
+                                style={{ borderRadius: '8px', border: '1px solid oklch(0.85 0 0)', color: 'oklch(0.4 0 0)', backgroundColor: 'oklch(0.95 0 0)' }}>
                                 Reset to {eventDefaultPoints}
                             </button>
                             <button type="button" onClick={() => adjustPoints(5)}
@@ -331,12 +369,12 @@ export default function AdminReviewModal({
                             </button>
                             <button type="button" onClick={() => setPointsMultiplier(0.5)}
                                 className="px-3 py-1.5 text-xs font-semibold transition-all"
-                                style={{ borderRadius: '8px', border: '1px solid oklch(0.88 0.01 250)', color: 'oklch(0.5 0.01 250)', backgroundColor: 'oklch(0.97 0.005 250)' }}>
+                                style={{ borderRadius: '8px', border: '1px solid oklch(0.88 0 0)', color: 'oklch(0.5 0 0)', backgroundColor: 'oklch(0.97 0 0)' }}>
                                 Half
                             </button>
                             <button type="button" onClick={() => setPointsMultiplier(2)}
                                 className="px-3 py-1.5 text-xs font-semibold transition-all"
-                                style={{ borderRadius: '8px', border: '1px solid oklch(0.88 0.01 250)', color: 'oklch(0.5 0.01 250)', backgroundColor: 'oklch(0.97 0.005 250)' }}>
+                                style={{ borderRadius: '8px', border: '1px solid oklch(0.88 0 0)', color: 'oklch(0.5 0 0)', backgroundColor: 'oklch(0.97 0 0)' }}>
                                 Double
                             </button>
                         </div>
@@ -351,9 +389,9 @@ export default function AdminReviewModal({
                             className="flex items-center gap-2 p-3 transition-all group"
                             style={{
                                 borderRadius: '14px',
-                                backgroundColor: 'oklch(0.96 0.02 250)',
-                                border: '1px solid oklch(0.9 0.03 250)',
-                                color: 'oklch(0.4 0.12 250)',
+                                backgroundColor: 'oklch(0.96 0 0)',
+                                border: '1px solid oklch(0.9 0 0)',
+                                color: 'oklch(0.4 0 0)',
                             }}
                         >
                             <span className="material-symbols-outlined">attachment</span>
@@ -383,13 +421,19 @@ export default function AdminReviewModal({
                     )}
                 </div>
 
+                {error && (
+                    <p role="alert" className="mx-5 mb-0 mt-0 px-4 py-3 text-sm font-medium" style={{ borderRadius: '12px', backgroundColor: 'oklch(0.95 0.03 25)', color: 'oklch(0.4 0.15 25)' }}>
+                        {error}
+                    </p>
+                )}
+
                 {/* Actions Footer */}
                 {canReview && (
                     <div
                         className="p-5 flex flex-col-reverse md:flex-row justify-end gap-3"
                         style={{
-                            borderTop: '1px solid oklch(0.92 0.008 250)',
-                            backgroundColor: 'oklch(0.97 0.005 250)',
+                            borderTop: '1px solid oklch(0.92 0 0)',
+                            backgroundColor: 'oklch(0.97 0 0)',
                         }}
                     >
                         <button
@@ -398,9 +442,9 @@ export default function AdminReviewModal({
                             className="px-5 py-2.5 font-semibold text-sm transition-all disabled:opacity-50"
                             style={{
                                 borderRadius: '12px',
-                                border: '1px solid oklch(0.88 0.008 250)',
-                                color: 'oklch(0.45 0.01 250)',
-                                backgroundColor: 'oklch(0.99 0.003 250)',
+                                border: '1px solid oklch(0.88 0 0)',
+                                color: 'oklch(0.45 0 0)',
+                                backgroundColor: 'oklch(0.99 0 0)',
                             }}
                         >
                             Cancel
@@ -447,16 +491,18 @@ export default function AdminReviewModal({
                         {onApprove && !showRejectForm && (
                             <button
                                 onClick={() => onApprove(item.id, pointsInput === '' ? undefined : Number(pointsInput))}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || (item.is_personal && pointsInput === '')}
                                 className="flex items-center justify-center gap-2 px-6 py-2.5 font-semibold text-sm transition-all disabled:opacity-50"
                                 style={{
                                     borderRadius: '12px',
-                                    backgroundColor: 'oklch(0.45 0.18 160)',
-                                    color: 'oklch(0.98 0.005 160)',
+                                    backgroundColor: 'oklch(0.2 0 0)',
+                                    color: 'oklch(0.98 0 0)',
                                 }}
                             >
                                 {isSubmitting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                                Approve and Award {currentPoints || eventDefaultPoints} pts
+                                {item.is_personal && pointsInput === ''
+                                    ? 'Set points to approve'
+                                    : `Approve and Award ${pointsInput === '' ? eventDefaultPoints : currentPoints} pts`}
                             </button>
                         )}
                     </div>

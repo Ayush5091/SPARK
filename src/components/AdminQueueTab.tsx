@@ -72,7 +72,7 @@ export default function AdminQueueTab({
             verified: { bg: "oklch(0.92 0.06 150)", fg: "oklch(0.3 0.12 150)", label: "Approved" },
             rejected: { bg: "oklch(0.92 0.06 25)", fg: "oklch(0.38 0.14 25)", label: "Rejected" },
         };
-        const s = map[status] || { bg: "oklch(0.94 0.005 250)", fg: "oklch(0.4 0.01 250)", label: status };
+        const s = map[status] || { bg: "oklch(0.94 0 0)", fg: "oklch(0.4 0 0)", label: status };
         return (
             <span className="inline-flex px-2 py-0.5 text-xs font-semibold" style={{ borderRadius: "6px", backgroundColor: s.bg, color: s.fg }}>
                 {s.label}
@@ -95,19 +95,19 @@ export default function AdminQueueTab({
                 transition={{ delay: 0.1, duration: 0.35 }}
             >
                 <div className="flex-1 min-w-[220px] relative">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg" style={{ color: "oklch(0.6 0.01 250)" }}>search</span>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg" style={{ color: "oklch(0.6 0 0)" }}>search</span>
                     <input
                         value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Search by name, USN, or event..."
                         className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-all"
-                        style={{ borderRadius: "14px", border: "1px solid oklch(0.9 0.008 250)", backgroundColor: "oklch(0.99 0.003 250)", color: "oklch(0.2 0.015 250)" }}
+                        style={{ borderRadius: "14px", border: "1px solid oklch(0.9 0 0)", backgroundColor: "oklch(0.99 0 0)", color: "oklch(0.2 0 0)" }}
                     />
                 </div>
                 <motion.button
                     onClick={() => setShowFilters(!showFilters)}
                     whileTap={{ scale: 0.96 }}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all"
-                    style={{ borderRadius: "14px", border: "1px solid oklch(0.9 0.008 250)", backgroundColor: showFilters ? "oklch(0.95 0.02 250)" : "oklch(0.99 0.003 250)", color: "oklch(0.35 0.015 250)" }}>
+                    style={{ borderRadius: "14px", border: "1px solid oklch(0.9 0 0)", backgroundColor: showFilters ? "oklch(0.95 0 0)" : "oklch(0.99 0 0)", color: "oklch(0.35 0 0)" }}>
                     <motion.span
                         className="material-symbols-outlined text-lg"
                         animate={{ rotate: showFilters ? 180 : 0 }}
@@ -130,9 +130,9 @@ export default function AdminQueueTab({
                             className="px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap relative"
                             style={{
                                 borderRadius: "12px",
-                                color: statusFilter === tab.key ? "oklch(0.97 0.005 250)" : "oklch(0.45 0.01 250)",
-                                border: statusFilter === tab.key ? "none" : "1px solid oklch(0.92 0.008 250)",
-                                backgroundColor: statusFilter === tab.key ? "oklch(0.2 0.015 250)" : "oklch(0.97 0.005 250)",
+                                color: statusFilter === tab.key ? "oklch(0.97 0 0)" : "oklch(0.45 0 0)",
+                                border: statusFilter === tab.key ? "none" : "1px solid oklch(0.92 0 0)",
+                                backgroundColor: statusFilter === tab.key ? "oklch(0.2 0 0)" : "oklch(0.97 0 0)",
                             }}>
                             {tab.label}
                         </button>
@@ -150,15 +150,15 @@ export default function AdminQueueTab({
                         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         className="overflow-hidden"
                     >
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4" style={{ borderRadius: "16px", backgroundColor: "oklch(0.98 0.005 250)", border: "1px solid oklch(0.93 0.008 250)" }}>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4" style={{ borderRadius: "16px", backgroundColor: "oklch(0.98 0 0)", border: "1px solid oklch(0.93 0 0)" }}>
                             <SelectFilter label="Department" value={deptFilter} options={departments} onChange={setDeptFilter} />
                             <SelectFilter label="Category" value={catFilter} options={CATEGORIES} onChange={setCatFilter} />
                             <SelectFilter label="Event" value={eventFilter} options={eventNames} onChange={setEventFilter} />
                             <div>
-                                <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: "oklch(0.5 0.01 250)" }}>Date Range</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: "oklch(0.5 0 0)" }}>Date Range</label>
                                 <div className="flex gap-2">
-                                    <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="flex-1 px-2 py-1.5 text-xs outline-none" style={{ borderRadius: "8px", border: "1px solid oklch(0.9 0.008 250)", color: "oklch(0.3 0.01 250)" }} />
-                                    <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="flex-1 px-2 py-1.5 text-xs outline-none" style={{ borderRadius: "8px", border: "1px solid oklch(0.9 0.008 250)", color: "oklch(0.3 0.01 250)" }} />
+                                    <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="flex-1 px-2 py-1.5 text-xs outline-none" style={{ borderRadius: "8px", border: "1px solid oklch(0.9 0 0)", color: "oklch(0.3 0 0)" }} />
+                                    <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="flex-1 px-2 py-1.5 text-xs outline-none" style={{ borderRadius: "8px", border: "1px solid oklch(0.9 0 0)", color: "oklch(0.3 0 0)" }} />
                                 </div>
                             </div>
                         </div>
@@ -169,7 +169,7 @@ export default function AdminQueueTab({
             {/* Select All */}
             {filtered.length > 0 && statusFilter === "pending_review" && (
                 <div className="flex items-center gap-3 px-1">
-                    <button onClick={allSelected ? onDeselectAll : onSelectAll} className="flex items-center gap-2 text-xs font-semibold" style={{ color: "oklch(0.45 0.1 250)" }}>
+                    <button onClick={allSelected ? onDeselectAll : onSelectAll} className="flex items-center gap-2 text-xs font-semibold" style={{ color: "oklch(0.45 0 0)" }}>
                         <span className="material-symbols-outlined text-lg">{allSelected ? "check_box" : "check_box_outline_blank"}</span>
                         {allSelected ? "Deselect all" : `Select all ${filtered.length}`}
                     </button>
@@ -180,7 +180,7 @@ export default function AdminQueueTab({
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 className="text-xs font-semibold"
-                                style={{ color: "oklch(0.45 0.15 160)" }}
+                                style={{ color: "oklch(0.2 0 0)" }}
                             >
                                 {selectedIds.size} selected
                             </motion.span>
@@ -199,11 +199,11 @@ export default function AdminQueueTab({
                 >
                     <motion.span
                         className="material-symbols-outlined text-5xl mb-3 block"
-                        style={{ color: "oklch(0.8 0.01 250)" }}
+                        style={{ color: "oklch(0.8 0 0)" }}
                         animate={{ y: [0, -6, 0] }}
                         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                     >inbox</motion.span>
-                    <p className="text-sm font-semibold" style={{ color: "oklch(0.45 0.01 250)" }}>No submissions match your filters.</p>
+                    <p className="text-sm font-semibold" style={{ color: "oklch(0.45 0 0)" }}>No submissions match your filters.</p>
                 </motion.div>
             ) : (
                 <div className="space-y-2">
@@ -217,13 +217,13 @@ export default function AdminQueueTab({
                                 initial="hidden"
                                 animate="show"
                                 exit="exit"
-                                whileHover={{ scale: 1.008, boxShadow: "0 4px 20px oklch(0.7 0.02 250 / 0.1)" }}
+                                whileHover={{ scale: 1.008, boxShadow: "0 4px 20px oklch(0.7 0 0 / 0.1)" }}
                                 whileTap={{ scale: 0.995 }}
                                 className="flex items-center gap-3 p-4 cursor-pointer group"
                                 style={{
                                     borderRadius: "16px",
-                                    backgroundColor: selectedIds.has(item.id) ? "oklch(0.96 0.02 250)" : "oklch(0.99 0.005 250)",
-                                    border: selectedIds.has(item.id) ? "1px solid oklch(0.8 0.06 250)" : "1px solid oklch(0.93 0.008 250)",
+                                    backgroundColor: selectedIds.has(item.id) ? "oklch(0.96 0 0)" : "oklch(0.99 0 0)",
+                                    border: selectedIds.has(item.id) ? "1px solid oklch(0.8 0 0)" : "1px solid oklch(0.93 0 0)",
                                 }}
                                 onClick={() => onReviewItem(item)}
                             >
@@ -235,7 +235,7 @@ export default function AdminQueueTab({
                                     >
                                         <motion.span
                                             className="material-symbols-outlined text-xl"
-                                            style={{ color: selectedIds.has(item.id) ? "oklch(0.45 0.18 250)" : "oklch(0.75 0.01 250)" }}
+                                            style={{ color: selectedIds.has(item.id) ? "oklch(0.45 0 0)" : "oklch(0.75 0 0)" }}
                                             animate={{ scale: selectedIds.has(item.id) ? [1, 1.2, 1] : 1 }}
                                             transition={{ duration: 0.25 }}
                                         >
@@ -245,19 +245,19 @@ export default function AdminQueueTab({
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="text-sm font-semibold truncate" style={{ color: "oklch(0.2 0.015 250)" }}>{item.student_name}</p>
+                                        <p className="text-sm font-semibold truncate" style={{ color: "oklch(0.2 0 0)" }}>{item.student_name}</p>
                                         {statusBadge(item.status)}
                                     </div>
-                                    <p className="text-xs mt-0.5 truncate" style={{ color: "oklch(0.5 0.01 250)" }}>
+                                    <p className="text-xs mt-0.5 truncate" style={{ color: "oklch(0.5 0 0)" }}>
                                         {item.event_name || item.activity || item.activity_name} · {item.student_department} · Sem {item.student_semester || 'N/A'} · {new Date(item.submitted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                                     </p>
                                 </div>
                                 <div className="text-right shrink-0">
-                                    <p className="text-sm font-bold" style={{ color: "oklch(0.45 0.18 160)" }}>{item.event_points || item.points} pts</p>
+                                    <p className="text-sm font-bold" style={{ color: "oklch(0.2 0 0)" }}>{item.event_points || item.points} pts</p>
                                 </div>
                                 <motion.span
                                     className="material-symbols-outlined text-lg"
-                                    style={{ color: "oklch(0.55 0.01 250)" }}
+                                    style={{ color: "oklch(0.55 0 0)" }}
                                     initial={{ opacity: 0, x: -4 }}
                                     whileHover={{ opacity: 1 }}
                                     animate={{ opacity: 0 }}
@@ -274,10 +274,10 @@ export default function AdminQueueTab({
 function SelectFilter({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
     return (
         <div>
-            <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: "oklch(0.5 0.01 250)" }}>{label}</label>
+            <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: "oklch(0.5 0 0)" }}>{label}</label>
             <select value={value} onChange={e => onChange(e.target.value)}
                 className="w-full px-3 py-2 text-sm outline-none appearance-none cursor-pointer"
-                style={{ borderRadius: "10px", border: "1px solid oklch(0.9 0.008 250)", backgroundColor: "oklch(0.99 0.003 250)", color: "oklch(0.3 0.015 250)" }}>
+                style={{ borderRadius: "10px", border: "1px solid oklch(0.9 0 0)", backgroundColor: "oklch(0.99 0 0)", color: "oklch(0.3 0 0)" }}>
                 {options.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
         </div>

@@ -3,20 +3,38 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { 
-    Home, 
-    Calendar, 
-    Clock, 
-    User, 
-    Plus, 
-    LayoutDashboard, 
-    ClipboardCheck, 
+import {
+    Home,
+    Calendar,
+    Clock,
+    User,
+    Plus,
+    LayoutDashboard,
+    ClipboardCheck,
     LogOut,
     Award
 } from "lucide-react";
 import { motion } from 'framer-motion';
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
+
+const FOCUS = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black';
+
+// One navigation for every role: a white sidebar on desktop and a bottom bar on phones,
+// with the same active state (ink pill) everywhere. Only the links differ by role.
+const STUDENT_LINKS = [
+    { href: '/', icon: Home, label: 'Home' },
+    { href: '/events', icon: Calendar, label: 'Events' },
+    { href: '/submissions-history', icon: Clock, label: 'History' },
+    { href: '/profile', icon: User, label: 'Profile' },
+];
+
+const ADMIN_LINKS = [
+    { href: '/', icon: LayoutDashboard, label: 'Overview' },
+    { href: '/admin/queue', icon: ClipboardCheck, label: 'Review queue' },
+    { href: '/admin/events', icon: Calendar, label: 'Events' },
+    { href: '/profile', icon: User, label: 'Profile' },
+];
 
 export default function Navigation() {
     const pathname = usePathname();
@@ -33,223 +51,124 @@ export default function Navigation() {
     };
 
     const isAdmin = user?.role === 'admin';
+    const links = isAdmin ? ADMIN_LINKS : STUDENT_LINKS;
+    const action = isAdmin
+        ? { href: '/admin/events?new=1', label: 'Create event' }
+        : { href: '/events?new=1', label: 'Log activity' };
 
     return (
         <>
-            {/* Mobile Bottom Navigation */}
-            <nav className={`md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 ${
-                isAdmin 
-                    ? 'bg-white border-t border-gray-200 rounded-t-md' 
-                    : 'bg-[#F0F0F3] rounded-t-3xl shadow-[0_-8px_20px_rgba(209,209,211,0.5)]'
-            }`}>
-                <div className="flex items-center justify-between px-8 py-5 relative">
-                    {isAdmin ? (
-                        <>
-                            {/* Admin Navigation */}
-                            {[
-                                { href: '/', icon: LayoutDashboard },
-                                { href: '/admin/queue', icon: ClipboardCheck },
-                                { href: '/admin/events', icon: Calendar },
-                                { href: '/profile', icon: User }
-                            ].map((item) => {
-                                const active = isActive(item.href);
-                                const IconComponent = item.icon;
-                                return (
-                                    <MotionLink
-                                        key={item.href}
-                                        href={item.href}
-                                        className="relative flex flex-col items-center justify-center pb-2 w-12 h-12 group"
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        <IconComponent 
-                                            size={24} 
-                                            strokeWidth={active ? 2.5 : 2} 
-                                            className={`transition-colors duration-200 ${
-                                                active ? 'text-black' : 'text-gray-400 group-hover:text-black'
-                                            }`} 
-                                        />
-                                        {active && (
-                                            <motion.div
-                                                layoutId="active-line-mobile-admin"
-                                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"
-                                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                            />
-                                        )}
-                                    </MotionLink>
-                                );
-                            })}
-                        </>
-                    ) : (
-                        <>
-                            {/* Student Navigation */}
-                            {[
-                                { href: '/', icon: Home },
-                                { href: '/events', icon: Calendar },
-                                { href: 'spacer', icon: null },
-                                { href: '/submissions-history', icon: Clock },
-                                { href: '/profile', icon: User }
-                            ].map((item, index) => {
-                                if (item.href === 'spacer') {
-                                    return <div key={`spacer-${index}`} className="w-12"></div>;
-                                }
-                                const active = isActive(item.href);
-                                const IconComponent = item.icon!;
-                                return (
-                                    <MotionLink
-                                        key={item.href}
-                                        href={item.href}
-                                        className="relative w-12 h-12 flex items-center justify-center group"
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        {active && (
-                                            <motion.div
-                                                layoutId="active-circle-mobile-student"
-                                                className="absolute inset-0 rounded-full bg-black shadow-[4px_4px_10px_#9ca3af]"
-                                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                            />
-                                        )}
-                                        <IconComponent 
-                                            size={active ? 22 : 24} 
-                                            strokeWidth={2.5} 
-                                            className={`relative z-10 transition-colors duration-200 ${
-                                                active ? 'text-white' : 'text-gray-400 group-hover:text-black'
-                                            }`} 
-                                        />
-                                    </MotionLink>
-                                );
-                            })}
+            {/* Mobile bottom bar */}
+            <nav
+                aria-label="Main"
+                className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[#E9ECEF] bg-white/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
+            >
+                <div className="relative mx-auto flex max-w-md items-center justify-around px-4 py-3">
+                    {links.slice(0, 2).map((item) => (
+                        <MobileLink key={item.href} item={item} active={isActive(item.href)} />
+                    ))}
 
-                            {/* Center FAB */}
-                            <MotionLink 
-                                href="/events" 
-                                className="absolute left-1/2 -translate-x-1/2 -top-6 w-16 h-16 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-[4px_10px_20px_rgba(0,0,0,0.3)] border-4 border-[#F0F0F3] z-20"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                            >
-                                <Plus size={28} strokeWidth={3} />
-                            </MotionLink>
-                        </>
-                    )}
+                    <MotionLink
+                        href={action.href}
+                        aria-label={action.label}
+                        className={`flex h-12 w-12 items-center justify-center rounded-full bg-[#1A1A1A] text-white ${FOCUS}`}
+                        whileTap={{ scale: 0.94 }}
+                    >
+                        <Plus size={22} strokeWidth={2.5} />
+                    </MotionLink>
+
+                    {links.slice(2).map((item) => (
+                        <MobileLink key={item.href} item={item} active={isActive(item.href)} />
+                    ))}
                 </div>
             </nav>
 
-            {/* Desktop Sidebar */}
-            <nav className={`hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 p-6 z-30 ${
-                isAdmin 
-                    ? 'bg-white border-r border-gray-200 text-black' 
-                    : 'bg-[#F0F0F3] border-r border-white/20 shadow-[4px_0_12px_#d1d1d3] text-black'
-            }`}>
-                <div className="flex items-center gap-3 mb-10 mt-4 px-2">
-                    <div className={`h-10 w-10 flex items-center justify-center text-white rounded-xl ${
-                        isAdmin 
-                            ? 'bg-black rounded-md' 
-                            : 'bg-black shadow-[2px_2px_6px_#d1d1d3]'
-                    }`}>
-                        <Award size={20} strokeWidth={2.5} />
-                    </div>
-                    <h1 className="text-lg font-black tracking-widest text-black">SPARK</h1>
-                </div>
-
-                <div className="flex-1 space-y-4">
-                    {isAdmin ? (
-                        <div className="flex flex-col gap-1">
-                            {[
-                                { href: '/', label: 'Overview' },
-                                { href: '/admin/queue', label: 'Review Queue' },
-                                { href: '/admin/events', label: 'Events' },
-                                { href: '/profile', label: 'Profile' }
-                            ].map((item) => {
-                                const active = isActive(item.href);
-                                return (
-                                    <MotionLink
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`relative flex items-center gap-3 py-2.5 pl-4 pr-3 rounded-r-lg transition-colors ${
-                                            active 
-                                                ? 'text-black font-bold bg-gray-50' 
-                                                : 'text-gray-600 hover:text-black font-medium'
-                                        }`}
-                                        whileHover={active ? {} : { x: 3 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        {active && (
-                                            <motion.div
-                                                layoutId="active-border-desktop-admin"
-                                                className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r"
-                                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                                            />
-                                        )}
-                                        <span className="text-sm relative z-10">{item.label}</span>
-                                    </MotionLink>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-2">
-                            {[
-                                { href: '/', icon: Home, label: 'Home' },
-                                { href: '/events', icon: Calendar, label: 'Events' },
-                                { href: '/submissions-history', icon: Clock, label: 'History' },
-                                { href: '/profile', icon: User, label: 'Profile' }
-                            ].map((item) => {
-                                const active = isActive(item.href);
-                                const IconComponent = item.icon;
-                                return (
-                                    <MotionLink
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`relative flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-colors ${
-                                            active 
-                                                ? 'text-black font-black' 
-                                                : 'text-gray-500 hover:text-black font-bold'
-                                        }`}
-                                        whileHover={active ? {} : { x: 4 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        {active && (
-                                            <motion.div
-                                                layoutId="active-bg-desktop-student"
-                                                className="absolute inset-0 bg-[#F0F0F3] shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] rounded-2xl -z-10"
-                                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                                            />
-                                        )}
-                                        <IconComponent size={20} strokeWidth={2.5} className="relative z-10" />
-                                        <span className="text-xs uppercase tracking-wider relative z-10">{item.label}</span>
-                                    </MotionLink>
-                                );
-                            })}
-
-                            <MotionLink
-                                href="/events?new=1"
-                                className="flex items-center justify-center gap-2 rounded-2xl bg-black text-white px-4 py-4 text-xs font-bold uppercase tracking-widest shadow-[4px_4px_10px_#9ca3af] mt-6"
-                                whileHover={{ scale: 1.02, y: -2 }}
-                                whileTap={{ scale: 0.98 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                            >
-                                <Plus size={16} strokeWidth={3} />
-                                <span>Start Event</span>
-                            </MotionLink>
-                        </div>
+            {/* Desktop sidebar */}
+            <nav
+                aria-label="Main"
+                className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 z-30 border-r border-[#E9ECEF] bg-white px-4 py-6 text-[#1A1A1A]"
+            >
+                <Link href="/" className={`mb-10 mt-2 flex items-center gap-3 rounded-xl px-3 ${FOCUS}`}>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1A1A1A] text-white">
+                        <Award size={18} strokeWidth={2.5} />
+                    </span>
+                    <span className="text-lg font-black tracking-tight">SPARK</span>
+                    {isAdmin && (
+                        <span className="ml-auto rounded-md border border-[#E9ECEF] px-1.5 py-0.5 text-[11px] font-bold text-[#6C757D]">Admin</span>
                     )}
+                </Link>
+
+                <div className="flex flex-col gap-1">
+                    {links.map((item) => {
+                        const active = isActive(item.href);
+                        const Icon = item.icon;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                aria-current={active ? 'page' : undefined}
+                                className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${FOCUS} ${
+                                    active ? 'font-bold text-white' : 'font-semibold text-[#495057] hover:bg-[#F1F3F5] hover:text-[#1A1A1A]'
+                                }`}
+                            >
+                                {active && (
+                                    <motion.span
+                                        layoutId="nav-active"
+                                        className="absolute inset-0 rounded-xl bg-[#1A1A1A]"
+                                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                                    />
+                                )}
+                                <Icon size={18} strokeWidth={2.25} className="relative z-10" />
+                                <span className="relative z-10">{item.label}</span>
+                            </Link>
+                        );
+                    })}
                 </div>
 
-                <div className="mt-auto pt-6 border-t border-gray-200/50">
-                    <motion.button 
-                        onClick={logout} 
-                        className={`w-full flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all p-3.5 ${
-                            isAdmin
-                                ? 'bg-white border border-gray-200 text-black hover:bg-gray-50 rounded-md shadow-none'
-                                : 'bg-[#F0F0F3] text-red-600 rounded-2xl shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d1d3]'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                <Link
+                    href={action.href}
+                    className={`mt-6 flex items-center justify-center gap-2 rounded-xl border border-[#DEE2E6] px-4 py-2.5 text-sm font-bold transition-colors hover:border-[#1A1A1A] ${FOCUS}`}
+                >
+                    <Plus size={16} strokeWidth={2.5} />
+                    {action.label}
+                </Link>
+
+                <div className="mt-auto border-t border-[#E9ECEF] pt-4">
+                    <button
+                        type="button"
+                        onClick={logout}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#495057] transition-colors hover:bg-[#F1F3F5] hover:text-red-700 ${FOCUS}`}
                     >
-                        <LogOut size={20} strokeWidth={2.5} />
-                        <span>Log out</span>
-                    </motion.button>
+                        <LogOut size={18} strokeWidth={2.25} />
+                        Log out
+                    </button>
                 </div>
             </nav>
         </>
+    );
+}
+
+function MobileLink({ item, active }: { item: (typeof STUDENT_LINKS)[number]; active: boolean }) {
+    const Icon = item.icon;
+    return (
+        <Link
+            href={item.href}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-full ${FOCUS}`}
+        >
+            {active && (
+                <motion.span
+                    layoutId="nav-active-mobile"
+                    className="absolute inset-0 rounded-full bg-[#F1F3F5]"
+                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                />
+            )}
+            <Icon
+                size={21}
+                strokeWidth={active ? 2.5 : 2}
+                className={`relative z-10 transition-colors ${active ? 'text-[#1A1A1A]' : 'text-[#868E96]'}`}
+            />
+        </Link>
     );
 }

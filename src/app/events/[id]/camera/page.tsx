@@ -316,7 +316,7 @@ export default function CameraSubmissionPage() {
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F0F0F3]">
+      <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F8F9FA]">
         <div className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Loading camera verification...</div>
       </div>
     );
@@ -324,12 +324,12 @@ export default function CameraSubmissionPage() {
 
   if (!event) {
     return (
-      <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F0F0F3]">
+      <div className="max-w-md mx-auto min-h-screen flex items-center justify-center bg-[#F8F9FA]">
         <div className="text-center space-y-6 px-6">
           <h1 className="text-2xl font-black text-black tracking-tight">Event Not Found</h1>
           <button
             onClick={() => router.push('/')}
-            className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-[4px_4px_10px_#b8b8ba] active:scale-95 transition-all"
+            className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
           >
             Back to Home
           </button>
@@ -341,13 +341,13 @@ export default function CameraSubmissionPage() {
   const categoryInfo = getCategoryIconInfo(event.category);
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+    <div className="max-w-md mx-auto min-h-screen bg-[#F8F9FA] font-sans relative pb-24 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-sm">
+      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F8F9FA]/90 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+            className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card active:bg-[#E9ECEF] transition-all"
           >
             <span className="material-symbols-outlined text-2xl">arrow_back</span>
           </Link>
@@ -356,14 +356,14 @@ export default function CameraSubmissionPage() {
             <span className="text-lg font-black tracking-tight text-black max-w-[200px] truncate">{event.name}</span>
           </div>
         </div>
-        <UserAvatar name={user?.name} className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-lg font-bold shadow-[4px_4px_10px_#d1d1d3,-4px_-4px_10px_#ffffff]" />
+        <UserAvatar name={user?.name} className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-lg font-bold" />
       </header>
 
       <main className="flex-1 px-6 py-6 pb-28 space-y-6">
         {/* Event Info */}
-        <div className="bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20">
+        <div className="rounded-2xl p-6 ui-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-[2px_2px_6px_#d1d1d3]">
+            <div className="h-10 w-10 rounded-xl bg-gray-900 text-white flex items-center justify-center ">
               <span className="material-icons-outlined text-xl">{categoryInfo.icon}</span>
             </div>
             <div>
@@ -374,7 +374,7 @@ export default function CameraSubmissionPage() {
 
           <p className="text-xs text-gray-500 font-medium mb-4 leading-relaxed">{event.description}</p>
 
-          <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-wider pt-3 border-t border-gray-200/50">
+          <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-wider pt-3 border-t border-[#E9ECEF]">
             <span className="material-icons-outlined text-sm">location_on</span>
             <span>{event.location_name}</span>
             {locationData ? (
@@ -388,11 +388,11 @@ export default function CameraSubmissionPage() {
         </div>
 
         {/* Camera Interface */}
-        <div className="bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20">
+        <div className="rounded-2xl p-6 ui-card">
           <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Take Event Photo</h3>
 
           {error && (
-            <div className="bg-[#F0F0F3] border border-red-200/50 rounded-2xl p-4 mb-4 text-center shadow-[inset_3px_3px_6px_#d1d1d3]">
+            <div className="border border-red-200/50 rounded-2xl p-4 mb-4 text-center ui-well">
               <p className="text-red-600 text-xs font-bold uppercase tracking-wider">{error}</p>
               <button
                 onClick={initializeCamera}
@@ -404,7 +404,7 @@ export default function CameraSubmissionPage() {
           )}
 
           {locationError && !locationData && (
-            <div className="bg-[#F0F0F3] border border-amber-200/50 rounded-2xl p-4 mb-4 text-center shadow-[inset_3px_3px_6px_#d1d1d3]">
+            <div className="border border-amber-200/50 rounded-2xl p-4 mb-4 text-center ui-well">
               <p className="text-amber-700 text-xs font-bold uppercase tracking-wider">{locationError}</p>
               <button
                 onClick={getCurrentLocation}
@@ -416,7 +416,7 @@ export default function CameraSubmissionPage() {
           )}
 
           {success && (
-            <div className="bg-[#F0F0F3] border border-green-200/50 rounded-2xl p-4 mb-4 text-center shadow-[inset_3px_3px_6px_#d1d1d3]">
+            <div className="border border-green-200/50 rounded-2xl p-4 mb-4 text-center ui-well">
               <p className="text-green-600 text-xs font-bold uppercase tracking-wider">{success}</p>
             </div>
           )}
@@ -457,7 +457,7 @@ export default function CameraSubmissionPage() {
                 <div className="flex justify-center">
                   <button
                     onClick={capturePhoto}
-                    className="bg-black hover:bg-gray-900 text-white p-5 rounded-full transition-transform active:scale-95 shadow-[4px_4px_10px_#9ca3af]"
+                    className="bg-black hover:bg-gray-900 text-white p-5 rounded-full transition-transform active:scale-95 "
                   >
                     <span className="material-icons-outlined text-3xl">camera_alt</span>
                   </button>
@@ -468,7 +468,7 @@ export default function CameraSubmissionPage() {
                 <div className="text-center py-4">
                   <button
                     onClick={initializeCamera}
-                    className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-[4px_4px_10px_#b8b8ba] active:scale-95 transition-all"
+                    className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
                   >
                     Start Camera
                   </button>
@@ -476,7 +476,7 @@ export default function CameraSubmissionPage() {
               )}
 
               {permissionsReady && (
-                <div className="p-5 bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50 rounded-3xl">
+                <div className="p-5 ui-well rounded-2xl">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-black mb-2 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm">info</span> Requirements
                   </h4>
@@ -495,7 +495,7 @@ export default function CameraSubmissionPage() {
                 <img src={preview!} alt="Captured" className="w-full h-64 object-cover" />
               </div>
 
-              <div className="p-5 bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50 rounded-3xl text-center">
+              <div className="p-5 ui-well rounded-2xl text-center">
                 <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5 ${locationData ? 'text-green-600' : 'text-amber-600'}`}>
                   <span className="material-symbols-outlined text-sm">{locationData ? 'check_circle' : 'location_searching'}</span>
                   {locationData ? 'Ready to Submit' : 'Waiting for Location'}
@@ -510,14 +510,14 @@ export default function CameraSubmissionPage() {
               <div className="flex gap-4">
                 <button
                   onClick={retakePhoto}
-                  className="rounded-2xl bg-[#F0F0F3] shadow-[4px_4px_8px_#d1d1d3,-4px_-4px_8px_#ffffff] px-5 py-4 text-xs font-bold uppercase text-gray-500 active:shadow-[inset_2px_2px_4px_#d1d1d3] transition-all flex-1 text-center"
+                  className="rounded-2xl ui-card px-5 py-4 text-xs font-bold uppercase text-gray-500 active:bg-[#E9ECEF] transition-all flex-1 text-center"
                 >
                   Retake
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || !locationData}
-                  className="rounded-2xl bg-black text-white px-5 py-4 text-xs font-bold uppercase tracking-widest shadow-[4px_4px_8px_#b8b8ba] active:scale-95 disabled:opacity-50 transition-all flex-1 flex items-center justify-center gap-2"
+                  className="rounded-2xl bg-black text-white px-5 py-4 text-xs font-bold uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all flex-1 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>

@@ -239,3 +239,25 @@
     outline: none;
   }
 }
+/* -----------------------------------------------------------------------------
+   SPARK monochrome surfaces (DESIGN.md): flat at rest, 1px hairlines, depth only
+   as a response to hover or focus. Every screen builds on these.
+----------------------------------------------------------------------------- */
+@layer components {
+  /* Raised container: white on the #F8F9FA canvas, hairline border, no shadow at rest */
+  .ui-card {
+    @apply border border-[#E9ECEF] bg-white;
+  }
+  /* Interactive card: lifts with a soft shadow on hover */
+  .ui-card-hover {
+    @apply transition-[box-shadow,border-color] duration-200 hover:border-[#DEE2E6] hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.06)];
+  }
+  /* Recessed area: tracks, empty states, inline readouts, inactive pills */
+  .ui-well {
+    @apply bg-[#F1F3F5];
+  }
+  /* Text inputs, selects and textareas */
+  .ui-input {
+    @apply border border-[#DEE2E6] bg-white text-[#1A1A1A] transition-colors placeholder:text-[#6C757D] focus:border-[#1A1A1A] focus-visible:ring-2 focus-visible:ring-black/10;
+  }
+}

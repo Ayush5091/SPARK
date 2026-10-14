@@ -42,9 +42,9 @@ export default function LoginPage() {
     };
 
     return (
-    <div className="w-full min-h-screen bg-[#F0F0F3] font-sans relative flex flex-col items-center justify-center p-6 text-black selection:bg-black selection:text-white">
+    <div className="w-full min-h-screen bg-[#F8F9FA] font-sans relative flex flex-col items-center justify-center p-6 text-black selection:bg-black selection:text-white">
       {/* Login Card Container */}
-      <main className="w-full rounded-3xl bg-[#F0F0F3] p-8 shadow-[12px_12px_24px_#d1d1d3,-12px_-12px_24px_#ffffff] max-w-sm border border-white/20 flex flex-col items-center">
+      <main className="w-full rounded-2xl p-8 ui-card max-w-sm flex flex-col items-center">
         {/* Header Section */}
         <div className="text-center mb-8">
           <h2 className="text-black text-2xl font-black tracking-tight mb-1">
@@ -57,9 +57,9 @@ export default function LoginPage() {
 
         {/* Slider/Toggle Component */}
         <div className="flex mb-8 w-full">
-          <div className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] p-1 w-full relative">
+          <div className="flex h-12 flex-1 items-center justify-center rounded-2xl ui-well p-1 w-full relative">
             <div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#F0F0F3] rounded-xl shadow-[2px_2px_6px_#d1d1d3,-2px_-2px_6px_#ffffff] z-0 transition-transform duration-300 ease-out"
+              className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl ui-card z-0 transition-transform duration-300 ease-out"
               style={{
                 transform: role === "student" ? "translateX(4px)" : "translateX(calc(100% + 4px))",
                 left: 0,
@@ -105,7 +105,7 @@ export default function LoginPage() {
             </p>
             <a
               href="/api/auth/google/login"
-              className="w-full flex items-center justify-center gap-3 bg-[#F0F0F3] shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] border border-white/20 rounded-2xl py-4 px-4 hover:shadow-[4px_4px_8px_#d1d1d3] active:shadow-[inset_3px_3px_6px_#d1d1d3] transition-all group active:scale-95"
+              className="w-full flex items-center justify-center gap-3 ui-card rounded-2xl py-4 px-4 hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.06)] active:bg-[#E9ECEF] transition-all group active:scale-95"
             >
               <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
@@ -127,14 +127,14 @@ export default function LoginPage() {
           >
             <form onSubmit={handleAdminLogin} className="space-y-4 w-full">
               {error && (
-                <div className="text-red-600 text-[10px] text-center font-bold uppercase tracking-wider bg-[#F0F0F3] p-3 rounded-2xl shadow-[inset_2px_2px_4px_#d1d1d3] border border-red-200/30">
+                <div className="text-red-600 text-[10px] text-center font-bold uppercase tracking-wider p-3 rounded-2xl ui-well border border-red-200/30">
                   {error}
                 </div>
               )}
               <div className="flex flex-col">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1 mb-1.5">Email Address</label>
                 <input
-                  className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 h-12 text-sm text-black placeholder-gray-400 outline-none focus:ring-0"
+                  className="w-full ui-input rounded-xl px-5 h-12 text-sm text-black outline-none"
                   placeholder="admin@aicte.edu.in"
                   type="email"
                   value={email}
@@ -145,7 +145,7 @@ export default function LoginPage() {
               <div className="flex flex-col">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1 mb-1.5">Password</label>
                 <input
-                  className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 h-12 text-sm text-black placeholder-gray-400 outline-none focus:ring-0 tracking-widest"
+                  className="w-full ui-input rounded-xl px-5 h-12 text-sm text-black outline-none tracking-widest"
                   placeholder="••••••••"
                   type="password"
                   value={password}
@@ -155,7 +155,7 @@ export default function LoginPage() {
               </div>
               <button
                 disabled={isLoading}
-                className="w-full bg-black text-white font-bold h-12 rounded-2xl shadow-[4px_4px_8px_#b8b8ba] active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50 text-xs uppercase tracking-widest"
+                className="w-full bg-black text-white font-bold h-12 rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50 text-xs uppercase tracking-widest"
                 type="submit"
               >
                 <span>{isLoading ? "Authenticating..." : "Login"}</span>

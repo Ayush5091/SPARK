@@ -10,8 +10,8 @@ import { useEffect, useState } from "react";
 export const SCREEN_W = 300;
 export const SCREEN_H = 640;
 
-const RAISED = "shadow-[5px_5px_10px_#d1d1d3,-5px_-5px_10px_#ffffff]";
-const INSET = "shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff]";
+const RAISED = "ui-card";
+const INSET = "ui-well";
 
 const EVENT = {
   name: "Robotics Club Open Lab",
@@ -44,23 +44,23 @@ function HomeScreen() {
         </div>
         <div className={`relative flex h-9 w-9 items-center justify-center rounded-full ${RAISED}`}>
           <Bell size={15} strokeWidth={2.5} />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-[#F0F0F3] bg-black" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-black" />
         </div>
       </div>
 
       <h2 className="mt-6 text-[26px] font-black leading-[1.05] tracking-tighter">Ready for your next activity?</h2>
 
-      <div className={`mt-5 rounded-3xl p-5 ${RAISED}`}>
+      <div className={`mt-5 rounded-2xl p-5 ${RAISED}`}>
         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total points</p>
         <p className="mt-1 text-[32px] font-black tracking-tighter">
           60 <span className="text-sm font-bold text-gray-400">/ 100</span>
         </p>
-        <div className={`mt-3 h-3.5 rounded-full bg-[#e0e0e3] p-[3px] ${INSET}`}>
+        <div className={`mt-3 h-3.5 rounded-full bg-[#E9ECEF] p-[3px] ${INSET}`}>
           <div className="h-full w-[60%] rounded-full bg-black" />
         </div>
       </div>
 
-      <div className={`mt-5 flex flex-col gap-3 rounded-3xl p-5 ${RAISED}`}>
+      <div className={`mt-5 flex flex-col gap-3 rounded-2xl p-5 ${RAISED}`}>
         <div className="flex items-center justify-between">
           <span className="rounded-full bg-black px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-white">Happening now</span>
           <span className="text-[13px] font-black">+{EVENT.points} pts</span>
@@ -97,15 +97,15 @@ function LiveScreen() {
       <h2 className="mt-2 text-[26px] font-black leading-[1.05] tracking-tighter">{EVENT.name}</h2>
       <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500">{EVENT.category} · +{EVENT.points} pts</p>
 
-      <div className={`mt-6 flex flex-col gap-3 rounded-3xl p-5 ${INSET}`}>
+      <div className={`mt-6 flex flex-col gap-3 rounded-2xl p-5 ${INSET}`}>
         <Row icon={<MapPin size={14} strokeWidth={2.5} />} label="Venue" value={EVENT.venue} />
         <Row icon={<Clock size={14} strokeWidth={2.5} />} label="Event window" value={EVENT.window} />
-        <Row icon={<ShieldCheck size={14} strokeWidth={2.5} />} label="Check-in radius" value="100 m" />
+        <Row icon={<ShieldCheck size={14} strokeWidth={2.5} />} label="Check-in" value="Open now" />
       </div>
 
-      <div className={`mt-5 rounded-3xl p-4 ${RAISED}`}>
+      <div className={`mt-5 rounded-2xl p-4 ${RAISED}`}>
         <p className="text-[11px] font-semibold leading-relaxed text-gray-600">
-          Check-in opens when the event starts. Photos are accepted up to 30 minutes either side of the window.
+          Go to the venue and tap the button below to check in with a photo.
         </p>
       </div>
 
@@ -130,10 +130,10 @@ function GeofenceScreen() {
   const reduce = useReducedMotion();
   return (
     <div className="flex h-full flex-col px-5 pb-6">
-      <h2 className="mt-6 text-[22px] font-black leading-tight tracking-tighter">Checking where you are</h2>
+      <h2 className="mt-6 text-[22px] font-black leading-tight tracking-tighter">You&apos;re at the venue</h2>
       <p className="mt-1 text-[11px] font-semibold text-gray-500">{EVENT.venue}</p>
 
-      <div className={`relative mt-5 aspect-square w-full overflow-hidden rounded-3xl bg-[#e9e9ec] ${INSET}`}>
+      <div className={`relative mt-5 aspect-square w-full overflow-hidden rounded-2xl bg-[#E9ECEF] ${INSET}`}>
         {/* Campus blocks */}
         <svg viewBox="0 0 260 260" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <g fill="#dcdce0">
@@ -164,10 +164,10 @@ function GeofenceScreen() {
         </motion.div>
       </div>
 
-      <div className={`mt-5 flex items-center justify-between rounded-3xl p-4 ${RAISED}`}>
+      <div className={`mt-5 flex items-center justify-between rounded-2xl p-4 ${RAISED}`}>
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">From venue</p>
-          <p className="font-mono text-[20px] font-bold tracking-tight">38 m <span className="text-[12px] text-gray-400">/ 100 m</span></p>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Location</p>
+          <p className="text-[16px] font-black tracking-tight">Confirmed</p>
         </div>
         <span className="flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-[10px] font-bold text-white">
           <Check size={11} strokeWidth={3} /> Inside
@@ -220,7 +220,7 @@ function CameraScreen() {
           <span key={c} className={`absolute h-5 w-5 rounded-[3px] border-white/80 ${c}`} />
         ))}
         <div className="absolute left-3 right-3 top-10 flex justify-between">
-          <span className="rounded-full bg-black/60 px-2.5 py-1 font-mono text-[10px] font-bold backdrop-blur">GPS ±6 m</span>
+          <span className="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold backdrop-blur">At the venue</span>
           <span className="rounded-full bg-black/60 px-2.5 py-1 font-mono text-[10px] font-bold backdrop-blur">2:47 PM</span>
         </div>
         {!reduce && (
@@ -233,13 +233,13 @@ function CameraScreen() {
         )}
       </div>
       <div className="flex items-center justify-between px-8 pb-7 pt-5">
-        <span className="text-[10px] font-bold text-white/60">Camera only</span>
+        <span className="text-[10px] font-bold text-white/60">Take photo</span>
         <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/90">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black">
             <Camera size={18} strokeWidth={2.5} />
           </span>
         </span>
-        <span className="text-[10px] font-bold text-white/60">No uploads</span>
+        <span className="text-[10px] font-bold text-white/60">Proof</span>
       </div>
     </div>
   );
@@ -270,7 +270,7 @@ function VerifiedScreen() {
     <div className="flex h-full flex-col px-5 pb-6">
       <div className="mt-8 flex flex-col items-center text-center">
         <motion.div
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-green-600 text-white shadow-[6px_6px_14px_#c8c8cb,-6px_-6px_14px_#ffffff]"
+          className="flex h-20 w-20 items-center justify-center rounded-full bg-green-600 text-white ui-card"
           initial={reduce ? false : { scale: 0.4, rotate: -30 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 16, delay: 0.1 }}
@@ -281,7 +281,7 @@ function VerifiedScreen() {
         <p className="mt-1 text-[11px] font-semibold text-gray-500">{EVENT.name}</p>
       </div>
 
-      <div className={`mt-6 rounded-3xl p-5 ${RAISED}`}>
+      <div className={`mt-6 rounded-2xl p-5 ${RAISED}`}>
         <div className="flex items-end justify-between">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total points</p>
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-800">+{EVENT.points}</span>
@@ -289,7 +289,7 @@ function VerifiedScreen() {
         <p className="mt-1 text-[34px] font-black tracking-tighter">
           <CountUp from={60} to={80} /> <span className="text-sm font-bold text-gray-400">/ 100</span>
         </p>
-        <div className={`mt-3 h-3.5 rounded-full bg-[#e0e0e3] p-[3px] ${INSET}`}>
+        <div className={`mt-3 h-3.5 rounded-full bg-[#E9ECEF] p-[3px] ${INSET}`}>
           <motion.div
             className="h-full rounded-full bg-black"
             initial={reduce ? false : { width: "60%" }}
@@ -299,11 +299,11 @@ function VerifiedScreen() {
         </div>
       </div>
 
-      <div className={`mt-5 flex flex-col gap-2.5 rounded-3xl p-4 ${INSET}`}>
+      <div className={`mt-5 flex flex-col gap-2.5 rounded-2xl p-4 ${INSET}`}>
         {[
-          ["Distance", "38 m of 100 m"],
-          ["Time", "2:47 PM, in window"],
-          ["Review", "Not needed"],
+          ["Location", "At the venue"],
+          ["Time", "During the event"],
+          ["Points", "Added"],
         ].map(([k, v]) => (
           <div key={k} className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-gray-500">{k}</span>
@@ -322,7 +322,7 @@ function InboxScreen() {
     <div className="flex h-full flex-col px-5 pb-6">
       <h2 className="mt-6 text-[22px] font-black tracking-tighter">Notifications</h2>
       <div className="mt-5 flex flex-col gap-3">
-        <div className={`rounded-3xl p-4 ${RAISED}`}>
+        <div className={`rounded-2xl p-4 ${RAISED}`}>
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white"><Check size={12} strokeWidth={3} /></span>
             <span className="text-[12px] font-black">Approved by coordinator</span>
@@ -332,19 +332,19 @@ function InboxScreen() {
           </p>
           <p className="mt-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">2 min ago</p>
         </div>
-        <div className={`rounded-3xl p-4 ${RAISED}`}>
+        <div className={`rounded-2xl p-4 ${RAISED}`}>
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e0e0e3] text-gray-700"><Clock size={12} strokeWidth={3} /></span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E9ECEF] text-gray-700"><Clock size={12} strokeWidth={3} /></span>
             <span className="text-[12px] font-black">Submitted for review</span>
           </div>
           <p className="mt-2 text-[11px] font-semibold leading-relaxed text-gray-600">
-            Photo taken 180 m from the venue (max 100 m). A coordinator will take a look.
+            We couldn&apos;t confirm your location, so a coordinator will take a look.
           </p>
           <p className="mt-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">1 h ago</p>
         </div>
-        <div className={`rounded-3xl p-4 opacity-70 ${INSET}`}>
+        <div className={`rounded-2xl p-4 opacity-70 ${INSET}`}>
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e0e0e3] text-gray-700"><X size={12} strokeWidth={3} /></span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E9ECEF] text-gray-700"><X size={12} strokeWidth={3} /></span>
             <span className="text-[12px] font-black">Check-in closed</span>
           </div>
           <p className="mt-2 text-[11px] font-semibold leading-relaxed text-gray-600">Debate Society Finals ended at 6:00 PM.</p>
@@ -362,7 +362,7 @@ export function PhoneScreen({ stage }: { stage: number }) {
   const dark = index === 3;
   return (
     <div
-      className={`relative overflow-hidden rounded-[38px] font-body antialiased ${dark ? "bg-[#0b0b0c]" : "bg-[#F0F0F3] text-black"}`}
+      className={`relative overflow-hidden rounded-[38px] font-body antialiased ${dark ? "bg-[#0b0b0c]" : "bg-[#F8F9FA] text-black"}`}
       style={{ width: SCREEN_W, height: SCREEN_H }}
     >
       {/* Dynamic island */}

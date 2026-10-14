@@ -89,13 +89,13 @@ export default function RequestsScreen() {
     };
 
     return (
-    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+    <div className="max-w-md md:max-w-5xl mx-auto min-h-screen bg-[#F8F9FA] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-sm">
+      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F8F9FA]/90 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+            className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card active:bg-[#E9ECEF] transition-all"
           >
             <span className="material-symbols-outlined text-2xl">arrow_back</span>
           </Link>
@@ -108,7 +108,7 @@ export default function RequestsScreen() {
         {user?.role !== 'admin' && (
           <Link
             href="/request-activity"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all hover:scale-105"
+            className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card active:bg-[#E9ECEF] transition-all hover:scale-105"
           >
             <span className="material-symbols-outlined text-2xl">add</span>
           </Link>
@@ -118,9 +118,9 @@ export default function RequestsScreen() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-4 pb-28 space-y-6">
         {/* Segmented Control */}
-        <div className="flex h-12 items-center justify-center rounded-2xl bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] p-1 w-full relative">
+        <div className="flex h-12 items-center justify-center rounded-2xl ui-well p-1 w-full relative">
           <div
-            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#F0F0F3] rounded-xl shadow-[2px_2px_6px_#d1d1d3,-2px_-2px_6px_#ffffff] z-0 transition-transform duration-300 ease-out"
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl ui-card z-0 transition-transform duration-300 ease-out"
             style={{
               transform: activeTab === 'evaluated' ? "translateX(calc(100% - 4px))" : "translateX(4px)",
               left: 0,
@@ -157,7 +157,7 @@ export default function RequestsScreen() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {currentItems.length === 0 ? (
-              <div className="col-span-full rounded-3xl bg-[#F0F0F3] p-12 text-center text-xs font-bold uppercase tracking-wider text-gray-400 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50">
+              <div className="col-span-full rounded-2xl p-12 text-center text-xs font-bold uppercase tracking-wider text-gray-400 ui-well">
                 No {activeTab} requests found.
               </div>
             ) : currentItems.map((item, idx) => {
@@ -176,7 +176,7 @@ export default function RequestsScreen() {
                       setIsModalOpen(true);
                     }
                   }}
-                  className={`bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20 relative overflow-hidden transition-all duration-300 ${
+                  className={`rounded-2xl p-6 ui-card relative overflow-hidden transition-all duration-300 ${
                     isAdmin && item.status === 'pending' ? 'cursor-pointer hover:translate-y-[-2px]' : ''
                   }`}
                 >
@@ -187,7 +187,7 @@ export default function RequestsScreen() {
                       </h3>
                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{dateStr}</p>
                     </div>
-                    <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white shadow-[2px_2px_6px_#d1d1d3] uppercase shrink-0 ml-3">
+                    <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white uppercase shrink-0 ml-3">
                       {pointsText}
                     </span>
                   </div>
@@ -198,14 +198,14 @@ export default function RequestsScreen() {
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200/50">
+                  <div className="flex items-center justify-between pt-4 border-t border-[#E9ECEF]">
                     <div className="flex items-center gap-2">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${
                         item.status === 'approved' 
-                          ? 'bg-[#F0F0F3] text-green-600 shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]' 
+                          ? ' text-green-600 ui-well' 
                           : item.status === 'rejected'
-                          ? 'bg-[#F0F0F3] text-red-600 shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]'
-                          : 'bg-[#F0F0F3] text-orange-600 shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]'
+                          ? ' text-red-600 ui-well'
+                          : ' text-orange-600 ui-well'
                       }`}>
                         {statusInfo.text}
                       </span>
@@ -217,7 +217,7 @@ export default function RequestsScreen() {
                           e.stopPropagation();
                           router.push('/submit-proof');
                         }}
-                        className="rounded-2xl bg-black text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest shadow-[2px_2px_6px_#b8b8ba] active:scale-95 transition-all"
+                        className="rounded-2xl bg-black text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all"
                       >
                         Submit Proof
                       </button>

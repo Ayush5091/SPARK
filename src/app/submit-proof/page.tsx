@@ -66,13 +66,13 @@ export default function SubmitProofScreen() {
         }
     };
   return (
-    <div className="max-w-md md:max-w-3xl mx-auto min-h-screen bg-[#F0F0F3] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
+    <div className="max-w-md md:max-w-3xl mx-auto min-h-screen bg-[#F8F9FA] font-sans relative pb-24 md:pb-12 overflow-hidden text-black selection:bg-black selection:text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F0F0F3]/90 backdrop-blur-sm">
+      <header className="flex items-center justify-between px-6 pt-10 pb-6 sticky top-0 z-20 bg-[#F8F9FA]/90 backdrop-blur-sm">
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex items-center justify-center w-12 h-12 rounded-full bg-[#F0F0F3] text-black shadow-[6px_6px_12px_#d1d1d3,-6px_-6px_12px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d1d3] transition-all"
+          className="flex items-center justify-center w-12 h-12 rounded-full text-black ui-card active:bg-[#E9ECEF] transition-all"
         >
           <span className="material-symbols-outlined text-2xl">arrow_back</span>
         </button>
@@ -86,10 +86,10 @@ export default function SubmitProofScreen() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-6 pb-28 space-y-6">
         {message && (
-          <div className={`p-4 rounded-3xl text-center text-xs font-bold uppercase tracking-wider ${
+          <div className={`p-4 rounded-2xl text-center text-xs font-bold uppercase tracking-wider ${
             message.includes('successfully')
-              ? 'bg-[#F0F0F3] text-green-600 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff]'
-              : 'bg-[#F0F0F3] text-red-600 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff]'
+              ? ' text-green-600 ui-well'
+              : ' text-red-600 ui-well'
           }`}>
             {message}
           </div>
@@ -102,7 +102,7 @@ export default function SubmitProofScreen() {
             </label>
             <div className="relative">
               <select
-                className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 pr-12 text-sm text-black outline-none focus:ring-0 appearance-none cursor-pointer font-bold uppercase tracking-wider"
+                className="w-full ui-input rounded-xl px-5 py-3 pr-12 text-sm text-black outline-none appearance-none cursor-pointer font-bold uppercase tracking-wider"
                 value={selectedRequest?.request_id || ""}
                 onChange={(e) => {
                   const req = approvedRequests.find(r => r.request_id === parseInt(e.target.value));
@@ -121,13 +121,13 @@ export default function SubmitProofScreen() {
           </div>
 
           {selectedRequest ? (
-            <div className="bg-[#F0F0F3] rounded-3xl p-6 shadow-[8px_8px_16px_#d1d1d3,-8px_-8px_16px_#ffffff] border border-white/20 relative overflow-hidden">
+            <div className="rounded-2xl p-6 ui-card relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-[#F0F0F3] text-green-600 shadow-[inset_2px_2px_4px_#d1d1d3,inset_-2px_-2px_4px_#ffffff]">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest text-green-600 ui-well">
                     Approved
                   </span>
-                  <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white shadow-[2px_2px_6px_#d1d1d3] uppercase shrink-0">
+                  <span className="rounded-full bg-black px-3 py-1.5 text-[9px] font-bold tracking-widest text-white uppercase shrink-0">
                     +{selectedRequest.points} PTS
                   </span>
                 </div>
@@ -139,12 +139,12 @@ export default function SubmitProofScreen() {
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl bg-[#F0F0F3] p-8 text-center text-xs font-bold uppercase tracking-wider text-gray-400 shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50">
+            <div className="rounded-2xl p-8 text-center text-xs font-bold uppercase tracking-wider text-gray-400 ui-well">
               No approved requests available.
             </div>
           )}
 
-          <div className="p-5 bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50 rounded-3xl">
+          <div className="p-5 ui-well rounded-2xl">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-black mb-2 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-sm">info</span> Instructions
             </h4>
@@ -168,7 +168,7 @@ export default function SubmitProofScreen() {
                 required
                 value={proofUrl}
                 onChange={e => setProofUrl(e.target.value)}
-                className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl px-5 py-4 text-sm text-black placeholder-gray-400 outline-none focus:ring-0"
+                className="w-full ui-input rounded-xl px-5 py-3 text-sm text-black outline-none"
                 placeholder="Paste Google Drive link"
                 type="url"
               />
@@ -183,7 +183,7 @@ export default function SubmitProofScreen() {
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="w-full bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border-none rounded-2xl p-5 text-sm text-black placeholder-gray-400 outline-none focus:ring-0 resize-none"
+              className="w-full ui-input rounded-xl p-5 text-sm text-black outline-none resize-none"
               placeholder="Add details about your participation..."
               rows={4}
             ></textarea>
@@ -194,7 +194,7 @@ export default function SubmitProofScreen() {
             <button
               disabled={loading || !selectedRequest}
               type="submit"
-              className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-[4px_4px_10px_#b8b8ba] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-14 bg-black text-white font-bold text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <span>{loading ? "Submitting..." : "Submit for Verification"}</span>
               <span className="material-symbols-outlined text-sm">arrow_forward</span>
