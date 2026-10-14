@@ -29,7 +29,7 @@ interface LocationData {
 }
 
 export default function CameraSubmissionPage() {
-  const { user, token, refreshProfile } = useAuth();
+  const { user, token, refreshProfile, isInitializing } = useAuth();
   const router = useRouter();
   const params = useParams();
   const eventId = params.id as string;
@@ -40,6 +40,7 @@ export default function CameraSubmissionPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
@@ -48,8 +49,19 @@ export default function CameraSubmissionPage() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Mirrors cameraStream so unmount cleanup sees the live stream, not the initial null
+  const streamRef = useRef<MediaStream | null>(null);
 
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    streamRef.current = null;
+    setCameraStream(null);
+  };
+
+  // Wait for the auth provider to restore the session; on a hard refresh user is
+  // still null on the first render and we'd bounce a logged-in student to /login.
   useEffect(() => {
+    if (isInitializing) return;
     if (!user || user.role !== 'student') {
       router.push('/login');
       return;
@@ -57,22 +69,31 @@ export default function CameraSubmissionPage() {
     if (token) {
       fetchEvent();
     }
-  }, [user, eventId, token]);
-
-  // Only initialize camera when component mounts for students
-  useEffect(() => {
-    if (user?.role === 'student') {
-      initializeCamera();
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-      }
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps array intentional - only run once
+  }, [user, eventId, token, isInitializing]);
+
+  useEffect(() => {
+    if (isInitializing || user?.role !== 'student') return;
+    initializeCamera();
+    return stopCamera;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitializing, user?.role]);
+
+  // The stream can arrive while the loading screen is still up (no <video> yet), and
+  // the <video> remounts after a retake, so attach whenever both exist.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !cameraStream || video.srcObject === cameraStream) return;
+    video.srcObject = cameraStream;
+    video.onloadedmetadata = () => setCameraReady(true);
+    video.play().catch(err => console.error('Video play error:', err));
+  }, [cameraStream, loading, event, capturedPhoto]);
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   const fetchEvent = async () => {
     try {
@@ -99,15 +120,20 @@ export default function CameraSubmissionPage() {
     }
   };
 
+  // Camera and location are requested independently so a slow or denied
+  // location fix doesn't keep the camera from starting.
   const initializeCamera = async () => {
+    setError(null);
+    setCameraReady(false);
+    getCurrentLocation();
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Camera is unavailable. Open this page over HTTPS or on localhost.');
+      return;
+    }
+
     try {
-      setError(null);
-      console.log('🎥 Initializing camera...');
-
-      // Get location first
-      await getCurrentLocation();
-
-      // Then get camera
+      stopCamera();
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -115,63 +141,55 @@ export default function CameraSubmissionPage() {
           height: { ideal: 1080 }
         }
       });
-
-      console.log('📷 Camera stream obtained');
+      streamRef.current = stream;
       setCameraStream(stream);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          console.log('🎬 Video metadata loaded');
-          setCameraReady(true);
-        };
-        await videoRef.current.play();
-        console.log('▶️ Video playing');
-      }
-
       setPermissionsReady(true);
     } catch (error: any) {
-      console.error('❌ Camera initialization error:', error);
+      console.error('Camera initialization error:', error);
       if (error.name === 'NotAllowedError') {
-        setError('Camera and location permissions are required. Please allow access and refresh.');
-      } else if (error.name === 'NotFoundError') {
+        setError('Camera permission was denied. Allow camera access in your browser and try again.');
+      } else if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') {
         setError('No camera found on this device.');
+      } else if (error.name === 'NotReadableError') {
+        setError('The camera is in use by another app. Close it and try again.');
       } else {
         setError('Unable to access camera. Please check permissions and try again.');
       }
     }
   };
 
-  const getCurrentLocation = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation not supported'));
-        return;
-      }
+  const getCurrentLocation = () => {
+    setLocationError(null);
+    if (!navigator.geolocation) {
+      setLocationError('Location is not supported by this browser.');
+      return;
+    }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const locationInfo: LocationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: Date.now()
-          };
-          setLocationData(locationInfo);
-          console.log('📍 Location obtained:', locationInfo);
-          resolve();
-        },
-        (error) => {
-          console.error('📍 Location error:', error);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocationData({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: Date.now()
+        });
+      },
+      (error) => {
+        console.error('Location error:', error);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError('Location permission was denied. Allow location access to submit.');
+        } else if (error.code === error.TIMEOUT) {
+          setLocationError('Getting your location timed out.');
+        } else {
+          setLocationError('Could not determine your location.');
         }
-      );
-    });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
   };
 
   const capturePhoto = () => {
@@ -202,14 +220,7 @@ export default function CameraSubmissionPage() {
         if (blob && blob.size > 0) {
           setCapturedPhoto(blob);
           setPreview(URL.createObjectURL(blob));
-
-          // Stop camera
-          if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            setCameraStream(null);
-          }
-
-          console.log('📸 Photo captured successfully');
+          stopCamera();
         } else {
           setError('Failed to capture photo. Please try again.');
         }
@@ -221,8 +232,12 @@ export default function CameraSubmissionPage() {
   };
 
   const handleSubmit = async () => {
-    if (!capturedPhoto || !event || !locationData) {
-      setError('Photo and location data are required');
+    if (!capturedPhoto || !event) {
+      setError('Photo is required');
+      return;
+    }
+    if (!locationData) {
+      setError('Location is required to submit. Allow location access and retry.');
       return;
     }
 
@@ -277,8 +292,6 @@ export default function CameraSubmissionPage() {
   const retakePhoto = () => {
     setCapturedPhoto(null);
     setPreview(null);
-    setError(null);
-    setCameraReady(false);
     initializeCamera();
   };
 
@@ -364,8 +377,12 @@ export default function CameraSubmissionPage() {
           <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase tracking-wider pt-3 border-t border-gray-200/50">
             <span className="material-icons-outlined text-sm">location_on</span>
             <span>{event.location_name}</span>
-            {locationData && (
-              <span className="ml-auto text-green-600">• Location Verified</span>
+            {locationData ? (
+              <span className="ml-auto text-green-600">• Location Captured</span>
+            ) : locationError ? (
+              <span className="ml-auto text-red-600">• No Location</span>
+            ) : (
+              <span className="ml-auto">• Locating…</span>
             )}
           </div>
         </div>
@@ -382,6 +399,18 @@ export default function CameraSubmissionPage() {
                 className="mt-3 bg-black text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-gray-900 shadow-sm"
               >
                 Try Again
+              </button>
+            </div>
+          )}
+
+          {locationError && !locationData && (
+            <div className="bg-[#F0F0F3] border border-amber-200/50 rounded-2xl p-4 mb-4 text-center shadow-[inset_3px_3px_6px_#d1d1d3]">
+              <p className="text-amber-700 text-xs font-bold uppercase tracking-wider">{locationError}</p>
+              <button
+                onClick={getCurrentLocation}
+                className="mt-3 bg-black text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-gray-900 shadow-sm"
+              >
+                Retry Location
               </button>
             </div>
           )}
@@ -467,11 +496,14 @@ export default function CameraSubmissionPage() {
               </div>
 
               <div className="p-5 bg-[#F0F0F3] shadow-[inset_3px_3px_6px_#d1d1d3,inset_-3px_-3px_6px_#ffffff] border border-gray-100/50 rounded-3xl text-center">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-green-600 mb-1 flex items-center justify-center gap-1.5">
-                  <span className="material-symbols-outlined text-sm">check_circle</span> Ready to Submit
+                <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5 ${locationData ? 'text-green-600' : 'text-amber-600'}`}>
+                  <span className="material-symbols-outlined text-sm">{locationData ? 'check_circle' : 'location_searching'}</span>
+                  {locationData ? 'Ready to Submit' : 'Waiting for Location'}
                 </h4>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
-                  Location data locked in. Submit to claim {event.points} PTS.
+                  {locationData
+                    ? `Location data locked in. Submit to claim ${event.points} PTS.`
+                    : 'Your location is needed before you can submit.'}
                 </p>
               </div>
 
@@ -484,7 +516,7 @@ export default function CameraSubmissionPage() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || !locationData}
                   className="rounded-2xl bg-black text-white px-5 py-4 text-xs font-bold uppercase tracking-widest shadow-[4px_4px_8px_#b8b8ba] active:scale-95 disabled:opacity-50 transition-all flex-1 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
